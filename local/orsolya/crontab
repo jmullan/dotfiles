@@ -1,49 +1,7 @@
-#5 5 * * * dpkg --get-selections
-#45 3 * * * uptime
-#1 3 * * * /home/jmullan/bin/updategallerycvs.sh
-#5 3 * * * /home/jmullan/bin/makedailyrelease.pl
-#30 3 * * * /home/jmullan/bin/makedailyreleaseG2.pl
-
-#0 4 * * * /home/jmullan/bin/makedailyreleaseintegrations.pl
-#0 3 * * * /usr/bin/find /www/galleryupdates.jpmullan.com/html/daily/ -mtime +15 -iname '*tar.gz' -exec /bin/rm "{}" \;
-#0 3 * * * /usr/bin/find /www/galleryupdates.jpmullan.com/html/G2/ -mtime +15 -iname '*zip' -exec /bin/rm "{}" \;
 0 3 * * * /usr/bin/find /www/galleryupdates.jpmullan.com/html/G3/ -mtime +15 -iname '*zip' -exec /bin/rm "{}" \;
-
-#29 3 * * * /usr/bin/find /www/jpmullan.com/galleryupdates/G2/ -mtime +10 -iname '*tar.gz' -exec /bin/rm "{}" \;
-#29 3 * * * /usr/bin/find /www/jpmullan.com/galleryupdates/G2/ -mtime +10 -iname '*zip' -exec /bin/rm "{}" \;
-
-# 29 3 * * * /usr/bin/find /www/jpmullan.com/galleryupdates/remote/ -mtime +15 -iname '*zip' -exec /bin/rm {} \; -print
-
-
-#5 1 * * * /home/jmullan/bin/dualbums.sh
-#5 1 1 1,7 * du -sh ~/*
-
-#45 3 * * * cp -f .mailboxlist .mailboxlist.old
-0 * * * * /home/jmullan/bin/mailboxes >/home/jmullan/.mailboxlist
-#0 4 * * * grep -rs \<\<\<\<\<\<\< /www/gallery2.jpmullan.com/
-#0 4 * * * /home/jmullan/mprime/mprime -c
-#0 5 * * * /home/jmullan/mprime/mprime -b1
-#0 0,6,12,18 * * *  wget -O - -q http://thoa.ath.cx/irc/raw.txt
-# 30 5 * * * /usr/bin/perl src/awstats-5.9/tools/awstats_buildstaticpages.pl -awstatsprog=/home/jmullan/cgi-bin/awstats.pl -dir=/www/jpmullan.com/gallerystats/ -config=gallery.jpmullan.com -update
-#0,5,10,15,20,25,30,35,40,45,50,55 * * * * /usr/bin/fetchmail >>/home/jmullan/logs/fetchmail.log
-#0 4 * * 1 /home/jmullan/mprime/mprime -c
-#0 5 * * * /home/jmullan/mprime/mprime -b1
-#0 0 1 * * echo '30 day reminder' | mail skeathly@gmail.com
-#0 0 1 * * echo '30 day reminder' | mail jmullan@gmail.com
-#0 0 1 * * echo '30 day reminder' | mail jessepmullan@hotmail.com
-#0 5 * * * grep -ch ^From ~/logs/procmail.1 > /www/jpmullan.com/emailcount
-#30 7 * * 1-5 /usr/bin/mpg321 -q -z /home/jmullan/mp3/*
-#30 7 * * 1-5 /usr/bin/mpg321 -q http://134.84.15.153:8000/
-#30 7 * * 1-5 /usr/bin/mpg321 -qz --list /big/mp3s/playlists/morningList.m3u
-#25 7 * * 1-5 /bin/sh /home/jmullan/bin/unmute.sh
-#0 6 * * * /usr/bin/php /home/jmullan/bin/makePlaylist.php >/big/mp3s/playlists/morningList.m3u
-#30 6 * * * /usr/bin/php /home/jmullan/bin/ratedFive.php >/www/jpmullan.com/ratedFive.txt
-#0 * * * * wget -O - -q http://whittier.jpmullan.com/cron.php
-
-
-4 * * * * /usr/bin/php /home/jmullan/bin/mySqlOptimize.php
+0 * * * * /home/jmullan/orsolya_bin/mailboxes >/home/jmullan/.mailboxlist
+4 * * * * /usr/bin/php /home/jmullan/orsolya_bin/mySqlOptimize.php
 30 3 * * * /home/jmullan/bin/doreleases.sh
 4 1 * * * df -h
-
 * * * * * /usr/bin/fetchmail >>/home/jmullan/logs/fetchmail.log
 0 * * * * sh /home/jmullan/src/minecraft/make_map.sh >>/home/jmullan/logs/make_minecraft_map.log
