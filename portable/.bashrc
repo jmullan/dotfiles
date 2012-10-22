@@ -133,26 +133,12 @@ if [ -n "$YROOT_NAME" ]; then
 else
     export PS1="\[\e[36m\u@$(tput bold)$(tput setaf $HOST_COLOR)\]\h\[$(tput sgr0)\]:\[\w\e[0m\] \$(_git_prompt)\n\$ "
 fi
+
 export SVN_EDITOR=emacs
 export VISUAL=emacs
 export EDITOR=emacs
 export TZ='America/Los_Angeles'
 export HOSTNAME=`hostname`
-    # If this is an xterm set the title to user@host:dir
-    #case $TERM in
-    #xterm*)
-    #    PROMPT_COMMAND='echo -ne "\033]0;${USER}@${HOSTNAME}: ${PWD}\007"'
-    #    ;;
-    #*)
-    #    ;;
-    #esac
-
-    # enable programmable completion features (you don't need to enable
-    # this, if it's already enabled in /etc/bash.bashrc).
-    #if [ -f /etc/bash_completion ]; then
-    #  . /etc/bash_completion
-    #fi
-
 
 if [ ! -s $DISPLAY ]; then
     emacs () {
