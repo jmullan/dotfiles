@@ -1,4 +1,4 @@
-#!/usr/bin/php
+#!/usr/bin/env php
 <?php
 $total = 0;
 while (!feof(STDIN)) {
@@ -8,4 +8,3 @@ while (!feof(STDIN)) {
     }
 }
 echo "$total\n";
-?>
