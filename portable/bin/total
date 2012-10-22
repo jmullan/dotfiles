@@ -1,0 +1,11 @@
+#!/usr/bin/php
+<?php
+$total = 0;
+while (!feof(STDIN)) {
+    $line = trim(fgets(STDIN));
+    if (is_numeric($line)) {
+	$total += $line;
+    }
+}
+echo "$total\n";
+?>

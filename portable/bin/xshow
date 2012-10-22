@@ -1,0 +1,4 @@
+#!/bin/bash
+FILE=`tempfile`
+cat > "$FILE"
+geany "$FILE" >/dev/null </dev/null  2>&1 &

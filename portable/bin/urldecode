@@ -1,0 +1,5 @@
+#!/usr/bin/env php
+<?php
+while ($foo = fgets(STDIN)) {
+      echo trim(strtolower(urldecode(trim($foo)))) . "\n";
+}

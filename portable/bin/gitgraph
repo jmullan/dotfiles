@@ -1,0 +1,22 @@
+#!/bin/bash
+_ADD=`git diff --numstat origin/master | awk 'BEGIN {add=0;del=0}; {add = add + $1; del = del + $2;} ; END {print add}'`
+_DEL=`git diff --numstat origin/master | awk 'BEGIN {add=0;del=0}; {add = add + $1; del = del + $2;} ; END {print del}'`
+_TOTAL=$(($_ADD + $_DEL))
+_SCALE=$(($_TOTAL / 10))
+
+if [ 0 -ne $_SCALE ] ; then
+    _ADD_WIDTH=$(($_ADD / $_SCALE))
+    _DEL_WIDTH=$(($_DEL / $_SCALE))
+
+    _ADD_PAD_LEFT=$((10 - $_ADD_WIDTH))
+    _ADD_PAD_RIGHT=0
+    _DEL_PAD_LEFT=0
+    _DEL_PAD_RIGHT=$((10 - $_DEL_WIDTH))
+
+    echo -n "$(tput setaf 1)"
+    printf '%*.*s' $_ADD_PAD_LEFT $_ADD_WIDTH "++++++++++" $_ADD_PAD_RIGHT
+    echo -n "$(tput sgr0)"
+    echo -n "$(tput setaf 2)"
+    printf '%*.*s' $_DEL_PAD_LEFT $_DEL_WIDTH "----------" $_DEL_PAD_RIGHT
+    echo -n "$(tput sgr0)"
+fi
