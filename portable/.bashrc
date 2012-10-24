@@ -131,8 +131,7 @@ function _git_prompt() {
 if [ -n "$YROOT_NAME" ]; then
     export PS1="\e[36m\u@\H[\e[31m$YROOT_NAME\e[36m]:\w\e[0m\n\$ "
 else
-#    export PS1="\[\e[36m\u@$(tput bold)$(tput setaf $HOST_COLOR)\]\h\[$(tput sgr0)\]:\[\w\e[0m\] \$(_git_prompt)\n\$ "
-    export PS1="\[\e[36m\u@$(tput bold)$(tput setaf $HOST_COLOR)\]\h\[$(tput sgr0)\]:\[\w\e[0m\]\n\$ "
+    export PS1="\[\e[36m\u@$(tput bold)$(tput setaf $HOST_COLOR)\]\h\[$(tput sgr0)\]:\[\w\e[0m\] \$(_git_prompt)\n\$ "
 fi
 
 export SVN_EDITOR=emacs
