@@ -1,0 +1,25 @@
+(defun js-cleanup ()
+  "Cleans a js file"
+  (interactive)
+  (save-excursion
+    (beginning-of-buffer)
+    (replace-string "
+" "
+")
+    (beginning-of-buffer)(replace-string "if(" "if (")
+    (beginning-of-buffer)(replace-string "while(" "while (")
+    (beginning-of-buffer)(replace-string "foreach(" "foreach (")
+    (beginning-of-buffer)(replace-string "switch(" "switch (")
+    (beginning-of-buffer)(replace-string "for(" "for (")
+    (beginning-of-buffer)(replace-string "function(" "function (")
+    (beginning-of-buffer)(replace-string "array (" "array(")
+    (beginning-of-buffer)(replace-string "for (i=0;i<" "for (i = 0; i < ")
+    (beginning-of-buffer)(replace-string "for (var i=0;i<" "for (var i = 0; i < ")
+    (beginning-of-buffer)(replace-string ";i++" "; i++")
+    (beginning-of-buffer)(replace-string "){" ") {")
+    (delete-trailing-whitespace)
+    (indent-region (point-min) (point-max) nil)
+    (untabify (point-min) (point-max))
+    )  
+)
+(provide 'js-cleanup)
