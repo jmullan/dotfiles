@@ -18,6 +18,8 @@ if [ -e /Users/jmullan ] ; then
 else
     if [ -e /home/jmullan ] ; then
         export HOME=/home/jmullan
+    else
+	export HOME=~
     fi
 fi
 
@@ -29,7 +31,7 @@ if [ -e $HOME/`hostname`_bin ] ; then
     export PATH=$HOME/`hostname`_bin:"${PATH}"
 fi
 
-if [ -e /Users/jmullan/bin ] ; then
+if [ -e $HOME/bin ] ; then
     export PATH=$HOME/bin:"${PATH}"
 fi
 
@@ -45,8 +47,8 @@ if [ -d /opt/icon/bin ] ; then
     export PATH="${PATH}":/opt/icon/bin;
 fi
 
-if [ -d /Users/jmullan/tenxer/tenxer/resources/arcanist/bin ] ; then
-    export PATH="${PATH}":/Users/jmullan/tenxer/tenxer/resources/arcanist/bin;
+if [ -d $HOME/tenxer/tenxer/resources/arcanist/bin ] ; then
+    export PATH="${PATH}":$HOME/tenxer/tenxer/resources/arcanist/bin;
 fi
 
 if [ -d /usr/local/share/python ] ; then
