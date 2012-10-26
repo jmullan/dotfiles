@@ -1,0 +1,18 @@
+#!/usr/bin/env php
+<?php
+array_shift($argv);
+if (!$argv) {
+  readfile('php://stdin');
+} else {
+  $regex = '/' . join('|', $argv) . '/S';
+  $handle = fopen('php://stdin', 'r');
+  if ($handle) {
+    while (!feof($handle)) {
+      $buffer = fgets($handle);
+      if (!preg_match($regex, $buffer)) {
+	echo $buffer;
+      }
+    }
+    fclose($handle);
+  }
+}
