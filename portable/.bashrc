@@ -153,3 +153,12 @@ fi
 complete -W "$(echo $((grep -h '^ssh ' ~/.*history* | sed 's/^ssh //' ; grep ^Host ~/.ssh/config | sed 's/^Host //') | sort -u))" ssh
 
 alias emacs='emacs -nw'
+
+# {{{
+# Node Completion - Auto-generated, do not touch.
+shopt -s progcomp
+for f in $(command ls ~/.node-completion); do
+  f="$HOME/.node-completion/$f"
+  test -f "$f" && . "$f"
+done
+# }}}
