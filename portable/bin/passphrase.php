@@ -1,6 +1,10 @@
 #!/usr/bin/env php
 <?php
 $words = file('/usr/share/dict/words');
+if (!$words) {
+    echo "/usr/share/dict/words not found\n";
+    exit(1);
+}
 $output = array();
 while (count($output) < 3) {
     foreach (array_rand($words, 3) as $key) {
