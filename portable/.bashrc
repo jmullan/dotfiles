@@ -142,7 +142,7 @@ export HOSTNAME=`hostname`
 
 if [ ! -s $DISPLAY ]; then
     emacs () {
-        /usr/local/bin/emacs -nw "$@"
+        /usr/bin/emacs -nw "$@"
     }
     geany () {
         /usr/local/bin/geany "$@" </dev/null >/dev/null 2>/dev/null &

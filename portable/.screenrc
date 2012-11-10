@@ -1,0 +1,4 @@
+escape ^Pp
+startup_message off
+setenv LC_CTYPE en_US.UTF-8
+defutf8 on
