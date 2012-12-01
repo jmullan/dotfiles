@@ -154,6 +154,7 @@ complete -W "$(echo $((grep -h '^ssh ' ~/.*history* | sed 's/^ssh //' ; grep ^Ho
 
 alias emacs='emacs -nw'
 
+if [ -e ~/.node_completion ] ; then
 # {{{
 # Node Completion - Auto-generated, do not touch.
 shopt -s progcomp
@@ -162,3 +163,4 @@ for f in $(command ls ~/.node-completion); do
   test -f "$f" && . "$f"
 done
 # }}}
+fi
