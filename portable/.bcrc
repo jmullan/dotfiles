@@ -1,0 +1,7 @@
+define f(x) {
+  if (x <= 1) return (1);
+  return (f(x-1) * x);
+}
+define c(n, r) {
+  return f(n) / (f(n-r) * f(r))
+}
