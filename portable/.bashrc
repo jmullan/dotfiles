@@ -5,6 +5,7 @@
 
 HOST_SYMBOL="SET UP YOUR LOCALRC FREAL"
 HOST_COLOR="3"
+export GIT_EDITOR=`which emacs`
 # If running interactively, then:
 if [ -e .ubuntu-bashrc ] ; then
     source .ubuntu-bashrc
@@ -101,6 +102,7 @@ function _git_prompt() {
         if [[ "$git_status" =~ On\ branch\ ([^[:space:]]+) ]]; then
             #branch="`git describe --all --contains --abbrev=4 HEAD 2> /dev/null || echo HEAD`"
             branch=`git status | head -n 1 | sed 's/.*On branch //'`
+            #branch=$(git name-rev HEAD 2> /dev/null | awk "{ print \$2 }")
         fi
         if [ -n "$branch$origin_diff" ] ; then
             echo -n "[ "
