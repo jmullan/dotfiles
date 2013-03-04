@@ -1,0 +1,31 @@
+#!/usr/bin/env python
+import re
+import random
+
+FILENAME = '/usr/share/dict/words'
+
+def main():
+    words = open(FILENAME).readlines()
+
+    output = []
+    while len(output) < 3:
+        key = random.randint(0, len(words) - 1)
+        word = words[key]
+        if re.search('^[A-Za-z]+$', word):
+            output.append(word.strip())
+
+    chosen_words = output[0:3]
+    passphrase = ' '.join(chosen_words)
+    password = ''
+    characters = [chr(x)
+                  for x in ([33, 43, 45, 94]
+                            + range(48, 57)
+                            + range(65, 90)
+                            + range(97, 122))]
+    for i in range(0,8):
+        password += characters[random.randint(0, len(characters) - 1)]
+    print password
+    print passphrase
+
+if __name__ == "__main__":
+    main()

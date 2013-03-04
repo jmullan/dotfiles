@@ -1,0 +1,88 @@
+#!/usr/bin/env python
+import sys
+import os
+import subprocess
+
+FROM = '/mnt/poo'
+TO = '/mnt/good'
+
+class File(object):
+
+    def __init__(self, path):
+        path = os.path.abspath(path)
+        if os.path.isdir(path):
+            path += '/'
+        self.path = path
+
+    @property
+    def is_backed(self):
+        return os.path.exists(self.to_path)
+
+    @property
+    def is_from(self):
+        return FROM in self.path
+
+    @property
+    def is_to(self):
+        return TO in self.path
+
+    @property
+    def exists(self):
+        return os.path.exists(self.path)
+
+    @property
+    def from_path(self):
+        if self.is_from:
+            return self.path
+        if self.is_to:
+            return self.path.replace(TO, FROM)
+    @property
+    def to_path(self):
+        if self.is_from:
+            return self.from_path.replace(FROM, TO)
+        if self.is_to:
+            return self.path
+
+    @property
+    def is_dir(self):
+        return self.exists and os.path.exists(self.from_path)
+
+    def mkdir(self):
+        if self.is_backed:
+            print 'Not creating dir for %s' % self.to_path
+        else:
+            if self.is_dir:
+                dirname = self.to_path
+            else:
+                dirname = os.path.dirname(self.to_path)
+            print 'Making dir: %s' % dirname
+            if os.path.exists(dirname):
+                print 'Exists: %s' % dirname
+            else:
+                print 'Creating %s' % dirname
+                os.makedirs(dirname)
+
+    def backup(self):
+        self.mkdir()
+        subprocess.call(['rsync',
+                         '-rtv',
+                         '--progress',
+                         self.from_path,
+                         self.to_path])
+
+def main(args):
+    if len(args) < 1:
+        print 'You must supply at least one path to back up'
+    for arg in args:
+        file = File(arg)
+        print 'path %s' % file.path
+        print 'exists %s' % file.exists
+        print 'is_from %s' % file.is_from
+        print 'is_to %s' % file.is_to
+        print 'is_backed %s' % file.is_backed
+        print 'from_path %s' % file.from_path
+        print 'to_path %s' % file.to_path
+        file.backup()
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
