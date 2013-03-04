@@ -2,6 +2,8 @@
 (setq-default indent-tabs-mode nil)
 (setq user-init-file (expand-file-name "init.el"   (expand-file-name ".xemacs" "~")))
 (setq custom-file    (expand-file-name "custom.el" (expand-file-name ".xemacs" "~")))
+(setq split-height-threshold nil)
+(setq split-width-threshold 150)
 
 (defvar font-lock-preprocessor-face 'font-lock-keyword-face  "Don't even think of using this.")
 

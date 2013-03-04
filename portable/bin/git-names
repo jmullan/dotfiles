@@ -1,2 +1,2 @@
 #!/bin/bash
-git diff --name-only $@
+git diff --name-only $@ | sort -u
