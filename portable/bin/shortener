@@ -1,0 +1,7 @@
+#!/bin/bash
+# Make a goo.gl short URL
+if [ -z "$1" ] ; then
+   echo "You must provide a url"
+   exit 1
+fi
+curl -s https://www.googleapis.com/urlshortener/v1/url -H "Content-Type: application/json" -d "{\"longUrl\": \"$1\"}" | awk 'BEGIN { FS = "id\": \"" }; { print $2}' | tr -d '\",' | grep http

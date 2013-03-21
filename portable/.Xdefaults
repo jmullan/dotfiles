@@ -1,0 +1,8 @@
+!## Athena text widgets
+*Paned.Text.translations: #override\n\
+Shift<Btn4Down>,<Btn4Up>: scroll-one-line-down()\n\
+Shift<Btn5Down>,<Btn5Up>: scroll-one-line-up()\n\
+Ctrl<Btn4Down>,<Btn4Up>: previous-page()\n\
+Ctrl<Btn5Down>,<Btn5Up>: next-page()\n\
+None<Btn4Down>,<Btn4Up>:scroll-one-line-down()scroll-one-line-down()scroll-one-line-down()scroll-one-line-down()scroll-one-line-down()\n\
+None<Btn5Down>,<Btn5Up>:scroll-one-line-up()scroll-one-line-up()scroll-one-line-up()scroll-one-line-up()scroll-one-line-up()\n\
