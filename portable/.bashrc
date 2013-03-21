@@ -91,6 +91,26 @@ alias gcc='gcc -Wall'
 function _git_prompt() {
     local git_status="`git status -unormal 2>&1`"
     if ! [[ "$git_status" =~ Not\ a\ git\ repo ]]; then
+        git_dir="$(git rev-parse --git-dir 2>/dev/null)"
+        if [ -f "$git_dir/rebase-merge/interactive" ]; then
+            rebase="INTERACTIVE REBASING"
+        elif [ -d "$ggit_dir/rebase-merge" ]; then
+            rebase="MERGING REBASE"
+        else
+            if [ -d "$git_dir/rebase-apply" ]; then
+                if [ -f "$git_dir/rebase-apply/rebasing" ]; then
+                    rebase="REBASING"
+                elif [ -f "$git_dir/rebase-apply/applying" ]; then
+                    rebase="APPLYING REBASE"
+                else
+                    rebase="REBASING"
+                fi
+            fi
+        fi
+        if [ -f "$git_dir/rebase-merge/head-name" ] ; then
+            rebasehead="$(cat "$git_dir/rebase-merge/head-name")"
+        fi
+
         local origin_diff="`git diff --numstat origin/master | awk 'BEGIN {add=0;del=0}; {add = add + $1; del = del + $2;} ; END {if (add || del) printf "+"add" -"del" ="add + del}'`"
         if [[ "$git_status" =~ nothing\ to\ commit ]]; then
             local ansi=2
@@ -106,6 +126,12 @@ function _git_prompt() {
         fi
         if [ -n "$branch$origin_diff" ] ; then
             echo -n "[ "
+        fi
+        if [ -n "$rebase" ]; then
+            echo -n " $rebase"
+        fi
+        if [ -n "$rebasehead" ]; then
+            echo -n " $rebasehead"
         fi
         if [ -n "$branch" ]; then
             echo -n "$(tput setaf $ansi)$branch$(tput sgr0)"
