@@ -44,6 +44,7 @@ while (!empty($paths)) {
 	    $subfile != '.'
 	    && $subfile != '..'
 	    && $subfile != '.svn'
+	    && $subfile != '.git'
 	    && !in_array($extension, array('bak', 'jpg', 'png'))
             && ('~' != substr($subfile, -1))
 	  ) {
