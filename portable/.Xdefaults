@@ -6,3 +6,91 @@ Ctrl<Btn4Down>,<Btn4Up>: previous-page()\n\
 Ctrl<Btn5Down>,<Btn5Up>: next-page()\n\
 None<Btn4Down>,<Btn4Up>:scroll-one-line-down()scroll-one-line-down()scroll-one-line-down()scroll-one-line-down()scroll-one-line-down()\n\
 None<Btn5Down>,<Btn5Up>:scroll-one-line-up()scroll-one-line-up()scroll-one-line-up()scroll-one-line-up()scroll-one-line-up()\n\
+XTerm*font:     *-fixed-*-*-*-20-*
+XTerm*boldFont: *-fixed-*-*-*-20-*
+
+## XTERM SETTINGS
+## see /usr/X11R6/lib/X11/doc/html/xterm.1.html
+## or man xterm
+*XTerm*deleteIsDEL:              true
+    xterm*scrollBar:             true
+    xterm*rightScrollBar:        true
+    xterm*jumpScroll:            true
+    xterm*cursorColor:           white
+    xterm*colorBDMode:           true
+    xterm*highlightColor:        yellow
+    xterm*activeIcon:            false
+    xterm*awaitInput:            true
+    xterm*scrollTtyOutput:       false
+    xterm*scrollKey:             true
+
+    xterm*Background:            black
+    xterm*Foreground:            white
+    xterm*vt100*geometry: 100x50
+    xterm*saveLines: 20000
+    xterm*termName: xterm-color
+    xterm*eightBitInput: false
+    xterm*foreground: rgb:ff/ff/ff
+    xterm*background: rgb:00/00/00
+    xterm*color0: rgb:00/00/00
+    xterm*color1: rgb:a8/00/00
+    xterm*color2: rgb:00/a8/00
+    xterm*color3: rgb:a8/54/00
+    xterm*color4: rgb:00/00/a8
+    xterm*color5: rgb:a8/00/a8
+    xterm*color6: rgb:00/a8/a8
+    xterm*color7: rgb:a8/a8/a8
+    xterm*color8: rgb:54/54/54
+    xterm*color9: rgb:fc/54/54
+    xterm*color10: rgb:54/fc/54
+    xterm*color11: rgb:fc/fc/54
+    xterm*color12: rgb:54/54/fc
+    xterm*color13: rgb:fc/54/fc
+    xterm*color14: rgb:54/fc/fc
+    xterm*color15: rgb:fc/fc/fc
+    xterm*boldMode: false
+    xterm*colorBDMode: true
+    xterm*colorBD: rgb:fc/fc/fc
+    XTerm*font: *-fixed-*-*-*-15-*
+    XTerm*font1: 5x7
+    XTerm*font2: 6x10
+    XTerm*font3: fixed
+    XTerm*font4: 9x15
+    XTerm*faceName: Mono
+    XTerm*faceSize: 10
+
+## TERMINAL KEY SETTINGS
+## Adjust to OSX Terminal.app behaviour
+*VT100.translations: #override\
+    <Key>Prior:                 scroll-back(1,pages) \n\
+   <Key>Next:                  scroll-forw(1,pages)\n\
+    Meta <Key> K:               send-signal(int) clear-saved-lines() \n\
+    Meta <Key> P:               print() \n\
+    Meta <Key> minus:           smaller-vt-font() \n\
+    Meta <Key> KP_Subtract:     smaller-vt-font() \n\
+    Meta <Key> plus:            larger-vt-font() \n\
+    Meta <Key> KP_Add:          larger-vt-font() \n\
+    Meta <Key> C:               select-cursor-start() \
+                                select-cursor-end(PRIMARY, CUT_BUFFER0) \n\
+    Meta <Key> V:               insert-selection(PRIMARY, CUT_BUFFER0) \n\
+    Meta <Key> M:               iconify() \n\
+
+
+## EXTRA SETTINGS FOR XAW SCROLLBAR
+## see /usr/X11R6/include/X11/Xaw/Scrollbar.h
+## for full reference of available recources
+*Scrollbar.background:          gray50
+*Scrollbar.foreground:          gray50
+*Scrollbar.borderWidth:         0
+*Scrollbar.shadowWidth:         0
+*Scrollbar.thickness:           14
+*Scrollbar.minimumThumb:        20
+*Scrollbar.backgroundPixmap: gradient:horizontal?dimension=14&start=gray80&end=white
+*Scrollbar.borderPixmap: gradient:horizontal?dimension=14&start=white&end=grey80
+
+*Scrollbar.translations: #override\
+     <Btn2Down>:   StartScroll(Forward) \n\
+     <Btn1Down>:   StartScroll(Continuous) MoveThumb() NotifyThumb() \n\
+     <Btn3Down>:   StartScroll(Backward) \n\
+     <Btn1Motion>: MoveThumb() NotifyThumb() \n\
+     <BtnUp>:      NotifyScroll(Proportional) EndScroll()
