@@ -91,6 +91,10 @@ alias gcc='gcc -Wall'
 function _git_prompt() {
     local git_status="`git status -unormal 2>&1`"
     if ! [[ "$git_status" =~ Not\ a\ git\ repo ]]; then
+        TRACKING=`git config prompt.tracking`
+        if [ -z "$TRACKING" ]; then
+            TRACKING='origin/master'
+        fi
         git_dir="$(git rev-parse --git-dir 2>/dev/null)"
         if [ -f "$git_dir/rebase-merge/interactive" ]; then
             rebase="INTERACTIVE REBASING"
@@ -111,7 +115,7 @@ function _git_prompt() {
             rebasehead="$(cat "$git_dir/rebase-merge/head-name")"
         fi
 
-        local origin_diff="`git diff --numstat origin/master | awk 'BEGIN {add=0;del=0}; {add = add + $1; del = del + $2;} ; END {if (add || del) printf "+"add" -"del" ="add + del}'`"
+        local origin_diff="`git diff --numstat $TRACKING | awk 'BEGIN {add=0;del=0}; {add = add + $1; del = del + $2;} ; END {if (add || del) printf "+"add" -"del" ="add + del}'`"
         if [[ "$git_status" =~ nothing\ to\ commit ]]; then
             local ansi=2
         elif [[ "$git_status" =~ nothing\ added\ to\ commit\ but\ untracked\ files\ present ]]; then
