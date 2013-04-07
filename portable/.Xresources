@@ -69,3 +69,10 @@
 *color14:                 S_base1
 *color15:                 S_base3
 
+
+! xclock ---------------------------------------------------------------------
+
+xclock*update:            1
+xclock*analog:            false
+xclock*Foreground:        white
+xclock*background:        black

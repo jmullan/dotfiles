@@ -1,0 +1,9 @@
+[submodule "submodules/dircolors-solarized"]
+	path = submodules/dircolors-solarized
+	url = git://github.com/seebi/dircolors-solarized.git
+[submodule "portable/.emacs.d/themes/emacs-color-theme-solarized"]
+	path = portable/.emacs.d/themes/emacs-color-theme-solarized
+	url = https://github.com/sellout/emacs-color-theme-solarized.git
+[submodule "portable/.emacs.d/emacs-color-theme-solarized"]
+	path = portable/.emacs.d/emacs-color-theme-solarized
+	url = https://github.com/sellout/emacs-color-theme-solarized.git

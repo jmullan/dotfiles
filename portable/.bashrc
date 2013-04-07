@@ -39,7 +39,7 @@ if [ -f /etc/bash_completion ]; then
     . /etc/bash_completion
 fi
 
-alias screen='TERM=screen screen'
+# alias screen='TERM=screen screen'
 
 #stty erase '^?'
 #bind '"\C-h": backward-delete-char'
@@ -71,19 +71,24 @@ export HISTFILESIZE=1000000
 export HISTTIMEFORMAT='%F %T '
 shopt -s histappend
 
-    # enable color support of ls and also add handy aliases
-if [ `which dircolors` ] ; then
-    eval `dircolors -b`
+# enable color support of ls and also add handy aliases
+
+if [ "$TERM" != "dumb" ]; then
+    alias ls='ls --color=auto'
+    if [ `which dircolors` ] ; then
+        [ -e "$HOME/.dircolors" ] && DIR_COLORS="$HOME/.dircolors"
+        [ -e "$DIR_COLORS" ] || DIR_COLORS=""
+        eval `dircolors -b $DIR_COLORS`
+    fi
 fi
 alias bc='bc -lq .bcrc'
-    #alias ls='ls --color=auto'
-    #alias dir='ls --color=auto --format=vertical'
-    #alias vdir='ls --color=auto --format=long'
+#alias dir='ls --color=auto --format=vertical'
+#alias vdir='ls --color=auto --format=long'
 
-    # some more ls aliases
-    #alias ll='ls -l'
-    #alias la='ls -A'
-    #alias l='ls -CF'
+# some more ls aliases
+#alias ll='ls -l'
+#alias la='ls -A'
+#alias l='ls -CF'
 alias gcc='gcc -Wall'
 
 
