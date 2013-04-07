@@ -7,3 +7,6 @@
 [submodule "portable/.emacs.d/emacs-color-theme-solarized"]
 	path = portable/.emacs.d/emacs-color-theme-solarized
 	url = https://github.com/sellout/emacs-color-theme-solarized.git
+[submodule "submodules/back"]
+	path = submodules/back
+	url = https://github.com/jmullan/back
