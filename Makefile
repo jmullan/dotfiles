@@ -1,6 +1,21 @@
 PWD = $(shell pwd)
-install:
-	-emacs -batch -f batch-byte-compile portable/lib/emacs/lisp/*.el >/dev/null 2>&1
-	sh meta/bin/install.sh $(PWD)
 
-.phony: install
+all: install
+
+submodules:
+	git submodule init
+	git submodule update
+
+portable/.emacs.d/themes/color-theme-solarized: submodules
+
+portable/.dircolors: submodules
+	cp submodules/dircolors-solarized/dircolors.ansi-dark portable/.dircolors
+
+portable/bin/back: submodules
+	cp submodules/back/back portable/bin/back
+
+install: portable/.dircolors portable/.emacs.d/themes/color-theme-solarized portable/bin/back
+	sh meta/bin/install.sh $(PWD)
+	emacs -batch -f batch-byte-compile portable/lib/emacs/lisp/*.el >/dev/null 2>&1
+
+.PHONY: install submodules

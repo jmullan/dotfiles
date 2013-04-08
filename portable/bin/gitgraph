@@ -1,6 +1,11 @@
 #!/bin/bash
-_ADD=`git diff --numstat origin/master | awk 'BEGIN {add=0;del=0}; {add = add + $1; del = del + $2;} ; END {print add}'`
-_DEL=`git diff --numstat origin/master | awk 'BEGIN {add=0;del=0}; {add = add + $1; del = del + $2;} ; END {print del}'`
+TRACKING=`git config prompt.tracking`
+if [ -z "$TRACKING" ]; then
+    TRACKING='origin/master'
+fi
+
+_ADD=`git diff --numstat $TRACKING | awk 'BEGIN {add=0;del=0}; {add = add + $1; del = del + $2;} ; END {print add}'`
+_DEL=`git diff --numstat $TRACKING | awk 'BEGIN {add=0;del=0}; {add = add + $1; del = del + $2;} ; END {print del}'`
 _TOTAL=$(($_ADD + $_DEL))
 _SCALE=$(($_TOTAL / 10))
 

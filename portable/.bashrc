@@ -39,7 +39,7 @@ if [ -f /etc/bash_completion ]; then
     . /etc/bash_completion
 fi
 
-alias screen='TERM=screen screen'
+# alias screen='TERM=screen screen'
 
 #stty erase '^?'
 #bind '"\C-h": backward-delete-char'
@@ -71,19 +71,24 @@ export HISTFILESIZE=1000000
 export HISTTIMEFORMAT='%F %T '
 shopt -s histappend
 
-    # enable color support of ls and also add handy aliases
-if [ `which dircolors` ] ; then
-    eval `dircolors -b`
+# enable color support of ls and also add handy aliases
+
+if [ "$TERM" != "dumb" ]; then
+    alias ls='ls --color=auto'
+    if [ `which dircolors` ] ; then
+        [ -e "$HOME/.dircolors" ] && DIR_COLORS="$HOME/.dircolors"
+        [ -e "$DIR_COLORS" ] || DIR_COLORS=""
+        eval `dircolors -b $DIR_COLORS`
+    fi
 fi
 alias bc='bc -lq .bcrc'
-    #alias ls='ls --color=auto'
-    #alias dir='ls --color=auto --format=vertical'
-    #alias vdir='ls --color=auto --format=long'
+#alias dir='ls --color=auto --format=vertical'
+#alias vdir='ls --color=auto --format=long'
 
-    # some more ls aliases
-    #alias ll='ls -l'
-    #alias la='ls -A'
-    #alias l='ls -CF'
+# some more ls aliases
+#alias ll='ls -l'
+#alias la='ls -A'
+#alias l='ls -CF'
 alias gcc='gcc -Wall'
 
 
@@ -91,6 +96,10 @@ alias gcc='gcc -Wall'
 function _git_prompt() {
     local git_status="`git status -unormal 2>&1`"
     if ! [[ "$git_status" =~ Not\ a\ git\ repo ]]; then
+        TRACKING=`git config prompt.tracking`
+        if [ -z "$TRACKING" ]; then
+            TRACKING='origin/master'
+        fi
         git_dir="$(git rev-parse --git-dir 2>/dev/null)"
         if [ -f "$git_dir/rebase-merge/interactive" ]; then
             rebase="INTERACTIVE REBASING"
@@ -111,7 +120,7 @@ function _git_prompt() {
             rebasehead="$(cat "$git_dir/rebase-merge/head-name")"
         fi
 
-        local origin_diff="`git diff --numstat origin/master | awk 'BEGIN {add=0;del=0}; {add = add + $1; del = del + $2;} ; END {if (add || del) printf "+"add" -"del" ="add + del}'`"
+        local origin_diff="`git diff --numstat $TRACKING | awk 'BEGIN {add=0;del=0}; {add = add + $1; del = del + $2;} ; END {if (add || del) printf "+"add" -"del" ="add + del}'`"
         if [[ "$git_status" =~ nothing\ to\ commit ]]; then
             local ansi=2
         elif [[ "$git_status" =~ nothing\ added\ to\ commit\ but\ untracked\ files\ present ]]; then
