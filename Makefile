@@ -3,8 +3,8 @@ PWD = $(shell pwd)
 all: install
 
 submodules:
-	git submodules init
-	git submodules upgrade
+	git submodule init
+	git submodule update
 
 portable/.emacs.d/themes/color-theme-solarized: submodules
 
@@ -18,4 +18,4 @@ install: portable/.dircolors portable/.emacs.d/themes/color-theme-solarized port
 	sh meta/bin/install.sh $(PWD)
 	emacs -batch -f batch-byte-compile portable/lib/emacs/lisp/*.el >/dev/null 2>&1
 
-.phony: install submodules
+.PHONY: install submodules
