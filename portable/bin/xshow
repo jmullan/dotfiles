@@ -1,4 +1,5 @@
 #!/bin/bash
 FILE=`tempfile`
 cat > "$FILE"
-xfewer "$FILE" >/dev/null </dev/null  2>&1 &
+#xfewer "$FILE" >/dev/null </dev/null  2>&1 &
+xterm -e less "$FILE" >/dev/null </dev/null 2>&1 &
