@@ -17,8 +17,7 @@ XTerm*boldFont: *-fixed-*-*-*-20-*
     xterm*rightScrollBar:        true
     xterm*jumpScroll:            true
     xterm*cursorColor:           white
-    xterm*colorBDMode:           true
-    xterm*highlightColor:        yellow
+    xterm*highlightColor:        rgb:a8/54/00
     xterm*activeIcon:            false
     xterm*awaitInput:            true
     xterm*scrollTtyOutput:       false
@@ -58,6 +57,12 @@ XTerm*boldFont: *-fixed-*-*-*-20-*
     XTerm*font4: 9x15
     XTerm*faceName: Mono
     XTerm*faceSize: 10
+
+    xterm*VT100*geometry: 94x28
+    xterm*loginShell: true
+    xterm*alwaysUseMods: true
+    xterm*metaSendsEscape: true
+    xterm*utf8Title: true
 
 ## TERMINAL KEY SETTINGS
 ## Adjust to OSX Terminal.app behaviour
