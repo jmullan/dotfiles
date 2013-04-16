@@ -150,16 +150,16 @@ function _git_prompt() {
             #branch=$(git name-rev HEAD 2> /dev/null | awk "{ print \$2 }")
         fi
         if [ -n "$branch$origin_diff" ] ; then
-            echo -n "[ "
+            echo -n "["
         fi
         if [ -n "$rebase" ]; then
-            echo -n " $rebase"
+            echo -n " $rebase "
         fi
         if [ -n "$rebasehead" ]; then
-            echo -n " $rebasehead"
+            echo -n " $rebasehead "
         fi
         if [ -n "$branch" ]; then
-            echo -n "$(tput setaf $ansi)$branch$(tput sgr0)"
+            echo -n " $(tput setaf $ansi)$branch$(tput sgr0)"
             if [[ "$git_status" =~ Changes\ to\ be\ committed ]] ; then
                 echo -n " $(tput setaf 7)staged$(tput sgr0)"
             fi
