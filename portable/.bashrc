@@ -96,9 +96,25 @@ alias gcc='gcc -Wall'
 function _git_prompt() {
     local git_status="`git status -unormal 2>&1`"
     if ! [[ "$git_status" =~ Not\ a\ git\ repo ]]; then
+        USER_NAME=`git config user.name`
+        USER_EMAIL=`git config user.email`
+        if [ -z "$USER_NAME" ]; then
+            echo
+            echo "$(tput setaf 1)No username set for git: git config user.name 'Jesse Mullan'$(tput sgr0)"
+        fi
+        if [ -z "$USER_EMAIL" ]; then
+            echo
+            echo "$(tput setaf 1)No email set for git: git config user.email 'jmullan@visi.com'$(tput sgr0)"
+        fi
+
         TRACKING=`git config prompt.tracking`
         if [ -z "$TRACKING" ]; then
-            TRACKING='origin/master'
+            REMOTES=`git remote`
+            if [ -z "$REMOTES" ] ; then
+                TRACKING='master'
+            else
+                TRACKING='origin/master'
+            fi
         fi
         git_dir="$(git rev-parse --git-dir 2>/dev/null)"
         if [ -f "$git_dir/rebase-merge/interactive" ]; then
