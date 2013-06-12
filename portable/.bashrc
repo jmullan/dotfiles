@@ -39,6 +39,11 @@ if [ -f /etc/bash_completion ]; then
     . /etc/bash_completion
 fi
 
+if [ -e ~/.virtualenvs ]; then
+    export WORKON_HOME=~/.virtualenvs
+    . /usr/local/bin/virtualenvwrapper.sh
+fi
+
 # alias screen='TERM=screen screen'
 
 #stty erase '^?'
