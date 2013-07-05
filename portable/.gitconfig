@@ -13,3 +13,5 @@
     rb = !git fetch origin && git rebase origin/master
 [rerere]
 	enabled = true
+[commit]
+	template = /home/vagrant/.arc-commit-template.txt
