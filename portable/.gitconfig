@@ -14,4 +14,4 @@
 [rerere]
 	enabled = true
 [commit]
-	template = /home/vagrant/.arc-commit-template.txt
+	template = ~/.arc-commit-template.txt
