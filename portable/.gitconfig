@@ -15,3 +15,5 @@
 	enabled = true
 [commit]
 	template = ~/.arc-commit-template.txt
+[user]
+	name = Jesse Mullan

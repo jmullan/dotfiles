@@ -1,7 +1,7 @@
 <<Enter Revision Title>>
 
 Summary:
-# Fixes:
+# Fixes
 
 Test Plan:
 
