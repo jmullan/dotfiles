@@ -107,7 +107,7 @@
 (defvar fly/phpcs-phpexe "c:\\php\\php.exe"
   "Location of the PHP EXE or program.")
 
-(defvar fly/phpcs-standard "Dino" ;; Zend, PEAR, PHPCS, etc
+(defvar fly/phpcs-standard "PSR2" ;; Zend, PEAR, PHPCS, etc
   "The coding standard CodeSniffer should apply.")
 
 
