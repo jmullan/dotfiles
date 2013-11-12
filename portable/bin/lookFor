@@ -1,0 +1,66 @@
+#!/bin/bash
+find ~/watermelon-sauce \
+    \( \
+    -not -iname '*.bak' \
+    -not -iname '*.tmp' \
+    -not -iname "*.csv" \
+    ! -iname "*.data" \
+    ! -iname "*.reg" \
+    ! -iname "*.log" \
+    ! -iname "*.log.?" \
+    ! -iname "*.xmf" \
+    ! -iname "*.xsf" \
+    ! -iname "*.pickle" \
+    ! -iname "*.h" \
+    ! -iname "*.crt" \
+    ! -iname "*.decTest" \
+    ! -iname ".filemap" \
+    ! -iname "*.xaf" \
+    ! -iname "*.svg" \
+    ! -iname "*.as" \
+    ! -iname "*.rc" \
+    ! -iname "*.frq" \
+    ! -iname "tzmappings" \
+    ! -iname "*~" \
+    ! -iname "#*#" \
+    ! -iname "*.fail.html" \
+    ! -iname "*.pyc" \
+    ! -iname "*.min.js" \
+    -name "*$@*" \
+    \) \
+    | sed s=^`pwd`/==
+grep -r \
+    --exclude="*.bak" \
+    --exclude="*.tmp" \
+    --exclude="*.csv" \
+    --exclude="*.data" \
+    --exclude="*.reg" \
+    --exclude="*.log" \
+    --exclude="*.log.?" \
+    --exclude="*.xmf" \
+    --exclude="*.xsf" \
+    --exclude="*.pickle" \
+    --exclude="*.h" \
+    --exclude="*.crt" \
+    --exclude="*.decTest" \
+    --exclude=".filemap" \
+    --exclude="*.xaf" \
+    --exclude="*.svg" \
+    --exclude="*.as" \
+    --exclude="*.rc" \
+    --exclude="*.frq" \
+    --exclude="tzmappings" \
+    --exclude="*~" \
+    --exclude="#*#" \
+    --exclude="*.fail.html" \
+    --exclude="*.pyc" \
+    --exclude="*.min.js" \
+    --exclude="*benchmark.html" \
+    --exclude="rcover_*" \
+    --binary-files=without-match \
+    "$@" \
+    ~/watermelon-sauce \
+    | grep -v \\.git \
+    | grep -v \\.svn \
+    | grep -v libphutil \
+    | sed s=^`pwd`/==
