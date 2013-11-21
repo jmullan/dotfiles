@@ -1,0 +1,3 @@
+#!/bin/bash
+scheck "$@" 2>&1 |grep -v TodoNamespace |grep -v 'for php_root'
+phpcs -s --standard=PSR2 --report=emacs "$@"
