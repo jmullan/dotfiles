@@ -1,0 +1,2 @@
+#!/bin/bash
+recursiveReplace.php "$1" "$2" `grep -rl "$1" .`
