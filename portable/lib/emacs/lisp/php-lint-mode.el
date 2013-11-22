@@ -1,12 +1,12 @@
 ;;; php-lint-mode.el --- Minor mode to require B::Lint clean php.
 
 ;;; To use this, add the following code to your .emacs file and copy
-; (add-to-list 'load-path "~/.site-lisp/")
-; (autoload 'php-lint "php-lint-mode" nil t)
-; (autoload 'php-lint-mode "php-lint-mode" nil t)
+;;; (add-to-list 'load-path "~/.site-lisp/")
+;;; (autoload 'php-lint "php-lint-mode" nil t)
+;;; (autoload 'php-lint-mode "php-lint-mode" nil t)
 
-; Automatically enable php-lint-mode for php-mode
-; (eval-after-load "php-mode" '(add-hook 'php-mode-hook 'php-lint-mode))
+;;; Automatically enable php-lint-mode for php-mode
+;;; (eval-after-load "php-mode" '(add-hook 'php-mode-hook 'php-lint-mode))
 
 ;;; B::Lint is a module in core php.
 
@@ -45,10 +45,10 @@
   (if
       (string-match "yahoo" (getenv "HOSTNAME"))
       "/home/y/bin/php"
-      "/usr/bin/php"
-  )
+    "/usr/bin/php"
+    )
   "The php binary used to check for lint."
-)
+  )
 
 
 (defvar php-lint-checks () "...")
@@ -111,7 +111,7 @@ displayed in an adjacent buffer."
 			    )
 			  )
 			)
-	    )
+           )
 					; Clear the lint buffer if it needs it.
 	(setq error_line -1)
         (if
@@ -120,20 +120,20 @@ displayed in an adjacent buffer."
           (set-buffer sniff-buf)
           (erase-buffer)
 	  )
-	
+
         (if
 	    (zerop (buffer-size snifflinenum-buf))
 	    nil
           (set-buffer snifflinenum-buf)
           (erase-buffer)
 	  )
-	
+
 					; Run B::Lint on the current buffer using whatever checks
 					; the user would like.
         (set-buffer input-buf)
         (let
 	    (
-	     (rc 
+	     (rc
 	      (
 	       call-process-region
 	       (point-min)          ; start
@@ -146,7 +146,7 @@ displayed in an adjacent buffer."
 	       )
 	      )
 	     )
-          
+
 					; Check that the B::Lint succeeded or clean up the error
 					; messages it posted.
           (set-buffer sniff-buf)
@@ -155,8 +155,8 @@ displayed in an adjacent buffer."
               (if (not (zerop rc))
                   (let
 		      ((foo nil))
-		    
-		    ; clean up the sniff output
+
+                                        ; clean up the sniff output
 		    (call-process-region
 		     (point-min)            ; start
 		     (point-max)            ; end
@@ -167,7 +167,7 @@ displayed in an adjacent buffer."
 		     "-r"                   ; arg
 		     php-sniff-clean_output)
 
-		    ; get the line number from the first line in the sniff buffer
+                                        ; get the line number from the first line in the sniff buffer
 		    (call-process-region
 		     (point-min)            ; start
 		     (point-max)            ; end
@@ -183,9 +183,9 @@ displayed in an adjacent buffer."
 					;(insert "\n")
 					;(insert (number-to-string error_line))
 					;(insert "\n")
-		    
+
 		    )
-		
+
 		(call-process-region
                  (point-min)            ; start
 		 (point-max)            ; end
@@ -208,7 +208,7 @@ displayed in an adjacent buffer."
 
       )
     )
-)
+  )
 
 
 (defun php-lint () "Returns a either nil or t depending on whether the current buffer
@@ -241,12 +241,12 @@ displayed in an adjacent buffer."
 		   nil                  ; delete
                    (list lint-buf t)    ; destination
                    nil                  ; display
-					;args 
+					;args
                    (reduce (lambda (l r) (concat l " " r)) (cons "-l" php-lint-checks))
 		   )
 		  )
 	      )
-          
+
 					; Check that the B::Lint succeeded or clean up the error
 					; messages it posted.
           (set-buffer lint-buf)
@@ -276,10 +276,10 @@ displayed in an adjacent buffer."
 		    (set-buffer linenum-buf)
 		    (setq error_line (string-to-number (buffer-string)))
 		    (set-buffer lint-buf)
-		    ;(insert "\n")
-		    ;(insert (number-to-string error_line))
-		    ;(insert "\n")
-		    
+                                        ;(insert "\n")
+                                        ;(insert (number-to-string error_line))
+                                        ;(insert "\n")
+
 		    )
 
                 (call-process-region
@@ -301,10 +301,10 @@ displayed in an adjacent buffer."
 	    (kill-buffer linenum-buf)
 	    (if	lint-ok (kill-buffer lint-buf) (display-buffer lint-buf))
 					; Oh yeah. Return a boolean too.
-	    
+
             lint-ok))))
     )
-)
+  )
 
 
 
@@ -319,11 +319,11 @@ displayed in an adjacent buffer."
   "Check php lint during `write-file-hooks' for `php-lint-mode'"
   (if php-lint-mode
       (save-restriction (widen) (save-excursion (mark-whole-buffer) (not (php-lint))))
-      nil
-  )
+    nil
+    )
   (when (and php-lint-mode (< -1 error_line)) (goto-line error_line))
   (and php-lint-mode (not final-lint-ok))
-)
+  )
 
 (defun php-lint-mode (&optional arg)
   "Php lint checking minor mode."
@@ -334,8 +334,6 @@ displayed in an adjacent buffer."
 			  (not php-lint-mode)
 					; Enable if >0.
 			(> (prefix-numeric-value arg) 0)))
-
-  (make-local-hook 'write-file-hooks)
   (funcall (if php-lint-mode #'add-hook #'remove-hook)
            'write-file-hooks 'php-lint-write-hook))
 

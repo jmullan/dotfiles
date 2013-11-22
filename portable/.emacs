@@ -97,19 +97,43 @@
     )
   "Zend Javascript Style for Yahoo")
 
+(defconst psrtwo-style
+  '((c-basic-offset . 4)
+    (my-c-continuation-offset . 8)
+    (c-comment-only-line-offset . (0 . 0))
+    (setq indent-tabs-mode nil)
+    (c-offsets-alist . ((inline-open . 0)
+                        (topmost-intro-cont    . 0)
+                        (statement-block-intro . +)
+                        (knr-argdecl-intro     . 5)
+                        (substatement-open     . 0)
+                        (label                 . 0)
+                        (arglist-intro         . +)
+                        (arglist-cont          . 0)
+                        (arglist-close         . 0)
+			(case-label            . +)
+                        (statement-case-open   . +)
+                        (statement-cont        . +)
+                        (access-label          . 0)
+			)
+		     )
+    (c-echo-syntactic-information-p . t)     ; turn this on to get debug info
+    )
+  "PSR2 Mode")
+
+
 (add-hook
  'php-mode-hook
  (function
   (lambda ()
-    (set (make-local-variable 'compile-command) (format "phpcs --report=emacs --standard=Zend %s" (buffer-file-name)))
+    (set (make-local-variable 'compile-command) (format "phpcs --report=emacs --standard=PSR2 %s" (buffer-file-name)))
     (modify-syntax-entry ?/ ". 124b" php-mode-syntax-table)
     (modify-syntax-entry ?* ". 23" php-mode-syntax-table)
     (modify-syntax-entry ?# "< b" php-mode-syntax-table)
     (modify-syntax-entry ?\n "> b" php-mode-syntax-table)
     (setq indent-tabs-mode nil)
     (setq c-electric-flag t)
-    (c-add-style "Zend Yahoo" yahoo-zend-style t)
-    ('php-lint-mode)
+    (c-add-style "PSR2" psrtwo-style t)
     )
   )
 )
@@ -345,5 +369,5 @@
 (load-theme 'solarized-dark t)
 
 (require 'flyphpcs)
-(setq c-default-style "linux"
+(setq c-default-style "k&r"
       c-basic-offset 4)
