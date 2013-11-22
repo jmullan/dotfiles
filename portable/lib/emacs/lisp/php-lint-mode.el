@@ -42,13 +42,8 @@
 					;                           Lint checking
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar php-lint-bin
-  (if
-      (string-match "yahoo" (getenv "HOSTNAME"))
-      "/home/y/bin/php"
-    "/usr/bin/php"
-    )
-  "The php binary used to check for lint."
-  )
+  "/usr/bin/php"
+  "The php binary used to check for lint.")
 
 
 (defvar php-lint-checks () "...")
@@ -66,150 +61,7 @@
 			 )
   )
 (defvar error_line -1)
-(defvar final-lint-ok nil)
-
-(defvar php-sniff-bin "zendcs")
-(defvar php-sniff-clean_output (concat
-				" $o = ''; "
-				" foreach (file('php://stdin') as $line) { "
-				"     if (0 !== (strpos($line, 'File')) && !strpos($line, 'camel caps')) { "
-				"         $o .= $line; "
-				"     } "
-				" } "
-				" fwrite(STDOUT, $o); "
-				" exit; "
-				)
-  )
-(defvar php-sniff-get_line (concat " $found = false;"
-				   " foreach (file('php://stdin') as $line) { "
-				   "     if (0 !== (strpos($line, 'File')) && !strpos($line, 'camel caps')) { "
-				   "         $fields = explode(',', $line); "
-				   "         fwrite(STDOUT, $fields[1]); "
-				   "         break; "
-				   "     } "
-				   " } "
-				   " exit; "
-				   )
-  )
-
-(defun php-sniff () "Returns a either nil or t depending on whether the current buffer
-passes php's lint check. If there's a failure, the failures are
-displayed in an adjacent buffer."
-  (interactive)
-  (save-restriction
-    (widen)
-    (save-excursion
-      (let
-	  ((input-buf (current-buffer))
-	   (sniff-buf (get-buffer-create "*Sniff check*"))
-	   (snifflinenum-buf (get-buffer-create "*Sniff Line number*"))
-	   (interpreter (progn
-			  (goto-char (point-min))
-			  (if (looking-at auto-mode-interpreter-regexp)
-			      (match-string 2)
-			    php-sniff-bin
-			    )
-			  )
-			)
-           )
-					; Clear the lint buffer if it needs it.
-	(setq error_line -1)
-        (if
-	    (zerop (buffer-size sniff-buf))
-	    nil
-          (set-buffer sniff-buf)
-          (erase-buffer)
-	  )
-
-        (if
-	    (zerop (buffer-size snifflinenum-buf))
-	    nil
-          (set-buffer snifflinenum-buf)
-          (erase-buffer)
-	  )
-
-					; Run B::Lint on the current buffer using whatever checks
-					; the user would like.
-        (set-buffer input-buf)
-        (let
-	    (
-	     (rc
-	      (
-	       call-process-region
-	       (point-min)          ; start
-	       (point-max)          ; end
-	       interpreter          ; program
-	       nil                  ; delete
-	       (list sniff-buf t)    ; destination
-	       nil                  ; display
-	       "php://stdin"
-	       )
-	      )
-	     )
-
-					; Check that the B::Lint succeeded or clean up the error
-					; messages it posted.
-          (set-buffer sniff-buf)
-          (goto-char (point-min))
-          (if (numberp rc)
-              (if (not (zerop rc))
-                  (let
-		      ((foo nil))
-
-                                        ; clean up the sniff output
-		    (call-process-region
-		     (point-min)            ; start
-		     (point-max)            ; end
-		     php-lint-bin           ; program
-		     t                      ; delete
-		     (list sniff-buf t)      ; destination
-		     t                      ; display
-		     "-r"                   ; arg
-		     php-sniff-clean_output)
-
-                                        ; get the line number from the first line in the sniff buffer
-		    (call-process-region
-		     (point-min)            ; start
-		     (point-max)            ; end
-		     php-lint-bin           ; program
-		     nil                      ; delete
-		     (list snifflinenum-buf t)   ; destination
-		     t                      ; display
-		     "-r"                   ; arg
-		     php-sniff-get_line)
-		    (set-buffer snifflinenum-buf)
-		    (setq error_line (string-to-number (buffer-string)))
-		    (set-buffer input-buf)
-					;(insert "\n")
-					;(insert (number-to-string error_line))
-					;(insert "\n")
-
-		    )
-
-		(call-process-region
-                 (point-min)            ; start
-		 (point-max)            ; end
-                 php-lint-bin           ; program
-		 t                      ; delete
-                 (list sniff-buf t)      ; destination
-                 t                      ; display
-		 "-r"                  ; arg
-		 php-sniff-clean_output
-                 )
-		)
-	    ;; Sometimes non-numeric results come back. I'm just bailing and inserting
-	    ;; them for the user to deal with.
-	    (insert rc "\n"))
-          (let((lint-ok (and (numberp rc) (zerop rc) (zerop (buffer-size)))))
-	    (setq final-lint-ok lint-ok)
-	    (if	lint-ok (kill-buffer sniff-buf) (display-buffer sniff-buf))
-	    (when (< -1 error_line) (goto-line error_line))
-            lint-ok)))
-
-      )
-    )
-  )
-
+(defvar linted-ok nil)
 
 (defun php-lint () "Returns a either nil or t depending on whether the current buffer
 passes php's lint check. If there's a failure, the failures are
@@ -297,7 +149,7 @@ displayed in an adjacent buffer."
 	    (insert rc "\n"))
           (let
 	      ((lint-ok (and (numberp rc) (zerop rc) (zerop (buffer-size)))))
-	    (setq final-lint-ok lint-ok)
+	    (setq linted-ok lint-ok)
 	    (kill-buffer linenum-buf)
 	    (if	lint-ok (kill-buffer lint-buf) (display-buffer lint-buf))
 					; Oh yeah. Return a boolean too.
@@ -311,37 +163,35 @@ displayed in an adjacent buffer."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Lint mode
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defvar php-lint-mode nil
-  "Check php lint before saving.")
-(make-variable-buffer-local 'php-lint-mode)
+(defvar in-php-lint-mode nil "Check php lint before saving.")
+(make-variable-buffer-local 'in-php-lint-mode)
 
 (defun php-lint-write-hook ()
   "Check php lint during `write-file-hooks' for `php-lint-mode'"
-  (if php-lint-mode
-      (save-restriction (widen) (save-excursion (mark-whole-buffer) (not (php-lint))))
-    nil
-    )
-  (when (and php-lint-mode (< -1 error_line)) (goto-line error_line))
-  (and php-lint-mode (not final-lint-ok))
+  (if in-php-lint-mode
+      (save-restriction
+        (widen)
+        (save-excursion (mark-whole-buffer) (not (php-lint))))
+    nil)
+  (when (and in-php-lint-mode (< -1 error_line)) (goto-line error_line))
+  (and in-php-lint-mode (not linted-ok))
   )
 
 (defun php-lint-mode (&optional arg)
   "Php lint checking minor mode."
   (interactive "P")
-					; Cargo-culted from the Extending Emacs book.
-  (setq php-lint-mode (if (null arg)
-					; Toggle it on and off.
-			  (not php-lint-mode)
-					; Enable if >0.
-			(> (prefix-numeric-value arg) 0)))
-  (funcall (if php-lint-mode #'add-hook #'remove-hook)
-           'write-file-hooks 'php-lint-write-hook))
+  (setq in-php-lint-mode
+        (if (null arg)
+            (not in-php-lint-mode)
+          (> (prefix-numeric-value arg) 0)))
+  (if in-php-lint-mode
+      (add-hook 'write-file-hooks 'php-lint-write-hook)
+      (remove-hook 'write-file-hooks 'php-lint-write-hook))
+  )
 
-					; Add this to the list of minor modes.
 (if (not (assq 'php-lint-mode minor-mode-alist))
     (setq minor-mode-alist
-          (cons '(php-lint-mode " Lint")
-                minor-mode-alist)))
+          (cons '(php-lint-mode " Lint") minor-mode-alist)))
 
 
 (provide 'php-lint-mode)

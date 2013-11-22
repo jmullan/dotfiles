@@ -98,13 +98,13 @@
 
 (eval-when-compile (require 'flymake))
 
-(defvar fly/phpcs-phpcs-dir "c:\\dev\\phpcs"
+(defvar fly/phpcs-phpcs-dir "/usr/share/php/test/PHP_CodeSniffer/"
   "Location of the PHP CodeSniffer installation.")
 
-(defvar fly/phpcs-phpinc "c:\\dev\\phplibs"
+(defvar fly/phpcs-phpinc "/usr/share/php/"
   "Location of any PHP include dir.")
 
-(defvar fly/phpcs-phpexe "c:\\php\\php.exe"
+(defvar fly/phpcs-phpexe "/usr/bin/php"
   "Location of the PHP EXE or program.")
 
 (defvar fly/phpcs-standard "PSR2" ;; Zend, PEAR, PHPCS, etc
@@ -127,8 +127,8 @@ the command to run, and a list of arguments.  The resulting command is like:
               (list
                "-d" "auto_append_file=''"
                "-d" "auto_prepend_file=''"
-               (concat fly/phpcs-phpcs-dir "\\scripts\\phpcs")
-               (concat "--standard="  fly/phpcs-standard)
+               "/usr/bin/phpcs"
+               (concat "--standard=" fly/phpcs-standard)
                "--report=emacs"
                "-s" ;; show the fullname of the rule being violated
                (expand-file-name source))))

@@ -323,7 +323,7 @@
 
 ;;; To use this, add the following code to your .emacs file and copy
 
-(eval-after-load "php-mode" '(add-hook 'php-mode-hook 'php-lint-mode))
+(add-hook 'php-mode-hook '(lambda () (php-lint-mode 1)))
 ;(eval-after-load "php-mode" '(add-hook 'php-mode-hook 'php-electric-mode))
 
 (require 'setnu+)
