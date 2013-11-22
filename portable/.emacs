@@ -74,9 +74,7 @@
   '((c-basic-offset . 4)
     (setq indent-tabs-mode nil)
     (my-c-continuation-offset . 8)
-
     (c-comment-only-line-offset . (0 . 0))
-
     (c-offsets-alist . (
 			(inline-open . 0)
                         (topmost-intro-cont    . +)
