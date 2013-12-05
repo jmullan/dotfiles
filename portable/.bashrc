@@ -148,7 +148,7 @@ function _git_prompt() {
             rebasehead="$(cat "$git_dir/rebase-merge/head-name")"
         fi
 
-        local origin_diff="`git diff --numstat $TRACKING | awk 'BEGIN {add=0;del=0}; {add = add + $1; del = del + $2;} ; END {if (add || del) printf "+"add" -"del" ="add + del}'`"
+        local origin_diff="`git diff --numstat $TRACKING | awk 'BEGIN {add=0;del=0}; {add = add + $1; del = del + $2;} ; END {if (add || del) printf "+"add" -"del" ="add - del " ("add + del")"}'`"
         if [[ "$git_status" =~ nothing\ to\ commit ]]; then
             local ansi=2
         elif [[ "$git_status" =~ nothing\ added\ to\ commit\ but\ untracked\ files\ present ]]; then
