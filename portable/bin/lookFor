@@ -1,5 +1,19 @@
 #!/bin/bash
-find ~/watermelon-sauce \
+curdir=`pwd`
+ROOT="$curdir"
+while [ "`pwd`" != '/' ]; do
+    if [ -f ".lookHere" ]; then
+        if [ -s ".lookHere" ]; then
+            ROOT=`cat .lookHere`
+        else
+            ROOT=`pwd`
+        fi
+        break
+    fi
+    cd ..
+done
+cd $curdir
+find "$ROOT" \
     \( \
     -not -iname '*.bak' \
     -not -iname '*.tmp' \
@@ -28,7 +42,8 @@ find ~/watermelon-sauce \
     ! -iname "*.min.js" \
     -name "*$@*" \
     \) \
-    | sed s=^`pwd`/==
+    | grep -v '.git' \
+    | sed s=^$curdir/==
 grep -r \
     --exclude="*.bak" \
     --exclude="*.tmp" \
@@ -59,7 +74,7 @@ grep -r \
     --exclude="rcover_*" \
     --binary-files=without-match \
     "$@" \
-    ~/watermelon-sauce \
+    "$ROOT" \
     | grep -v \\.git \
     | grep -v \\.svn \
     | grep -v libphutil \
