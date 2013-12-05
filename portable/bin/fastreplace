@@ -1,2 +1,2 @@
 #!/bin/bash
-recursiveReplace.php "$1" "$2" `grep -rl "$1" .`
+recursiveReplace.php "$1" "$2" `grep -rl "$1" . | grep -v .git | grep -v .bak`
