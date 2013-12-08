@@ -119,7 +119,7 @@
 This gets called by flymake itself. The output is a list of two elements:
 the command to run, and a list of arguments.  The resulting command is like:
 
-  php.exe -d auto_append_file="" -d auto_prepend_file="" phpcs\scripts\phpcs --report=emacs file.php
+  php.exe -d auto_append_file='' -d auto_prepend_file='' phpcs\scripts\phpcs --report=emacs file.php
 
 "
   ;;(dino-log "PHP" "flymake cmdline for %s" source)

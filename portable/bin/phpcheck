@@ -1,3 +1,6 @@
 #!/bin/bash
-scheck "$@" -emacs 2>&1 |grep -v TodoNamespace |grep -v 'for php_root'
-phpcs -s --standard=PSR2 --report=emacs "$@"
+for file in "$@"; do
+    php -l "$file" | grep -r 'No syntax errors'
+done
+which scheck >/dev/null && scheck "$@" -emacs 2>&1 |grep -v TodoNamespace |grep -v 'for php_root'
+which phpcs >/dev/null && phpcs -s --standard=PSR2 --report=emacs "$@"
