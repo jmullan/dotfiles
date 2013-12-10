@@ -10,3 +10,6 @@
 [submodule "submodules/back"]
 	path = submodules/back
 	url = https://github.com/jmullan/back
+[submodule "submodules/solarized"]
+	path = submodules/solarized
+	url = https://github.com/altercation/solarized.git
