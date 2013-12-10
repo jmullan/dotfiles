@@ -17,3 +17,5 @@
 	template = ~/.arc-commit-template.txt
 [user]
 	name = Jesse Mullan
+[push]
+	default = matching
