@@ -43,6 +43,10 @@ if [ -e $HOME/tenxerbin ] ; then
     export PATH=$HOME/tenxerbin:"${PATH}";
 fi
 
+if [ -e $HOME/ecofactorbin ] ; then
+    export PATH=$HOME/ecofactorbin:"${PATH}";
+fi
+
 if [ -d /opt/icon/bin ] ; then
     export PATH="${PATH}":/opt/icon/bin;
 fi
@@ -106,6 +110,9 @@ if [ -d /cygdrive/c/Program\ Files/Java/jdk1.6.0_21/bin ] ; then
     export PATH=/cygdrive/c/Program\ Files/Java/jdk1.6.0_21/bin/:"${PATH}";
 fi
 
+if [ -d /usr/local/mysql/bin/ ] ; then
+    export PATH=/usr/local/mysql/bin/:"${PATH}";
+fi
 test -r /sw/bin/init.sh && . /sw/bin/init.sh
 
 alias nodeunit=node_modules/nodeunit/bin/nodeunit
