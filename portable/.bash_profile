@@ -35,24 +35,20 @@ if [ -e $HOME/bin ] ; then
     export PATH=$HOME/bin:"${PATH}"
 fi
 
-if [ -e $HOME/imvubin ] ; then
-    export PATH=$HOME/imvubin:"${PATH}";
+if [ -e $HOME/bin-imvu ] ; then
+    export PATH=$HOME/bin-imvu:"${PATH}";
 fi
 
-if [ -e $HOME/tenxerbin ] ; then
-    export PATH=$HOME/tenxerbin:"${PATH}";
+if [ -e $HOME/bin-tenxer ] ; then
+    export PATH=$HOME/bin-tenxer:"${PATH}";
 fi
 
-if [ -e $HOME/ecofactorbin ] ; then
-    export PATH=$HOME/ecofactorbin:"${PATH}";
+if [ -e $HOME/bin-ecofactor ] ; then
+    export PATH=$HOME/bin-ecofactor:"${PATH}";
 fi
 
 if [ -d /opt/icon/bin ] ; then
     export PATH="${PATH}":/opt/icon/bin;
-fi
-
-if [ -d $HOME/tenxer/tenxer/resources/arcanist/bin ] ; then
-    export PATH="${PATH}":$HOME/tenxer/tenxer/resources/arcanist/bin;
 fi
 
 if [ -d /usr/local/share/python ] ; then

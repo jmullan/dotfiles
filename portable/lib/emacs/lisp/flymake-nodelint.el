@@ -25,7 +25,7 @@
          (local-file (file-relative-name
                       temp-file
                       (file-name-directory buffer-file-name))))
-    (list "~/ecofactorbin/jslint" (list local-file))))
+    (list "~/bin-ecofactor/jslint" (list local-file))))
 
 ;; needs debugging
 (setq flymake-allowed-file-name-masks
