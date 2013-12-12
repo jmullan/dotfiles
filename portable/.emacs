@@ -376,3 +376,7 @@
 (require 'flyphpcs)
 (setq c-default-style "k&r"
       c-basic-offset 4)
+
+(require 'flymake-nodelint)
+(add-hook 'javascript-mode-hook
+          (lambda () (flymake-mode t)))
