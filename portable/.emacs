@@ -377,6 +377,6 @@
 (setq c-default-style "k&r"
       c-basic-offset 4)
 
-(require 'flymake-nodelint)
+(require 'flymake-jshint-simple)
 (add-hook 'javascript-mode-hook
           (lambda () (flymake-mode t)))
