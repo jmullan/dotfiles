@@ -13,3 +13,6 @@
 [submodule "submodules/solarized"]
 	path = submodules/solarized
 	url = https://github.com/altercation/solarized.git
+[submodule "submodules/pycharm-solarized"]
+	path = submodules/pycharm-solarized
+	url = https://gist.github.com/7933924.git

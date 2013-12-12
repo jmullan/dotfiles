@@ -31,3 +31,6 @@ if [ -e "$SRC_DIR" ] ; then
         fi
     done
 fi
+if [ -e ~/Library/Preferences/PyCharm30/colors ]; then
+    cp "submodules/pycharm-solarized/Solarized Dark.xml" ~/Library/Preferences/PyCharm30/colors/;
+fi
