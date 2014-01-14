@@ -14,16 +14,9 @@
 (load "gallery-template-mode" t t)
 
 (setq auto-mode-alist (cons '("\\.r$" . c-mode) auto-mode-alist))
-(setq auto-mode-alist (cons '("\\.py$" . python-mode) auto-mode-alist))
-(setq auto-mode-alist (cons '("\\.cgi$" . python-mode) auto-mode-alist))
-(setq interpreter-mode-alist (cons '("python" . python-mode) interpreter-mode-alist))
-(add-to-list 'load-path "~/lib/emacs/lisp/python-mode/")
-(setq py-install-directory "~/lib/emacs/lisp/python-mode/")
-
-(autoload 'python-mode "python-mode" "Python editing mode." t)
 
 (require 'column-marker)
-(add-hook 'python-mode-hook (lambda () (interactive) (column-marker-1 80)))
+(add-hook 'python-mode-hook (lambda () (interactive) (column-marker-1 150)))
 
 (setq py-start-run-py-shell nil)
 (global-font-lock-mode t)

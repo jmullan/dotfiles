@@ -1,0 +1,14 @@
+#!/bin/bash
+ARGCOUNT=$#
+if [ $ARGCOUNT -eq 2 ] ; then
+    git branch --set-upstream $1 $2;
+    exit
+fi
+TRACKING=`git rev-parse --abbrev-ref --symbolic-full-name @{u}`
+if [ -z "$TRACKING" ] ; then
+    TRACKING=`git config prompt.tracking`
+    if [ -z "$TRACKING" ]; then
+        TRACKING='origin/master'
+    fi
+fi
+echo $TRACKING

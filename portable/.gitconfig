@@ -3,14 +3,18 @@
     status = auto
     branch = auto
     interactive = auto
+    ui = auto
 [core]
     whitespace = "trailing-space,space-before-tab"
+	autocrlf = input
 [apply]
     whitespace = "fix"
 [alias]
     graph = log --graph --date-order -C -M --pretty=format:\"<%h> %ad [%an] %Cgreen%d%Creset %s\" --all --date=short
     pr = pull --rebase
     rb = !git fetch origin && git rebase origin/master
+    unstage = reset HEAD
+    uncommit = reset --soft HEAD^
 [rerere]
 	enabled = true
 [commit]
@@ -19,3 +23,12 @@
 	name = Jesse Mullan
 [push]
 	default = matching
+[gc]
+        auto=1
+[merge]
+        summary=true
+[diff]
+	renames = copies
+	mnemonicprefix = true
+[branch]
+	autosetupmerge = true

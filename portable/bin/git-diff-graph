@@ -1,0 +1,22 @@
+#!/bin/bash
+TRACKING=`git track`
+ADD=`git diff --numstat $TRACKING | total`
+DEL=`git diff --numstat $TRACKING | awk '{print $2}' | total`
+TOTAL=$(($ADD + $DEL))
+SCALE=$(($TOTAL / 10))
+if [ 0 -ne $SCALE ] ; then
+    ADD_WIDTH=$(($ADD / $SCALE))
+    DEL_WIDTH=$(($DEL / $SCALE))
+
+    ADD_PAD_LEFT=$((10 - $ADD_WIDTH))
+    ADD_PAD_RIGHT=0
+    DEL_PAD_LEFT=0
+    DEL_PAD_RIGHT=$((10 - $DEL_WIDTH))
+
+    echo -n "$(tput setaf 1)"
+    printf '%*.*s' $ADD_PAD_LEFT $ADD_WIDTH "++++++++++" $ADD_PAD_RIGHT
+    echo -n "$(tput sgr0)"
+    echo -n "$(tput setaf 2)"
+    printf '%*.*s' $DEL_PAD_LEFT $DEL_WIDTH "----------" $DEL_PAD_RIGHT
+    echo -n "$(tput sgr0)"
+fi

@@ -43,6 +43,9 @@ find "$ROOT" \
     -name "*$@*" \
     \) \
     | grep -v '.git' \
+    | grep -v 'coverage/Phantom' \
+    | grep -v 'coverage/coverage-Phantom' \
+    | grep -v '^cover/' \
     | sed s=^$curdir/==
 grep -r \
     --exclude="*.bak" \
@@ -72,10 +75,14 @@ grep -r \
     --exclude="*.min.js" \
     --exclude="*benchmark.html" \
     --exclude="rcover_*" \
+    --exclude="nosetests.xml" \
     --binary-files=without-match \
     "$@" \
     "$ROOT" \
     | grep -v \\.git \
     | grep -v \\.svn \
     | grep -v libphutil \
+    | grep -v 'coverage/Phantom' \
+    | grep -v 'coverage/coverage-Phantom' \
+    | grep -v '/cover/' \
     | sed s=^`pwd`/==

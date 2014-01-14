@@ -1,0 +1,73 @@
+#!/bin/bash
+BRANCHNAME=`git rev-parse --abbrev-ref HEAD`
+GIT_DIR=`git rev-parse --git-dir 2>/dev/null`
+if [ ! $? ] ; then
+    exit
+fi
+GIT_STATUS="`git status -unormal 2>&1`"
+USER_NAME=`git config user.name`
+USER_EMAIL=`git config user.email`
+if [ -z "$USER_NAME" ]; then
+    echo
+    echo "$(tput setaf 1)No username set for git: git config user.name 'Jesse Mullan'$(tput sgr0)"
+fi
+if [ -z "$USER_EMAIL" ]; then
+    echo
+    echo "$(tput setaf 1)No email set for git: git config user.email 'jmullan@visi.com'$(tput sgr0)"
+fi
+TRACKING=`git track`
+if [ -f "$GIT_DIR/rebase-merge/interactive" ]; then
+    REBASE="INTERACTIVE REBASING"
+elif [ -d "$gGIT_DIR/rebase-merge" ]; then
+    REBASE="MERGING REBASE"
+else
+    if [ -d "$GIT_DIR/rebase-apply" ]; then
+        if [ -f "$GIT_DIR/rebase-apply/rebasing" ]; then
+            REBASE="REBASING"
+        elif [ -f "$GIT_DIR/rebase-apply/applying" ]; then
+            REBASE="APPLYING REBASE"
+        else
+            REBASE="REBASING"
+        fi
+    fi
+fi
+if [ -f "$GIT_DIR/rebase-merge/head-name" ] ; then
+    REBASE_HEAD="$(cat "$GIT_DIR/rebase-merge/head-name")"
+fi
+
+ORIGIN_DIFF_STATS=`git diff --numstat $TRACKING | awk 'BEGIN {add=0;del=0}; {add = add + $1; del = del + $2;} ; END {if (add || del) printf "+"add" -"del" ="add - del " ("add + del")"}'`
+if [[ "$GIT_STATUS" =~ nothing\ to\ commit ]]; then
+    ansi=2
+elif [[ "$GIT_STATUS" =~ nothing\ added\ to\ commit\ but\ untracked\ files\ present ]]; then
+    ansi=6
+else
+    ansi=5
+fi
+if [ -n "$BRANCHNAME$ORIGIN_DIFF_STATS" ] ; then
+    echo -n "["
+fi
+if [ -n "$REBASE" ]; then
+    echo -n " $REBASE "
+fi
+if [ -n "$REBASE_HEAD" ]; then
+    echo -n " $REBASE_HEAD "
+fi
+if [ -n "$BRANCHNAME" ]; then
+    echo -n " $(tput setaf $ansi)$BRANCHNAME$(tput sgr0)"
+    if [[ "$GIT_STATUS" =~ Changes\ to\ be\ committed ]] ; then
+        echo -n " $(tput setaf 7)staged$(tput sgr0)"
+    fi
+    if [[ "$GIT_STATUS" =~ not\ staged ]] ; then
+        echo -n " $(tput setaf 3)unstaged$(tput sgr0)"
+    fi
+    if [[ "$GIT_STATUS" =~ ntracked ]] ; then
+        echo -n " $(tput setaf 1)untracked$(tput sgr0)"
+    fi
+fi
+if [ -n "$ORIGIN_DIFF_STATS" ]; then
+    echo -n " $ORIGIN_DIFF_STATS "
+    git diff-graph
+fi
+if [ -n "$BRANCHNAME$ORIGIN_DIFF_STATS" ] ; then
+    echo -n " ]"
+fi

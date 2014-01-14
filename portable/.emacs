@@ -380,3 +380,4 @@
 (require 'flymake-jshint-simple)
 (add-hook 'javascript-mode-hook
           (lambda () (flymake-mode t)))
+(require 'python)

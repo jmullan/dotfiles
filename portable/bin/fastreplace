@@ -7,4 +7,4 @@ if [ -z "$2" ] ; then
     echo "No second argument";
     exit 1;
 fi
-recursiveReplace.php "$1" "$2" `grep -rl "$1" . | grep -v '.bak$' | grep -v .git`
+recursiveReplace.php "$1" "$2" `grep -rl "$1" . | grep -v '.bak$' | grep -v .git | grep -v *.pyc | grep -v nosetests.xml`
