@@ -35,7 +35,11 @@ if [ -f "$GIT_DIR/rebase-merge/head-name" ] ; then
     REBASE_HEAD="$(cat "$GIT_DIR/rebase-merge/head-name")"
 fi
 
-ORIGIN_DIFF_STATS=`git diff --numstat $TRACKING | awk 'BEGIN {add=0;del=0}; {add = add + $1; del = del + $2;} ; END {if (add || del) printf "+"add" -"del" ="add - del " ("add + del")"}'`
+ADDED=`git diff --numstat $TRACKING | total`
+DELETED=`git diff --numstat $TRACKING | awk '{print $2}' | total`
+GROSS=`expr $ADDED + $DELETED`
+NET=`expr $ADDED - $DELETED`
+ORIGIN_DIFF_STATS=`echo -n "+$ADDED -$DELETED =$NET ($GROSS)"`
 if [[ "$GIT_STATUS" =~ nothing\ to\ commit ]]; then
     ansi=2
 elif [[ "$GIT_STATUS" =~ nothing\ added\ to\ commit\ but\ untracked\ files\ present ]]; then
@@ -43,14 +47,12 @@ elif [[ "$GIT_STATUS" =~ nothing\ added\ to\ commit\ but\ untracked\ files\ pres
 else
     ansi=5
 fi
-if [ -n "$BRANCHNAME$ORIGIN_DIFF_STATS" ] ; then
-    echo -n "["
-fi
+echo -n "["
 if [ -n "$REBASE" ]; then
-    echo -n " $REBASE "
+    echo -n " $REBASE"
 fi
 if [ -n "$REBASE_HEAD" ]; then
-    echo -n " $REBASE_HEAD "
+    echo -n " $REBASE_HEAD"
 fi
 if [ -n "$BRANCHNAME" ]; then
     echo -n " $(tput setaf $ansi)$BRANCHNAME$(tput sgr0)"
@@ -64,10 +66,8 @@ if [ -n "$BRANCHNAME" ]; then
         echo -n " $(tput setaf 1)untracked$(tput sgr0)"
     fi
 fi
-if [ -n "$ORIGIN_DIFF_STATS" ]; then
+if [ $GROSS -gt 0 ]; then
     echo -n " $ORIGIN_DIFF_STATS "
     git diff-graph
 fi
-if [ -n "$BRANCHNAME$ORIGIN_DIFF_STATS" ] ; then
-    echo -n " ]"
-fi
+echo -n " ]"

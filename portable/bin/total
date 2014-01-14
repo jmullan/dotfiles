@@ -1,11 +1,2 @@
-#!/usr/bin/env php
-<?php
-$total = 0;
-while (!feof(STDIN)) {
-    $line = trim(fgets(STDIN));
-    $parts = preg_split('/\s+/', $line);
-    if ($parts && strlen($parts[0]) && is_numeric($parts[0])) {
-	$total += $line;
-    }
-}
-echo "$total\n";
+#!/bin/bash
+awk 'BEGIN { total = 0} ; {total = total + $1} ; END {print total}'
