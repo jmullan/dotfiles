@@ -3,7 +3,6 @@ GIT_DIR=`git rev-parse --git-dir 2>/dev/null`
 if [ -z "$GIT_DIR" ] ; then
     exit
 fi
-BRANCHNAME=`git rev-parse --abbrev-ref HEAD`
 GIT_STATUS="`git status -unormal 2>&1`"
 USER_NAME=`git config user.name`
 USER_EMAIL=`git config user.email`
@@ -18,7 +17,7 @@ fi
 TRACKING=`git track`
 if [ -f "$GIT_DIR/rebase-merge/interactive" ]; then
     REBASE="INTERACTIVE REBASING"
-elif [ -d "$gGIT_DIR/rebase-merge" ]; then
+elif [ -d "$GIT_DIR/rebase-merge" ]; then
     REBASE="MERGING REBASE"
 else
     if [ -d "$GIT_DIR/rebase-apply" ]; then
@@ -34,7 +33,10 @@ fi
 if [ -f "$GIT_DIR/rebase-merge/head-name" ] ; then
     REBASE_HEAD="$(cat "$GIT_DIR/rebase-merge/head-name")"
 fi
-
+if [ -f "$GIT_DIR/MERGE_HEAD" ] ; then
+    MERGING="MERGING"
+    MERGE_HEAD="$(cat "$GIT_DIR/MERGE_HEAD")"
+fi
 ADDED=`git diff --numstat $TRACKING | total`
 DELETED=`git diff --numstat $TRACKING | awk '{print $2}' | total`
 GROSS=`expr $ADDED + $DELETED`
@@ -54,6 +56,13 @@ fi
 if [ -n "$REBASE_HEAD" ]; then
     echo -n " $REBASE_HEAD"
 fi
+if [ -n "$MERGING" ]; then
+    echo -n " $MERGING"
+fi
+if [ -n "$MERGE_HEAD" ]; then
+    echo -n " $MERGE_HEAD";
+fi
+BRANCHNAME=`git rev-parse --abbrev-ref HEAD`
 if [ -n "$BRANCHNAME" ]; then
     echo -n " $(tput setaf $ansi)$BRANCHNAME$(tput sgr0)"
     if [[ "$GIT_STATUS" =~ Changes\ to\ be\ committed ]] ; then

@@ -1,7 +1,15 @@
 #!/bin/bash
 ARGCOUNT=$#
+if [ $ARGCOUNT -eq 1 ] ; then
+    LOCAL_BRANCH=`git rev-parse --abbrev-ref HEAD`
+    REMOTE_BRANCH=$1
+    git branch --set-upstream-to $LOCAL_BRANCH $REMOTE_BRANCH;
+    exit
+fi
 if [ $ARGCOUNT -eq 2 ] ; then
-    git branch --set-upstream $1 $2;
+    LOCAL_BRANCH=$1
+    REMOTE_BRANCH=$2
+    git branch --set-upstream-to $LOCAL_BRANCH $REMOTE_BRANCH;
     exit
 fi
 TRACKING=`git rev-parse --abbrev-ref --symbolic-full-name @{u}`
