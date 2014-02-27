@@ -15,21 +15,7 @@ if [ -z "$USER_EMAIL" ]; then
     echo "$(tput setaf 1)No email set for git: git config user.email 'jmullan@visi.com'$(tput sgr0)"
 fi
 TRACKING=`git track`
-if [ -f "$GIT_DIR/rebase-merge/interactive" ]; then
-    REBASE="INTERACTIVE REBASING"
-elif [ -d "$GIT_DIR/rebase-merge" ]; then
-    REBASE="MERGING REBASE"
-else
-    if [ -d "$GIT_DIR/rebase-apply" ]; then
-        if [ -f "$GIT_DIR/rebase-apply/rebasing" ]; then
-            REBASE="REBASING"
-        elif [ -f "$GIT_DIR/rebase-apply/applying" ]; then
-            REBASE="APPLYING REBASE"
-        else
-            REBASE="REBASING"
-        fi
-    fi
-fi
+REBASE=`git rebasing`
 if [ -f "$GIT_DIR/rebase-merge/head-name" ] ; then
     REBASE_HEAD="$(cat "$GIT_DIR/rebase-merge/head-name")"
 fi

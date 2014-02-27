@@ -1,4 +1,9 @@
 #!/bin/bash
+GIT_DIR=`git rev-parse --git-dir 2>/dev/null`
+if [ -z "$GIT_DIR" ] ; then
+    exit
+fi
+GIT_REBASE=`git rebasing`
 ARGCOUNT=$#
 if [ $ARGCOUNT -eq 1 ] ; then
     LOCAL_BRANCH=`git rev-parse --abbrev-ref HEAD`
@@ -12,7 +17,9 @@ if [ $ARGCOUNT -eq 2 ] ; then
     git branch --set-upstream-to $LOCAL_BRANCH $REMOTE_BRANCH;
     exit
 fi
-TRACKING=`git rev-parse --abbrev-ref --symbolic-full-name @{u}`
+if [ -z "$GIT_REBASE" ] ; then
+    TRACKING=`git rev-parse --abbrev-ref --symbolic-full-name @{u}`
+fi
 if [ -z "$TRACKING" ] ; then
     TRACKING=`git config prompt.tracking`
     if [ -z "$TRACKING" ]; then
