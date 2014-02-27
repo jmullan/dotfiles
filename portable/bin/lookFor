@@ -46,6 +46,7 @@ find "$ROOT" \
     | grep -v 'coverage/Phantom' \
     | grep -v 'coverage/coverage-Phantom' \
     | grep -v '^cover/' \
+    | grep -v 'mobileapp/nve' \
     | sed s=^$curdir/==
 grep -r \
     --exclude="*.bak" \
@@ -84,5 +85,6 @@ grep -r \
     | grep -v libphutil \
     | grep -v 'coverage/Phantom' \
     | grep -v 'coverage/coverage-Phantom' \
+    | grep -v 'mobileapp/nve' \
     | grep -v '/cover/' \
     | sed s=^`pwd`/==
