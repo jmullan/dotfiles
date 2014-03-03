@@ -1,0 +1,34 @@
+#!/bin/bash
+GIT_DIR=`git rev-parse --git-dir 2>/dev/null`
+if [ -z "$GIT_DIR" ] ; then
+    exit
+fi
+GIT_USER_NAME=`git config user.name`
+GIT_USER_EMAIL=`git config user.email`
+if [ -z "$GIT_USER_NAME" ]; then
+    E_FULLNAME=`gecos --fullname | quote`
+    echo
+    echo "$(tput setaf 1)No username set for git: git config user.name $E_FULLNAME $(tput sgr0)"
+fi
+if [ -z "$GIT_USER_EMAIL" ]; then
+    echo
+    echo -n "$(tput setaf 1)"
+    echo -n "No email set for git."
+    if [ -z "$EMAIL" ]; then
+        echo " Guessing your email..."
+        if [ -f ~/.forward ]; then
+            EMAIL=`cat ~/.forward | head -n 1`
+        else
+            USERNAME=`whoami`
+            if [ -f /etc/mailname ] ; then
+                HOSTNAME=`cat /etc/mailname`
+            else
+                HOSTNAME=`hostname`
+            fi
+            EMAIL="$USERNAME@$HOSTNAME"
+        fi
+    fi
+    E_EMAIL=`echo $EMAIL | quote`
+    echo "git config user.email $E_EMAIL"
+    echo "$(tput sgr0)"
+fi

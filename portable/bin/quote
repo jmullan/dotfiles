@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+import fileinput
+import pipes
+
+def main():
+    raw = ''
+    for line in fileinput.input():
+        raw += line
+    raw = raw.rstrip("\n\r")
+    print pipes.quote(raw) or "''"
+
+if __name__ == "__main__":
+    main()

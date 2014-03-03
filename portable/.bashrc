@@ -103,7 +103,7 @@ export LC_ALL="en_US.UTF-8"
 export LANG="en_US"
 
 # set a fancy prompt
-export PS1="\[\e[36m\u@$(tput bold)$(tput setaf $HOST_COLOR)\]\h\[$(tput sgr0)\]:\[\w\e[0m\] \$(git prompt)\n\$ "
+export PS1="\$(git sanity) \[\e[36m\u@$(tput bold)$(tput setaf $HOST_COLOR)\]\h\[$(tput sgr0)\]:\[\w\e[0m\] \$(git prompt)\n\$ "
 
 export SVN_EDITOR=emacs
 export VISUAL=emacs

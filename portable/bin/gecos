@@ -1,0 +1,49 @@
+#!/usr/bin/env python
+import argparse
+import os
+import pwd
+
+def check(options):
+    uid = options.get('uid')
+    username = options.get('username')
+    if uid is not None and username is not None:
+        raise ValueError('Cannot specify uid and username')
+    if uid is not None:
+        password = pwd.getpwuid(uid)
+    elif username is not None:
+        password = pwd.getpwnam(username)
+    else:
+        password = pwd.getpwuid(os.getuid())
+    if options.get('fullname'):
+        print password.pw_gecos
+    else:
+        print password.pw_uid, password.pw_name, password.pw_gecos
+
+def main():
+    pass
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--uid',
+        dest='uid',
+        help='Numerical user ID',
+        default=None
+    )
+    parser.add_argument(
+        '--username',
+        dest='username',
+        help='Username',
+        default=None
+    )
+    parser.add_argument(
+        '--fullname',
+        dest='fullname',
+        help='Only print the full name',
+        action='store_true',
+        default=False
+    )
+    options = parser.parse_args()
+    check(vars(options))
+
+if __name__ == "__main__":
+    main()

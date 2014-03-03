@@ -4,16 +4,6 @@ if [ -z "$GIT_DIR" ] ; then
     exit
 fi
 GIT_STATUS="`git status -unormal 2>&1`"
-USER_NAME=`git config user.name`
-USER_EMAIL=`git config user.email`
-if [ -z "$USER_NAME" ]; then
-    echo
-    echo "$(tput setaf 1)No username set for git: git config user.name 'Jesse Mullan'$(tput sgr0)"
-fi
-if [ -z "$USER_EMAIL" ]; then
-    echo
-    echo "$(tput setaf 1)No email set for git: git config user.email 'jmullan@visi.com'$(tput sgr0)"
-fi
 TRACKING=`git track`
 REBASE=`git rebasing`
 if [ -f "$GIT_DIR/rebase-merge/head-name" ] ; then
