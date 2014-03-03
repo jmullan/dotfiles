@@ -1,31 +1,126 @@
 #!/usr/bin/env python
+import argparse
 import re
 import random
+import string
 
 FILENAME = '/usr/share/dict/words'
 
+class Generator(object):
+    def __init__(self, options):
+        self.options = options
+        self.password = None
+        self.passphrase = None
+
+    def fails(self):
+        if self.password is None:
+            return True
+        password_length = len(self.password)
+        if (password_length < self.options.get('minimum_password_length')
+                  and password_length > self.options.get('maximum_password_length')):
+              return True
+        lowercase = sum(1 for c in self.password if c.islower())
+        if (lowercase < self.options.get('minimum_lowercase')):
+            return True
+        uppercase = sum(1 for c in self.password if c.isupper())
+        if (uppercase < self.options.get('minimum_uppercase')):
+            return True
+        numeric = sum(1 for c in self.password if c.isdigit())
+        if (numeric < self.options.get('minimum_numeric')):
+            return True
+        special = password_length - lowercase - uppercase - numeric
+        if (special < self.options.get('minimum_special')):
+            return True
+        return False
+
+    def generate(self):
+        words = open(FILENAME).readlines()
+        output = []
+        while len(output) < 3:
+            key = random.randint(0, len(words) - 1)
+            word = words[key]
+            if re.search('^[A-Za-z]+$', word):
+                output.append(word.strip())
+
+        chosen_words = output[0:3]
+        passphrase = ' '.join(chosen_words)
+        characters = string.lowercase + string.uppercase + string.digits + self.options.get('special')
+        if self.options.get('minimum_password_length') == self.options.get('maximum_password_length'):
+            password_length = self.options.get('minimum_password_length')
+        else:
+            password_length = random.randint(
+                self.options.get('minimum_password_length'), self.options.get('maximum_password_length'))
+
+        self.password = None
+        while self.fails():
+            self.password = ''
+            for i in range(0, password_length):
+                self.password += characters[random.randint(0, len(characters) - 1)]
+
+        assert len(self.password) == password_length
+        return self.password, passphrase
+
 def main():
-    words = open(FILENAME).readlines()
-
-    output = []
-    while len(output) < 3:
-        key = random.randint(0, len(words) - 1)
-        word = words[key]
-        if re.search('^[A-Za-z]+$', word):
-            output.append(word.strip())
-
-    chosen_words = output[0:3]
-    passphrase = ' '.join(chosen_words)
-    password = ''
-    characters = [chr(x)
-                  for x in ([33, 43, 45, 94]
-                            + range(48, 57)
-                            + range(65, 90)
-                            + range(97, 122))]
-    for i in range(0,8):
-        password += characters[random.randint(0, len(characters) - 1)]
+    """
+    Dispatch the checker from the command line.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--minimum-length',
+        dest='minimum_password_length',
+        help='minimum length of pass phrase to generate',
+        default=8
+    )
+    parser.add_argument(
+        '--maximum-length',
+        dest='maximum_password_length',
+        help='maximum length of pass phrase to generate',
+        type=int,
+        default=10
+    )
+    parser.add_argument(
+        '--minimum-lowercase',
+        dest='minimum_lowercase',
+        help='generate at least this many lowercase characters',
+        type=int,
+        default=1
+    )
+    parser.add_argument(
+        '--minimum-uppercase',
+        dest='minimum_uppercase',
+        help='generate at least this many uppercase characters',
+        type=int,
+        default=1
+    )
+    parser.add_argument(
+        '--minimum-numeric',
+        dest='minimum_numeric',
+        help='generate at least this many uppercase characters',
+        type=int,
+        default=1
+    )
+    parser.add_argument(
+        '--minimum-special',
+        dest='minimum_special',
+        help='generate at least this many special characters',
+        type=int,
+        default=1
+    )
+    parser.add_argument(
+        '--special',
+        dest='special',
+        help='what characters are used for special characters',
+        type=str,
+        default='-_!@#$%^&*()+=,./|'
+    )
+    options = vars(parser.parse_args())
+    if options.get('minimum_password_length') > options.get('maximum_password_length'):
+        raise ValueError('Minimum password length must be less than the maximum')
+    generator = Generator(options)
+    password, passphrase = generator.generate()
     print password
     print passphrase
+
 
 if __name__ == "__main__":
     main()
