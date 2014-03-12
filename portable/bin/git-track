@@ -6,9 +6,8 @@ fi
 GIT_REBASE=`git rebasing`
 ARGCOUNT=$#
 if [ $ARGCOUNT -eq 1 ] ; then
-    LOCAL_BRANCH=`git rev-parse --abbrev-ref HEAD`
     REMOTE_BRANCH=$1
-    git branch --set-upstream-to $LOCAL_BRANCH $REMOTE_BRANCH;
+    git branch --set-upstream-to "$REMOTE_BRANCH";
     exit
 fi
 if [ $ARGCOUNT -eq 2 ] ; then
