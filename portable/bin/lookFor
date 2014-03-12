@@ -48,43 +48,38 @@ find "$ROOT" \
     | grep -v '^cover/' \
     | grep -v 'mobileapp/nve' \
     | sed s=^$curdir/==
-grep -r \
-    --exclude="*.bak" \
-    --exclude="*.tmp" \
-    --exclude="*.csv" \
-    --exclude="*.data" \
-    --exclude="*.reg" \
-    --exclude="*.log" \
-    --exclude="*.log.?" \
-    --exclude="*.xmf" \
-    --exclude="*.xsf" \
-    --exclude="*.pickle" \
-    --exclude="*.h" \
-    --exclude="*.crt" \
-    --exclude="*.decTest" \
-    --exclude=".filemap" \
-    --exclude="*.xaf" \
-    --exclude="*.svg" \
-    --exclude="*.as" \
-    --exclude="*.rc" \
-    --exclude="*.frq" \
-    --exclude="tzmappings" \
-    --exclude="*~" \
-    --exclude="#*#" \
-    --exclude="*.fail.html" \
-    --exclude="*.pyc" \
-    --exclude="*.min.js" \
-    --exclude="*benchmark.html" \
-    --exclude="rcover_*" \
-    --exclude="nosetests.xml" \
-    --binary-files=without-match \
+ag -r -Q \
+    --ignore="*.bak" \
+    --ignore="*.tmp" \
+    --ignore="*.csv" \
+    --ignore="*.data" \
+    --ignore="*.reg" \
+    --ignore="*.log" \
+    --ignore="*.log.?" \
+    --ignore="*.xmf" \
+    --ignore="*.xsf" \
+    --ignore="*.pickle" \
+    --ignore="*.h" \
+    --ignore="*.crt" \
+    --ignore="*.decTest" \
+    --ignore=".filemap" \
+    --ignore="*.xaf" \
+    --ignore="*.svg" \
+    --ignore="*.as" \
+    --ignore="*.rc" \
+    --ignore="*.frq" \
+    --ignore="tzmappings" \
+    --ignore="*~" \
+    --ignore="#*#" \
+    --ignore="*.fail.html" \
+    --ignore="*.pyc" \
+    --ignore="*.min.js" \
+    --ignore="*benchmark.html" \
+    --ignore="rcover_*" \
+    --ignore="nosetests.xml" \
+    --ignore-dir=".git" \
+    --ignore-dir=".svn" \
+    --ignore-dir="libphutil" \
     "$@" \
     "$ROOT" \
-    | grep -v \\.git \
-    | grep -v \\.svn \
-    | grep -v libphutil \
-    | grep -v 'coverage/Phantom' \
-    | grep -v 'coverage/coverage-Phantom' \
-    | grep -v 'mobileapp/nve' \
-    | grep -v '/cover/' \
     | sed s=^`pwd`/==
