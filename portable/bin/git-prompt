@@ -55,11 +55,11 @@ if [ $GROSS -gt 0 ]; then
     echo -n " $ORIGIN_DIFF_STATS "
     git diff-graph
 fi
-AHEAD=`git ahead`
+AHEAD=`git ahead || echo 0`
 if [ "$AHEAD" -gt 0 ] ; then
     echo -n " $(tput setaf 2)AHEAD $AHEAD$(tput sgr0)";
 fi
-BEHIND=`git behind`
+BEHIND=`git behind || echo 0`
 if [ "$BEHIND" -gt 0 ] ; then
     echo -n " $(tput setaf 1)BEHIND $BEHIND$(tput sgr0)";
 fi

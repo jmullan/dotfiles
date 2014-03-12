@@ -18,7 +18,10 @@ if [ $ARGCOUNT -eq 2 ] ; then
     exit
 fi
 if [ -z "$GIT_REBASE" ] ; then
-    TRACKING=`git rev-parse --abbrev-ref --symbolic-full-name @{u}`
+    TRACKING=`git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null || echo`
+    if [ "$TRACKING" == "@{u}" ] ; then
+        exit 1;
+    fi
 fi
 if [ -z "$TRACKING" ] ; then
     TRACKING=`git config prompt.tracking`
