@@ -23,28 +23,15 @@ else
     fi
 fi
 
-if [ -e $HOME/bin ] ; then
-    export PATH=$HOME/bin:"${PATH}"
-fi
-
-if [ -e $HOME/`hostname`_bin ] ; then
-    export PATH=$HOME/`hostname`_bin:"${PATH}"
-fi
+for _DIR in `find -L $HOME -name 'bin-*' -maxdepth 1 -mindepth 1 -type d` ; do
+    export PATH=$_DIR:"${PATH}";
+done
 
 if [ -e $HOME/bin ] ; then
+    for _DIR in `find -L $HOME/bin -maxdepth 1 -mindepth 1 -type d` ; do
+        export PATH=$_DIR:"${PATH}";
+    done
     export PATH=$HOME/bin:"${PATH}"
-fi
-
-if [ -e $HOME/bin-imvu ] ; then
-    export PATH=$HOME/bin-imvu:"${PATH}";
-fi
-
-if [ -e $HOME/bin-tenxer ] ; then
-    export PATH=$HOME/bin-tenxer:"${PATH}";
-fi
-
-if [ -e $HOME/bin-ecofactor ] ; then
-    export PATH=$HOME/bin-ecofactor:"${PATH}";
 fi
 
 if [ -d /opt/icon/bin ] ; then
