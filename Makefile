@@ -3,8 +3,8 @@ PWD = $(shell pwd)
 all: install
 
 submodules:
-	git submodule init
-	git submodule update
+	git submodule update --recursive
+	git submodule update --init --recursive
 
 portable/.emacs.d/themes/color-theme-solarized: submodules
 
