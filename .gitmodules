@@ -16,3 +16,6 @@
 [submodule "submodules/gitflow"]
 	path = submodules/gitflow
 	url = https://github.com/nvie/gitflow.git
+[submodule "submodules/git-helpers"]
+	path = submodules/git-helpers
+	url = git@github.com:jmullan/git-helpers.git

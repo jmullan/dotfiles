@@ -23,7 +23,7 @@ else
     fi
 fi
 
-for _DIR in `find -L $HOME -name 'bin-*' -maxdepth 1 -mindepth 1 -type d` ; do
+for _DIR in `find -L $HOME -maxdepth 1 -mindepth 1 -name 'bin-*' -type d` ; do
     export PATH=$_DIR:"${PATH}";
 done
 
