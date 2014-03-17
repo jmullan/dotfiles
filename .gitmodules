@@ -4,9 +4,6 @@
 [submodule "portable/.emacs.d/themes/emacs-color-theme-solarized"]
 	path = portable/.emacs.d/themes/emacs-color-theme-solarized
 	url = https://github.com/sellout/emacs-color-theme-solarized.git
-[submodule "portable/.emacs.d/emacs-color-theme-solarized"]
-	path = portable/.emacs.d/emacs-color-theme-solarized
-	url = https://github.com/sellout/emacs-color-theme-solarized.git
 [submodule "submodules/back"]
 	path = submodules/back
 	url = https://github.com/jmullan/back
@@ -16,3 +13,6 @@
 [submodule "submodules/pycharm-solarized"]
 	path = submodules/pycharm-solarized
 	url = https://gist.github.com/7933924.git
+[submodule "submodules/gitflow"]
+	path = submodules/gitflow
+	url = https://github.com/nvie/gitflow.git
