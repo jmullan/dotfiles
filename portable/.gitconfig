@@ -23,7 +23,7 @@
 [user]
 	name = Jesse Mullan
 [push]
-	default = matching
+	default = simple
 [gc]
         auto=1
 [merge]
