@@ -34,6 +34,12 @@ if [ -e $HOME/bin ] ; then
     export PATH=$HOME/bin:"${PATH}"
 fi
 
+if [ -e $HOME/src ] ; then
+    for _DIR in `find -L $HOME/src -maxdepth 1 -mindepth 1 -name 'bin-*' -type d` ; do
+        export PATH=$_DIR:"${PATH}";
+    done
+fi
+
 if [ -d /opt/icon/bin ] ; then
     export PATH="${PATH}":/opt/icon/bin;
 fi
