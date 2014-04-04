@@ -6,8 +6,8 @@
     ui = auto
 [core]
     whitespace = "trailing-space,space-before-tab"
-	autocrlf = input
-	excludesfile = /Users/jmullan/.gitignore
+    autocrlf = input
+    excludesfile = /Users/jmullan/.gitignore
 [apply]
     whitespace = "fix"
 [alias]
@@ -36,7 +36,7 @@
 	autosetupmerge = true
 [difftool "sourcetree"]
 	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
-	path = 
+	path =
 [mergetool "sourcetree"]
 	cmd = /Applications/SourceTree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
 	trustExitCode = true
