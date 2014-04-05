@@ -48,38 +48,4 @@ find "$ROOT" \
     | grep -v '^cover/' \
     | grep -v 'mobileapp/nve' \
     | sed s=^$curdir/==
-ag -r -Q \
-    --ignore="*.bak" \
-    --ignore="*.tmp" \
-    --ignore="*.csv" \
-    --ignore="*.data" \
-    --ignore="*.reg" \
-    --ignore="*.log" \
-    --ignore="*.log.?" \
-    --ignore="*.xmf" \
-    --ignore="*.xsf" \
-    --ignore="*.pickle" \
-    --ignore="*.h" \
-    --ignore="*.crt" \
-    --ignore="*.decTest" \
-    --ignore=".filemap" \
-    --ignore="*.xaf" \
-    --ignore="*.svg" \
-    --ignore="*.as" \
-    --ignore="*.rc" \
-    --ignore="*.frq" \
-    --ignore="tzmappings" \
-    --ignore="*~" \
-    --ignore="#*#" \
-    --ignore="*.fail.html" \
-    --ignore="*.pyc" \
-    --ignore="*.min.js" \
-    --ignore="*benchmark.html" \
-    --ignore="rcover_*" \
-    --ignore="nosetests.xml" \
-    --ignore-dir=".git" \
-    --ignore-dir=".svn" \
-    --ignore-dir="libphutil" \
-    "$@" \
-    "$ROOT" \
-    | sed s=^`pwd`/==
+ag -r -Q "$@" "$ROOT" | sed s=^`pwd`/==
