@@ -69,6 +69,7 @@ def main():
         '--minimum-length',
         dest='minimum_password_length',
         help='minimum length of pass phrase to generate',
+        type=int,
         default=8
     )
     parser.add_argument(
@@ -115,7 +116,7 @@ def main():
     )
     options = vars(parser.parse_args())
     if options.get('minimum_password_length') > options.get('maximum_password_length'):
-        raise ValueError('Minimum password length must be less than the maximum')
+        raise ValueError('Minimum password length must be less than or equal to the maximum')
     generator = Generator(options)
     password, passphrase = generator.generate()
     print password
