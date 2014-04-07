@@ -4,6 +4,9 @@
     branch = auto
     interactive = auto
     ui = auto
+[gitflow]
+    fetch = 1
+    showcommands = 0
 [core]
     whitespace = "trailing-space,space-before-tab"
     autocrlf = input
