@@ -121,7 +121,7 @@ if [ ! -s $DISPLAY ]; then
     }
 fi
 
-complete -W _ssh_complete ssh
+complete -C _ssh_complete ssh
 
 alias emacs='emacs -nw'
 
