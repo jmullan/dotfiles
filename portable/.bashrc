@@ -121,7 +121,7 @@ if [ ! -s $DISPLAY ]; then
     }
 fi
 
-complete -W "$(echo $((grep -h '^ssh ' ~/.*history* | sed 's/^ssh //' ; grep ^Host ~/.ssh/config | sed 's/^Host //') | sort -u))" ssh
+complete -W _ssh_complete ssh
 
 alias emacs='emacs -nw'
 
