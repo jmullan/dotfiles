@@ -19,3 +19,6 @@
 [submodule "GitFlowAVH"]
 	path = submodules/gitflow
 	url = https://github.com/petervanderdoes/gitflow.git
+[submodule "js3-mode"]
+	path = submodules/js3-mode
+	url = https://github.com/thomblake/js3-mode.git
