@@ -1,0 +1,3 @@
+#!/bin/bash
+shift
+printf "%x\n" `seq $@`
