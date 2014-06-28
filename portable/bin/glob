@@ -1,0 +1,64 @@
+#!/usr/bin/env python
+import argparse
+import fnmatch
+import os
+import re
+import sys
+
+def globber(ignore_case, path, subpath):
+    found = False
+    chunk = subpath
+    subchunks = None
+    if '/' in subpath:
+        chunk, subchunks = subpath.split('/', 1)
+
+    rule = re.compile(fnmatch.translate(chunk), re.IGNORECASE)
+
+    def match(name):
+        return (ignore_case and rule.match(name)) or (fnmatch.fnmatch(name, chunk))
+
+    for name in os.listdir(path):
+        if match(name):
+            child = path + '/' + name
+            if subchunks is None:
+                print child
+                found = True
+            elif subchunks == '':
+                if os.path.isdir(child):
+                    print child
+                    found = True
+            elif os.path.isdir(child):
+                found = found or globber(ignore_case, child, subchunks)
+    return found
+
+def main():
+    """
+    Dispatch the checker from the command line.
+    """
+    status = 0
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '-i', '--ignore-case',
+        action='store_true',
+        dest='ignore_case',
+        help='case insensitive matching'
+    )
+    parser.add_argument('--cwd', nargs='?', help='', default=os.getcwd())
+    parser.add_argument('globs', nargs='+')
+    args = parser.parse_args()
+    if args.cwd.startswith('/'):
+        cwd = args.cwd
+    else:
+        cwd = os.getcwd() + '/' + args.cwd
+    for glob in args.globs:
+        if glob.startswith('/'):
+            found = globber(args.ignore_case, glob[0], glob[1:])
+        else:
+            found = globber(args.ignore_case, cwd, glob)
+        if not found:
+            print >> sys.stderr, 'Did not find %s in %s' % (glob, cwd)
+            status = 1
+    exit(status)
+
+if __name__ == "__main__":
+    main()
