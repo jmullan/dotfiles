@@ -36,3 +36,5 @@
 (define-key global-map [kp-enter] "
 ")
 (define-key global-map [select] 'end-of-line)
+(define-key global-map (kbd "ESC <up>") 'beginning-of-buffer)
+(define-key global-map (kbd "ESC <down>") 'end-of-buffer)

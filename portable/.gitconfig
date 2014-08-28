@@ -4,6 +4,19 @@
     branch = auto
     interactive = auto
     ui = auto
+[color "branch"]
+    current = yellow reverse
+    local = yellow
+    remote = green
+[color "diff"]
+    meta = yellow bold
+    frag = magenta bold # line info
+    old = red # deletions
+    new = green # additions
+[color "status"]
+    added = yellow
+    changed = green
+     untracked = cyan
 [gitflow]
     fetch = 1
     showcommands = 0
@@ -20,7 +33,7 @@
     unstage = reset HEAD
     uncommit = reset --soft HEAD^
 [rerere]
-	enabled = true
+    enabled = true
 [commit]
 	template = ~/.arc-commit-template.txt
 [user]
@@ -35,6 +48,7 @@
 	renames = copies
 	mnemonicprefix = true
 	algorithm = patience
+	renameLimit = 2000
 [branch]
 	autosetupmerge = true
 [difftool "sourcetree"]

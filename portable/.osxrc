@@ -1,0 +1,4 @@
+#!/bin/bash
+mkdir -p ~/Pictures/Screenshots
+defaults write com.apple.screencapture location  ~/Pictures/Screenshots
+defaults write com.apple.dock expose-animation-duration -int 0
