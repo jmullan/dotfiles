@@ -40,6 +40,12 @@ if [ -e $HOME/src ] ; then
     done
 fi
 
+if [ -e $HOME/src ] ; then
+    for _DIR in `find -L $HOME/lib/python -maxdepth 1 -mindepth 1 -type d` ; do
+        export PYTHONPATH=$_DIR:"${PATH}";
+    done
+fi
+
 if [ -d /opt/icon/bin ] ; then
     export PATH="${PATH}":/opt/icon/bin;
 fi

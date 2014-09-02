@@ -28,7 +28,7 @@ def globber(ignore_case, path, subpath):
                     print child
                     found = True
             elif os.path.isdir(child):
-                found = found or globber(ignore_case, child, subchunks)
+                found = globber(ignore_case, child, subchunks) or found
     return found
 
 def main():
