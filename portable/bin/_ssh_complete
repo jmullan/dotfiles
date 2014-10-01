@@ -1,5 +1,5 @@
 #!/bin/bash
-LIST=`mktemp -t ssh_complete_`
+LIST=`mktemp -t ssh_complete_XXXXXX`
 grep -h '^ssh ' ~/.*history* | sed 's/^ssh //' >$LIST 2>/dev/null
 grep ^Host ~/.ssh/config | sed 's/^Host //' >>$LIST 2>/dev/null
 for k in /etc/ssh_known_hosts /etc/ssh/ssh_known_hosts ~/.ssh/known_hosts
