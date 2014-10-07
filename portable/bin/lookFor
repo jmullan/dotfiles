@@ -46,6 +46,5 @@ find "$ROOT" \
     | grep -v 'coverage/Phantom' \
     | grep -v 'coverage/coverage-Phantom' \
     | grep -v '^cover/' \
-    | grep -v 'mobileapp' \
     | sed s=^$curdir/==
 ag -r -Q "$@" "$ROOT" | sed s=^`pwd`/==

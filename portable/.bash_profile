@@ -40,7 +40,7 @@ if [ -e $HOME/src ] ; then
     done
 fi
 
-if [ -e $HOME/src ] ; then
+if [ -e $HOME/lib/python ] ; then
     for _DIR in `find -L $HOME/lib/python -maxdepth 1 -mindepth 1 -type d` ; do
         export PYTHONPATH=$_DIR:"${PATH}";
     done

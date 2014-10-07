@@ -53,4 +53,3 @@ nosetests.xml
 .git
 .svn
 libphutil
-mobileapp
