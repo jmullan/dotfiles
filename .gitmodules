@@ -22,3 +22,6 @@
 [submodule "js3-mode"]
 	path = submodules/js3-mode
 	url = https://github.com/thomblake/js3-mode.git
+[submodule "submodules/travis-build"]
+	path = submodules/travis-build
+	url = https://github.com/travis-ci/travis-build.git

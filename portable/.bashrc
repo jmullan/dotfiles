@@ -135,3 +135,6 @@ for f in $(command ls ~/.node-completion); do
 done
 # }}}
 fi
+
+# added by travis gem
+[ -f /home/jmullan/.travis/travis.sh ] && source /home/jmullan/.travis/travis.sh
