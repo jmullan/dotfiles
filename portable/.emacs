@@ -378,8 +378,8 @@
 (load-theme 'solarized-dark t)
 
 (require 'flyphpcs)
-(setq c-default-style "k&r"
-      c-basic-offset 4)
+;(setq c-default-style "k&r"
+;      c-basic-offset 4)
 
 (require 'flymake-jshint-simple)
 (add-hook 'javascript-mode-hook
