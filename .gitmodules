@@ -25,3 +25,6 @@
 [submodule "submodules/travis-build"]
 	path = submodules/travis-build
 	url = https://github.com/travis-ci/travis-build.git
+[submodule "submodules/php-mode"]
+	path = submodules/php-mode
+	url = https://github.com/ejmr/php-mode.git

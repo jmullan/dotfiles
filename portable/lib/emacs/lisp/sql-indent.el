@@ -5,7 +5,7 @@
 ;; Authors: Alex Schroeder <alex@gnu.org>
 ;;          Matt Henry <mcthenry+gnu@gmail.com>
 ;; Maintainer: Matt Henry <mcthenry+gnu@gmail.com>
-;; Version: $Id: sql-indent.el,v 1.10 2009/03/25 22:52:25 mhenry Exp $  
+;; Version: $Id: sql-indent.el,v 1.10 2009/03/25 22:52:25 mhenry Exp $
 
 ;; Keywords: languages
 ;; URL: http://www.emacswiki.org/cgi-bin/wiki.pl?SqlIndent
@@ -104,13 +104,13 @@ indented by `sql-indent-offset'."
 
  (save-excursion
    (forward-line -1)
-   
+
    (while (and (not (bobp))
                (or
                 (looking-at "^\\s-*$")
                 (sql-indent-is-string-or-comment)) ; Skip comments or strings
                )
-     
+
      (forward-line -1))
    (list (point) (current-indentation))
    )
@@ -130,7 +130,7 @@ Return a list containing the level change and the previous indentation."
            (curr-start (progn (beginning-of-line)
                               (point)))
            (paren (nth 0 (parse-partial-sexp (nth 0 p-line) curr-start))))
-      
+
       ;; Add opening or closing parens.
       ;; If the current line starts with a keyword statement (e.g. SELECT, FROM, ...) back up one level
       ;; If the previous line starts with a keyword statement then add one level
@@ -155,7 +155,7 @@ Return a list containing the level change and the previous indentation."
   "Indent the buffer's SQL statements."
   (interactive)
   (save-excursion
-    (beginning-of-buffer)
+    (goto-char (point-min))
     (let*
         ((line 0)
          (level 0)
@@ -181,12 +181,12 @@ Return a list containing the level change and the previous indentation."
                       (if (< level 0)
                           0
                         level))))
-	
+
         (if sql-indent-debug
             (progn
               (setq line (1+ line))
               (message "Line %3d; level %3d; indent was %3d; at %d" line level indent (point))))
-        
+
         (beginning-of-line)
         (if (and (not (looking-at "^\\s-*$")) ; Leave blank lines alone
                  (not (sql-indent-is-string-or-comment)) ; Don't mess with comments or strings
@@ -208,8 +208,6 @@ Return a list containing the level change and the previous indentation."
          (indent-info (sql-indent-level-delta))
          (level-delta (nth 0 indent-info))
          (prev-indent (nth 1 indent-info))
-	 (jump-to-start nil)
-	 (start-of-line nil)
          (this-indent (max 0            ; Make sure the indentation is at least 0
                            (+ prev-indent
                               (* sql-indent-offset
@@ -223,19 +221,11 @@ Return a list containing the level change and the previous indentation."
     (save-excursion
 
       (beginning-of-line)
-      (setq start-of-line (point))
+
       (if (and (not (looking-at "^\\s-*$")) ; Leave blank lines alone
                (not (sql-indent-is-string-or-comment))  ; Don't mess with comments or strings
                (/= this-indent (current-indentation))) ; Don't change the line if already ok.
-          (list (indent-line-to this-indent)
-		(setq jump-to-start t)
-		)
-	)
-      )
-    (if (or jump-to-start (= (point) start-of-line))
-	(list (beginning-of-line)
-	      (forward-char this-indent)
-	      )
+          (indent-line-to this-indent))
       )
     )
   )

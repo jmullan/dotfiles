@@ -1,103 +1,113 @@
+(defun
+  my-replace-regex (regexp to-string)
+  (while (re-search-forward regexp nil t)
+    (replace-match to-string nil nil)))
+
+(defun
+  my-replace-string (from to)
+  (while (search-forward from nil t)
+    (replace-match to nil t)))
+
 (defun php-cleanup ()
   "Cleans a php file"
   (interactive)
   (save-excursion
-    (beginning-of-buffer)
-    (replace-string "
+    (goto-char (point-min))
+    (my-replace-string "
 " "
 ")
 
-    (beginning-of-buffer)(replace-string "if(" "if (")
-    (beginning-of-buffer)(replace-string "while(" "while (")
-    (beginning-of-buffer)(replace-string "foreach(" "foreach (")
-    (beginning-of-buffer)(replace-string "switch(" "switch (")
-    (beginning-of-buffer)(replace-string "for(" "for (")
-    (beginning-of-buffer)(replace-string "array (" "array(")
+    (goto-char (point-min))(my-replace-string "if(" "if (")
+    (goto-char (point-min))(my-replace-string "while(" "while (")
+    (goto-char (point-min))(my-replace-string "foreach(" "foreach (")
+    (goto-char (point-min))(my-replace-string "switch(" "switch (")
+    (goto-char (point-min))(my-replace-string "for(" "for (")
+    (goto-char (point-min))(my-replace-string "array (" "array(")
 
-    (beginning-of-buffer)(replace-string "){" ") {")
+    (goto-char (point-min))(my-replace-string "){" ") {")
 
     (if
 	(string-match "yahoo.com$" (system-name))
 	(progn
-	  (beginning-of-buffer)
-	  (replace-regexp "[ \t]function\\([^(]+\\)(\\([^)]*\\))[ \t\n]+{" " function\\1(\\2)\n{")
-	  (beginning-of-buffer)
-	  (replace-regexp "class\\([^{]+\\)[ \t\n]+{" "class\\1\n{")
-	  (beginning-of-buffer)(replace-regexp "([ \t]+" "(")
+	  (goto-char (point-min))
+	  (my-replace-regex "[ \t]function\\([^(]+\\)(\\([^)]*\\))[ \t\n]+{" " function\\1(\\2)\n{")
+	  (goto-char (point-min))
+	  (my-replace-regex "class\\([^{]+\\)[ \t\n]+{" "class\\1\n{")
+	  (goto-char (point-min))(my-replace-regex "([ \t]+" "(")
 	  )
       (progn
-       (beginning-of-buffer)(replace-regexp ")[ \t]*{" ") {")
-       (beginning-of-buffer)(replace-regexp "([ \t]*\n[ \t]+" "(\n")
-       (beginning-of-buffer)
-       (replace-regexp "[ \t]function\\([^(]+\\)(\\([^)]*\\))[ \t\n]+{" " function\\1(\\2) {")
-       (beginning-of-buffer)
-       (replace-regexp "class\\([^{]+\\)[ \t\n]+{" "class\\1 {")
+       (goto-char (point-min))(my-replace-regex ")[ \t]*{" ") {")
+       (goto-char (point-min))(my-replace-regex "([ \t]*\n[ \t]+" "(\n")
+       (goto-char (point-min))
+       (my-replace-regex "[ \t]function\\([^(]+\\)(\\([^)]*\\))[ \t\n]+{" " function\\1(\\2) {")
+       (goto-char (point-min))
+       (my-replace-regex "class\\([^{]+\\)[ \t\n]+{" "class\\1 {")
        )
       )
 
     ; tighten up parentheses
-    (beginning-of-buffer)(replace-string "( " "(")
-    (beginning-of-buffer)(replace-string " )" ")")
+    (goto-char (point-min))(my-replace-string "( " "(")
+    (goto-char (point-min))(my-replace-string " )" ")")
 
     ; make br tags nicer.  ugh?
-    (beginning-of-buffer)(replace-string "<br>" "<br />")
-    (beginning-of-buffer)(replace-string "<BR>" "<br />")
-    (beginning-of-buffer)(replace-string "<br/>" "<br />")
-    (beginning-of-buffer)(replace-string "</ br>" "<br />")
-    (beginning-of-buffer)(replace-string "stdclass" "stdClass")
+    (goto-char (point-min))(my-replace-string "<br>" "<br />")
+    (goto-char (point-min))(my-replace-string "<BR>" "<br />")
+    (goto-char (point-min))(my-replace-string "<br/>" "<br />")
+    (goto-char (point-min))(my-replace-string "</ br>" "<br />")
+    (goto-char (point-min))(my-replace-string "stdclass" "stdClass")
 
-    ;(beginning-of-buffer)(replace-string "\":" "\" :")
+    ;(goto-char (point-min))(my-replace-string "\":" "\" :")
     ; assignment and concatenation with arrays
-    ;(beginning-of-buffer)(replace-string "]." "] .")
-    ;(beginning-of-buffer)(replace-string "]=" "] =")
+    ;(goto-char (point-min))(my-replace-string "]." "] .")
+    ;(goto-char (point-min))(my-replace-string "]=" "] =")
 
     ; oh god what horror is this
-    ;(beginning-of-buffer)(replace-regexp "\\([.,;]\\)\\([\\$'\"]\\)" "\\1 \\2")
+    ;(goto-char (point-min))(my-replace-regex "\\([.,;]\\)\\([\\$'\"]\\)" "\\1 \\2")
 
 
     ; insert missing docblocks
-    (beginning-of-buffer)(replace-regexp "\\([{};][ \t\n]*\\)\\(public\\|private\\|static\\|function\\|var\\|class\\|interface\\|abstract\\)" "\\1\n/**\n *\n */\n\\2")
+    (goto-char (point-min))(my-replace-regex "\\([{};][ \t\n]*\\)\\(public\\|private\\|static\\|function\\|var\\|class\\|interface\\|abstract\\)" "\\1\n/**\n *\n */\n\\2")
 
     ; else on the same line as the closing brace of the if
-    (beginning-of-buffer)(replace-regexp "}[ \t\n]*else" "} else")
+    (goto-char (point-min))(my-replace-regex "}[ \t\n]*else" "} else")
 
     ; opening else brace on the same line as the else
-    (beginning-of-buffer)(replace-regexp "else[ \t\n]*{" "else {")
+    (goto-char (point-min))(my-replace-regex "else[ \t\n]*{" "else {")
 
     ; key => spacing in associative arrays
-    (beginning-of-buffer)(replace-regexp "\\([^ \t]\\)=>" "\\1 =>")
+    (goto-char (point-min))(my-replace-regex "\\([^ \t]\\)=>" "\\1 =>")
 
     ; close parentheses at the end of a line with trailing whitespace
-    (beginning-of-buffer)(replace-regexp ")[ \t]+\n" ")\n")
+    (goto-char (point-min))(my-replace-regex ")[ \t]+\n" ")\n")
 
     ; => value spacing in associative arrays
-    (beginning-of-buffer)(replace-regexp "=>\\([^ \t]\\)" "=> \\1")
+    (goto-char (point-min))(my-replace-regex "=>\\([^ \t]\\)" "=> \\1")
 
     ; key => spacing in associative arrays
-    (beginning-of-buffer)(replace-regexp "\\([^ \t]\\)[ \t][ \t]+=>" "\\1 =>")
+    (goto-char (point-min))(my-replace-regex "\\([^ \t]\\)[ \t][ \t]+=>" "\\1 =>")
 
     ; => value spacing in associative arrays
-    (beginning-of-buffer)(replace-regexp "=>[ \t][ \t]+" "=> ")
+    (goto-char (point-min))(my-replace-regex "=>[ \t][ \t]+" "=> ")
 
     ; move commas to the end of lines
     ; unsafe inside of strings?
-    ;(beginning-of-buffer)(replace-regexp "\n[ \t]+," ",\n")
+    ;(goto-char (point-min))(my-replace-regex "\n[ \t]+," ",\n")
 
     ; trim whitespace after semicolons at the end of lines
-    (beginning-of-buffer)(replace-regexp ";[ \t]+\n" ";\n")
+    (goto-char (point-min))(my-replace-regex ";[ \t]+\n" ";\n")
 
     ; delete whitespace from in front of commas
     ; unsafe inside of strings?
-    ;(beginning-of-buffer)(replace-regexp "\W+," ",")
+    ;(goto-char (point-min))(my-replace-regex "\W+," ",")
 
     ; convert // comments into /* comments */
-    (beginning-of-buffer)(replace-regexp "\n\\([ \t]\\)*//+[ \t]*\\([^\n]+\\)" "\n\\1/* \\2 */")
+    (goto-char (point-min))(my-replace-regex "\n\\([ \t]\\)*//+[ \t]*\\([^\n]+\\)" "\n\\1/* \\2 */")
 
     ; convert sequential comments into multiline comments
-    (beginning-of-buffer)(replace-regexp "\\*\\/\n\\([ \t]\\)*\\/\\*" "\n*")
+    (goto-char (point-min))(my-replace-regex "\\*\\/\n\\([ \t]\\)*\\/\\*" "\n*")
 
     ; Remove trailing ?> from files
-    (beginning-of-buffer)(replace-regexp "\\?>[ \n\t]*\\'" "\n")
+    (goto-char (point-min))(my-replace-regex "\\?>[ \n\t]*\\'" "\n")
 
 
     (delete-trailing-whitespace)
