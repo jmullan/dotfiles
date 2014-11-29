@@ -1,2 +1,4 @@
 *~
 *.elc
+*.bak
+/portable/.travis/.build

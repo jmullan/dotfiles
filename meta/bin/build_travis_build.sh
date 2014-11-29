@@ -9,6 +9,6 @@ if [ ! -e "${SRC_DIR}" ] ; then
     exit
 fi
 cd "${SRC_DIR}"
-gem install travis -v 1.7.2 --user-install --no-rdoc --no-ri
+gem install travis --user-install --no-rdoc --no-ri
 gem build travis-build.gemspec
 rm travis-build-0.0.1.gem
