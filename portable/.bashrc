@@ -103,8 +103,21 @@ export LC_ALL="en_US.UTF-8"
 export LANG="en_US"
 
 # set a fancy prompt
-export PS1="\$(git sanity) \[\e[36m\u@$(tput bold)$(tput setaf $HOST_COLOR)\]\h\[$(tput sgr0)\]:\[\w\e[0m\] \$(git prompt)\n\$ "
-
+function __prompt_command() {
+    local EXIT="$?"
+    SMILEY=`echo -e "\xf0\x9f\x92\x80 "`
+    FROWNY='😡  '
+    PS1="\$(git sanity)"
+    PS1+="\[\e[36m\u@$(tput bold)$(tput setaf $HOST_COLOR)\]\h\[$(tput sgr0)\]:\[\w\e[0m\]"
+    PS1+=" \$(git prompt)\n"
+    if [ $EXIT -eq 0 ]; then
+        PS1+="$SMILEY "
+    else
+        PS1+="$FROWNY "
+    fi
+    PS1+="\$ "
+}
+export PROMPT_COMMAND=__prompt_command
 export SVN_EDITOR=emacs
 export VISUAL=emacs
 export EDITOR=emacs
