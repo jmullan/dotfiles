@@ -10,5 +10,6 @@ if [ ! -e "${SRC_DIR}" ] ; then
 fi
 cd "${SRC_DIR}"
 gem install travis --user-install --no-rdoc --no-ri
+bundle install --path ~/.gem/
 gem build travis-build.gemspec
-rm travis-build-0.0.1.gem
+rm -f travis-build-0.0.1.gem
