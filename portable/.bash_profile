@@ -119,3 +119,6 @@ if which ruby >/dev/null && which gem >/dev/null; then
         export PATH="${RUBYPATH}:${PATH}"
     fi
 fi
+
+# OPAM configuration
+. /home/jmullan/.opam/opam-init/init.sh > /dev/null 2> /dev/null || true

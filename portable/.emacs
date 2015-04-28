@@ -180,6 +180,11 @@
 (autoload 'css-mode "css-mode")
 (autoload 'markdown-mode "markdown-mode.el" "Major mode for editing Markdown files" t)
 
+
+(autoload 'lua-mode "lua-mode" "Lua editing mode." t)
+(add-to-list 'auto-mode-alist '("\\.lua$" . lua-mode))
+(add-to-list 'interpreter-mode-alist '("lua" . lua-mode))
+
 (load "~/lib/emacs/lisp/php-cleanup")
 ;(load "~/lib/emacs/lisp/js-cleanup")
 (load "~/lib/emacs/lisp/css-cleanup")
