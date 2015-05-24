@@ -114,14 +114,32 @@ def main():
         type=str,
         default='-_!@#$%^&*()+=,./|'
     )
+    parser.add_argument(
+        '--word',
+        dest='word',
+        help='only make a word',
+        action='store_true',
+        default=False
+    )
+    parser.add_argument(
+        '--phrase',
+        dest='phrase',
+        action='store_true',
+        help='only make a phrase',
+        default=False
+    )
     options = vars(parser.parse_args())
     if options.get('minimum_password_length') > options.get('maximum_password_length'):
         raise ValueError('Minimum password length must be less than or equal to the maximum')
     generator = Generator(options)
     password, passphrase = generator.generate()
-    print password
-    print passphrase
-
+    if not options['phrase']:
+        print password
+    if not options['word']:
+        print passphrase
+    if options['phrase'] and options['word']:
+        print password
+        print passphrase
 
 if __name__ == "__main__":
     main()
