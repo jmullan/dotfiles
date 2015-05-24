@@ -390,3 +390,9 @@
 (add-hook 'javascript-mode-hook
           (lambda () (flymake-mode t)))
 (require 'python)
+
+(fset 'indent-by-four  "\C-u4\C-x\C-i")
+(fset 'dedent-by-four "\C-u-4\C-x\C-i")
+
+(global-set-key (kbd "C-c TAB") 'indent-by-four)
+(global-set-key (kbd "C-c q") 'dedent-by-four)
