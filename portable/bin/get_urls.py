@@ -6,6 +6,7 @@ import subprocess
 import logging
 import argparse
 
+
 FORMAT = '%(levelname)s %(lineno)d %(message)s'
 logging.basicConfig(format=FORMAT)
 
@@ -20,12 +21,11 @@ def main():
             matches = re.match(r'URL=(.*)', line)
             if matches is not None:
                 url = matches.group(1)
-                print url
-                print ["youtubedown", url]
-                result = subprocess.call(["youtubedown", url])
+                cmd = ["youtubedown", '--no-mux', url]
+                print url, cmd
+                result = subprocess.call(cmd)
                 if not result:
                     os.unlink(url_file)
-
 
 if __name__ == "__main__":
     main()
