@@ -5,7 +5,7 @@
 
 HOST_SYMBOL="SET UP YOUR LOCALRC FREAL"
 HOST_COLOR="3"
-export GIT_EDITOR=`which emacs`
+export GIT_EDITOR=emacs
 # If running interactively, then:
 if [ -e .ubuntu-bashrc ] ; then
     source .ubuntu-bashrc
@@ -41,7 +41,10 @@ fi
 
 if [ -e ~/.virtualenvs ]; then
     export WORKON_HOME=~/.virtualenvs
-    . /usr/local/bin/virtualenvwrapper.sh
+    VEW=`which virtualenvwrapper.sh`
+    if [ -n "${VEW}" ] ; then
+        . "${VEW}"
+    fi
 fi
 
 # alias screen='TERM=screen screen'
@@ -125,8 +128,9 @@ export TZ='America/Los_Angeles'
 export HOSTNAME=`hostname`
 
 if [ ! -s $DISPLAY ]; then
+    EMACS=`which emacs`
     emacs () {
-        /usr/bin/emacs -nw "$@"
+        "$EMACS" -nw "$@"
     }
     geany () {
         /usr/local/bin/geany "$@" </dev/null >/dev/null 2>/dev/null &
@@ -135,8 +139,6 @@ if [ ! -s $DISPLAY ]; then
 fi
 
 complete -C _ssh_complete ssh
-
-alias emacs='emacs -nw'
 
 if [ -e ~/.node_completion ] ; then
 # {{{

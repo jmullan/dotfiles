@@ -28,3 +28,6 @@
 [submodule "submodules/lua-mode"]
 	path = submodules/lua-mode
 	url = https://github.com/immerrr/lua-mode.git
+[submodule "submodules/editorconfig-emacs"]
+	path = submodules/editorconfig-emacs
+	url = git@github.com:editorconfig/editorconfig-emacs.git

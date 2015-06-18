@@ -18,6 +18,7 @@
 )
 
 (load "~/lib/emacs/lisp/syntax")
+(load "~/lib/emacs/lisp/editorconfig")
 
 
 (add-hook
@@ -394,5 +395,12 @@
 (fset 'indent-by-four  "\C-u4\C-x\C-i")
 (fset 'dedent-by-four "\C-u-4\C-x\C-i")
 
+
+
+(define-key input-decode-map "\e[1;6H" [S-home]) ; control-shift-home
+(define-key input-decode-map "\e[1;6F" [S-end]) ; control-shift-end
+(define-key input-decode-map "\e[1;2H" [S-up]) ; shift-home
+(define-key input-decode-map "\e[1;2F" [S-down]) ; shift-end
+(define-key input-decode-map "\e[1;2A" [S-up])
 (global-set-key (kbd "C-c TAB") 'indent-by-four)
 (global-set-key (kbd "C-c q") 'dedent-by-four)
