@@ -3,7 +3,7 @@
 (setq user-init-file (expand-file-name "init.el"   (expand-file-name ".xemacs" "~")))
 (setq custom-file    (expand-file-name "custom.el" (expand-file-name ".xemacs" "~")))
 (setq split-height-threshold nil)
-(setq split-width-threshold 150)
+(setq split-width-threshold 121)
 
 (defvar font-lock-preprocessor-face 'font-lock-keyword-face  "Don't even think of using this.")
 
@@ -404,3 +404,12 @@
 (define-key input-decode-map "\e[1;2A" [S-up])
 (global-set-key (kbd "C-c TAB") 'indent-by-four)
 (global-set-key (kbd "C-c q") 'dedent-by-four)
+
+(add-to-list 'edconf-custom-hooks
+  '(lambda (props)
+       (let ((max_line_length (gethash 'max_line_length props)))
+           (column-marker-1 (string-to-number max_line_length)
+               )
+           )
+       )
+    )
