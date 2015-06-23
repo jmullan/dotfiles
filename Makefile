@@ -5,6 +5,7 @@ all: install
 submodules:
 	git submodule update --recursive
 	git submodule update --init --recursive
+	git submodule foreach git pull origin master
 
 portable/.emacs.d/themes/color-theme-solarized: submodules
 

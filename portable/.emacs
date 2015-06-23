@@ -408,7 +408,8 @@
 (add-to-list 'edconf-custom-hooks
   '(lambda (props)
        (let ((max_line_length (gethash 'max_line_length props)))
-           (column-marker-1 (string-to-number max_line_length)
+           (column-marker-1 (string-to-number
+                                (if max_line_length max_line_length "0"))
                )
            )
        )
