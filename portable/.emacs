@@ -1,4 +1,5 @@
 ;;; XEmacs backwards compatibility file
+(define-coding-system-alias 'UTF-8 'utf-8)
 (setq-default indent-tabs-mode nil)
 (setq user-init-file (expand-file-name "init.el"   (expand-file-name ".xemacs" "~")))
 (setq custom-file    (expand-file-name "custom.el" (expand-file-name ".xemacs" "~")))
@@ -356,7 +357,6 @@
 
 (eval-after-load "sql" '(load-library "sql-indent"))
 
-
 (column-number-mode)
 (set-variable 'indent-tabs-mode nil)
 (setq indent-tabs-mode nil)
@@ -376,26 +376,22 @@
 (when (require 'flymake)
   (set-variable 'flymake-log-level 9)
   (setq flymake-start-syntax-check-on-newline nil)
-  (setq flymake-no-changes-timeout 10))
+  (setq flymake-no-changes-timeout 5))
 
 (add-hook 'find-file-hook 'flymake-find-file-hook)
 
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/emacs-color-theme-solarized/")
-(load-theme 'solarized-dark t)
+(load-theme 'solarized t)
+(set-frame-parameter nil 'background-mode 'dark)
+(set-terminal-parameter nil 'background-mode 'dark)
 
 (require 'flyphpcs)
-;(setq c-default-style "k&r"
-;      c-basic-offset 4)
-
 (require 'flymake-jshint-simple)
-(add-hook 'javascript-mode-hook
-          (lambda () (flymake-mode t)))
+(add-hook 'javascript-mode-hook (lambda () (flymake-mode t)))
 (require 'python)
 
 (fset 'indent-by-four  "\C-u4\C-x\C-i")
 (fset 'dedent-by-four "\C-u-4\C-x\C-i")
-
-
 
 (define-key input-decode-map "\e[1;6H" [S-home]) ; control-shift-home
 (define-key input-decode-map "\e[1;6F" [S-end]) ; control-shift-end
