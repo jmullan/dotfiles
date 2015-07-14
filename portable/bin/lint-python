@@ -1,0 +1,5 @@
+#!/bin/bash
+trap exit SIGHUP SIGINT SIGTERM
+pyflakes $@
+pep8 $@
+epylint $@
