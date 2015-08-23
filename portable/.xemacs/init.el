@@ -11,7 +11,7 @@
 (setq load-path (cons (expand-file-name path) load-path)))
 (add-search-dir "~/lib/emacs/lisp")
 (load "php-style" t t)
-(load "gallery-template-mode" t t)
+;(load "gallery-template-mode" t t)
 
 (setq auto-mode-alist (cons '("\\.r$" . c-mode) auto-mode-alist))
 

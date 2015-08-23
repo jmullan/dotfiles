@@ -1,10 +1,8 @@
 #!/usr/bin/php
 <?php
-require_once('databaseMachine.php');
-
-$dbm = databaseMachine::getDatabaseMachine('db2276_brownlog');
+require_once('databaseMachineI.class.php');
+$dbm = databaseMachineI::getDatabaseMachine('db2276_brownlog');
 $databases = $dbm->getColumn("SHOW DATABASES WHERE `Database` NOT IN ('information_schema', 'mysql', 'performance_schema')");
-
 $queries = array();
 foreach ($databases as $database) {
     if ($database == 'performance_schema') {
@@ -17,6 +15,5 @@ foreach ($databases as $database) {
     }
 }
 foreach ($queries as $query) {
-    #echo "$query\n";
     $dbm->query($query);
 }
