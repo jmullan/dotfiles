@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 """Back up a file or files."""
+import argparse
+import logging
 import os
 import re
 import subprocess
-import logging
-import argparse
-
 
 FORMAT = '%(levelname)s %(lineno)d %(message)s'
 logging.basicConfig(format=FORMAT)

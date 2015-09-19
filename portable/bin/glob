@@ -5,6 +5,7 @@ import os
 import re
 import sys
 
+
 def globber(ignore_case, path, subpath):
     found = False
     chunk = subpath

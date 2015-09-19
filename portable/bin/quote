@@ -2,6 +2,7 @@
 import fileinput
 import pipes
 
+
 def main():
     raw = ''
     for line in fileinput.input():
