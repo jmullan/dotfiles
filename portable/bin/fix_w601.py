@@ -7,7 +7,7 @@ REGEX = r'([^ (]+).has_key\(([^)]+)\)'
 
 
 def main():
-    """Do it."""
+    """Try to turn has_key into ` in `."""
     parser = OptionParser()
     parser.add_option('-v', '--verbose', dest='verbose',
                       action='store_true', default=False,

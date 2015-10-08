@@ -1,0 +1,13 @@
+#!/bin/bash
+git prune
+git gc
+SEARCHES=(
+    "*~"
+    "*.bak"
+    "*_flymake.py"
+    "*.pyc"
+    ".DS_Store"
+)
+for SEARCH in "${SEARCHES[@]}"; do
+    find . -name "${SEARCH}" -delete
+done

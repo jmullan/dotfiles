@@ -1,38 +1,50 @@
 #!/usr/bin/env python
 import os
+import re
 from optparse import OptionParser
 
 
+def blank(line):
+    if re.match(r'^ +$', line):
+        return ''
+    else:
+        return line
+
+
 def main():
-    """Strip extra newlines from end of files, add one if there is none."""
+    """Remove trailing whitespace"""
     changed = False
     parser = OptionParser()
     parser.add_option('-v', '--verbose', dest='verbose',
                       action='store_true', default=False,
                       help='verbose is more verbose')
+    parser.add_option(
+        '--only-blank-lines',
+        dest='only_blank_lines',
+        action='store_true',
+        default=False,
+        help='Only trim blank lines'
+    )
     (options, args) = parser.parse_args()
     options = options.__dict__
     verbose = options.get('verbose')
+    only_blank_lines = options.get('only_blank_lines')
 
     for filename in args:
         contents = ''
         filesize = os.path.getsize(filename)
         with open(filename) as f:
             contents = f.read(filesize)
-        while len(contents) and contents[0] == "\n":
-            contents = contents[1:]
-            changed = True
-        while contents[-2:] == "\n\n":
-            contents = contents[:-1]
-            changed = True
-        if contents and contents[-1] != "\n":
-            contents = "%s\n" % contents
-            changed = True
+        if only_blank_lines:
+            new_contents = "\n".join(blank(x) for x in contents.split("\n"))
+        else:
+            new_contents = "\n".join(x.rstrip() for x in contents.split("\n"))
+        changed = new_contents != contents
         if changed:
             if verbose:
                 print 'updated file %s' % filename
             with open(filename, 'w') as f:
-                f.write(contents)
+                f.write(new_contents)
 
 
 if __name__ == "__main__":
