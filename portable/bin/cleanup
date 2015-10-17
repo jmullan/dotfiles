@@ -7,6 +7,7 @@ SEARCHES=(
     "*_flymake.py"
     "*.pyc"
     ".DS_Store"
+    "#*#"
 )
 for SEARCH in "${SEARCHES[@]}"; do
     find . -name "${SEARCH}" -delete
