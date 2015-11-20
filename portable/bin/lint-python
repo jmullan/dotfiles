@@ -1,8 +1,15 @@
 #!/bin/bash
 trap exit SIGHUP SIGINT SIGTERM
-pyflakes $@
-pep8 $@
-epylint $@ 2>&1 | grep -v '\*\*\*\*\*\*\*\*\*\*\*\*\* Module' | egrep -v '^Warning:' | sed 's/^ //'
-pep257 $@ 2>&1
-ag --nobreak --nocolor --noheading 'logging.(debug|info|warn|error|exception)' $@
-isort -rc --check-only $@ | sed 's/^ERROR: //' | sed 's/ \(Imports are incorrectly sorted.\)/:0:0:\1/'
+pyflakes ${1+"$@"}
+pep8 ${1+"$@"}
+epylint ${1+"$@"} 2>&1 | grep -v '\*\*\*\*\*\*\*\*\*\*\*\*\* Module' | egrep -v '^Warning:' | sed 's/^ //'
+pep257 --template='%(filename)s:%(line)s:%(code)s:%(definition)s %(short_desc)s\n' ${1+"$@"} 2>&1
+ag -s --nobreak --nocolor --noheading 'logging.(debug|info|warn|error|exception)' ${1+"$@"}
+ag --nobreak --nocolor --noheading 'assertNone' ${1+"$@"}
+ag --nobreak --nocolor --noheading 'assertNotNone' ${1+"$@"}
+isort -rc --check-only ${1+"$@"} | sed 's/^ERROR: //' | sed 's/ \(Imports are incorrectly sorted.\)/:0:0:\1/'
+if [ -e "vulture.txt" ] ; then
+    for i in ${1+"$@"}; do
+        grep $i vulture.txt
+    done
+fi

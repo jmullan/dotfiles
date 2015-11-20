@@ -305,18 +305,6 @@
   (message "My JS2 hook")
 )
 
-(add-hook
- 'js2-mode-hook
- '(lambda ()
-    (add-hook
-     'before-save-hook
-     (lambda ()
-       (untabify (point-min) (point-max))
-       (delete-trailing-whitespace)
-       ))))
-
-(add-hook 'before-save-hook 'delete-trailing-whitespace)
-
 (define-key function-key-map [delete] nil)
 (global-set-key [delete] 'delete-char)
 
@@ -411,5 +399,36 @@
            (column-marker-1
                (string-to-number (if max_line_length max_line_length "80")))
            )
+       )
+    )
+
+(add-to-list 'edconf-custom-hooks
+  '(lambda (props)
+       (let ((indent_size (gethash 'indent_size props)))
+           (setq-default c-basic-offset
+               (string-to-number (if indent_size indent_size "4")))
+           (setq-default python-indent
+               (string-to-number (if indent_size indent_size "4")))
+           (setq-default python-indent-offset
+               (string-to-number (if indent_size indent_size "4")))
+           )
+       )
+    )
+
+(add-to-list 'edconf-custom-hooks
+  '(lambda (props)
+       (let ((tab_width (gethash 'tab_width props)))
+           (setq-default tab-width
+               (string-to-number (if tab_width tab_width "8")))
+           )
+       )
+    )
+
+(add-to-list 'edconf-custom-hooks
+  '(lambda (props)
+       (let ((indent_style (gethash 'indent_style props)))
+           (setq-default indent-tabs-mode (eq indent_style "tab")
+             )
+          )
        )
     )

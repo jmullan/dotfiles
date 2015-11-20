@@ -16,7 +16,6 @@
 (setq auto-mode-alist (cons '("\\.r$" . c-mode) auto-mode-alist))
 
 (require 'column-marker)
-(add-hook 'python-mode-hook (lambda () (interactive) (column-marker-1 150)))
 
 (setq py-start-run-py-shell nil)
 (global-font-lock-mode t)

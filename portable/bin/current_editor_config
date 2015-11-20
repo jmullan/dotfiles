@@ -1,0 +1,8 @@
+#!/bin/bash
+CWD=`pwd`
+if [ -z "$1" ] ; then
+    editorconfig "${CWD}"
+else
+    SETTING=`editorconfig "${CWD}" | grep "${1}" | sed "s#${1}=##"`
+    echo $SETTING
+fi
