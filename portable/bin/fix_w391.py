@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import sys
 from optparse import OptionParser
 
 
@@ -30,7 +31,7 @@ def main():
             changed = True
         if changed:
             if verbose:
-                print 'updated file %s' % filename
+                sys.stdout.write('updated file %s' % filename)
             with open(filename, 'w') as f:
                 f.write(contents)
 
