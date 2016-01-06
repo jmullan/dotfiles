@@ -3,7 +3,7 @@ trap exit SIGHUP SIGINT SIGTERM
 pyflakes ${1+"$@"}
 pep8 ${1+"$@"}
 epylint ${1+"$@"} 2>&1 | grep -v '\*\*\*\*\*\*\*\*\*\*\*\*\* Module' | egrep -v '^Warning:' | sed 's/^ //'
-pep257 --template='%(filename)s:%(line)s:%(code)s:%(definition)s %(short_desc)s\n' ${1+"$@"} 2>&1
+pep257 --template='%(filename)s:%(line)s:%(code)s:%(definition)s %(short_desc)s\n' ${1+"$@"} 2>&1 | grep -v Meta
 ag -s --nobreak --nocolor --noheading 'logging.(debug|info|warn|error|exception)' ${1+"$@"}
 ag --nobreak --nocolor --noheading 'assertNone' ${1+"$@"}
 ag --nobreak --nocolor --noheading 'assertNotNone' ${1+"$@"}
