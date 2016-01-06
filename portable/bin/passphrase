@@ -31,6 +31,8 @@ class Generator(object):
         special = password_length - lowercase - uppercase - numeric
         if (special < self.options.get('minimum_special')):
             return True
+        if (special > self.options.get('maximum_special', self.options.get('maximum_password_length'))):
+            return False
         return False
 
     def generate(self):
@@ -104,6 +106,13 @@ def main():
         '--minimum-special',
         dest='minimum_special',
         help='generate at least this many special characters',
+        type=int,
+        default=1
+    )
+    parser.add_argument(
+        '--maximum-special',
+        dest='maximum_special',
+        help='generate at most this many special characters',
         type=int,
         default=1
     )
