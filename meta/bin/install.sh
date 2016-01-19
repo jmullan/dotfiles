@@ -19,7 +19,7 @@ for FULLFILE in `find "$SRC_DIR" -mindepth 1 -maxdepth 1 -not -name '.git' | gre
 done
 SRC_DIR=$1"/local/"`hostname`
 if [ -e "$SRC_DIR" ] ; then
-    for FULLFILE in `find "$SRC_DIR" -mindepth 1 -maxdepth 1 -not -name '.git' | grep -v '~$' ` ; do
+    for FULLFILE in `find "$SRC_DIR" -mindepth 1 -maxdepth 1 -not -name '.git' | grep -v '~$' | grep -v '.bak'` ; do
         BASENAME=`basename "$FULLFILE"`
         LOCALFILE=`hostname`"_$BASENAME"
         echo ~/"$LOCALFILE"
