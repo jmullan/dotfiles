@@ -14,7 +14,6 @@ portable/.dircolors: submodules
 
 install: submodules portable/.dircolors portable/.emacs.d/themes/color-theme-solarized portable/bin/back
 	sh meta/bin/install.sh $(PWD)
-	emacs -batch -f batch-byte-compile submodules/js3-mode/*.el >/dev/null 2>&1
-	emacs -batch -f batch-byte-compile portable/lib/emacs/lisp/*.el >/dev/null 2>&1
+	emacs -batch -f batch-byte-compile portable/lib/emacs/lisp/*.el >/dev/null 2>&1 || true
 
 .PHONY: install submodules
