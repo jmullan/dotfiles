@@ -16,15 +16,3 @@
 [submodule "GitFlowAVH"]
 	path = submodules/gitflow
 	url = https://github.com/petervanderdoes/gitflow.git
-[submodule "js3-mode"]
-	path = submodules/js3-mode
-	url = https://github.com/thomblake/js3-mode.git
-[submodule "submodules/php-mode"]
-	path = submodules/php-mode
-	url = https://github.com/ejmr/php-mode.git
-[submodule "submodules/lua-mode"]
-	path = submodules/lua-mode
-	url = https://github.com/immerrr/lua-mode.git
-[submodule "submodules/editorconfig-emacs"]
-	path = submodules/editorconfig-emacs
-	url = git@github.com:editorconfig/editorconfig-emacs.git
