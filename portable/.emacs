@@ -10,43 +10,43 @@
   (package-initialize))
 
 (setq package-list
-      '(
-	color-theme
-	color-theme-solarized
-	column-marker
-	dash
-	editorconfig
-	editorconfig-core
-	editorconfig-fnmatch
-	epl
-	flycheck
-	flycheck-color-mode-line
-	flycheck-pyflakes
-	flymake-css
-	flymake-easy
-	flymake-jshint
-	flymake-json
-	flymake-less
-	flymake-php
-	flymake-phpcs
-	flymake-python-pyflakes
-	js3-mode
-	less-css-mode
-	let-alist
-	lua-mode
-	php-mode
-	pkg-info
-	scala-mode2
-	seq
-	sql-indent
-	)
-      )
+    '(
+         column-marker
+         dash
+         editorconfig
+         editorconfig-core
+         editorconfig-fnmatch
+         epl
+         flycheck
+         flycheck-color-mode-line
+         flycheck-pyflakes
+         flymake-css
+         flymake-easy
+         flymake-jshint
+         flymake-json
+         flymake-less
+         flymake-php
+         flymake-phpcs
+         flymake-python-pyflakes
+         js3-mode
+         less-css-mode
+         let-alist
+         lua-mode
+         php-mode
+         pkg-info
+         scala-mode2
+         seq
+         sql-indent
+         )
+    )
 
 (mapc
  (lambda (package)
    (or (package-installed-p package)
        (package-install package)))
  package-list)
+
+(editorconfig-mode 1)
 
 (defun my-docbook-settings()
     (interactive)
@@ -162,6 +162,7 @@
   (setq flymake-start-syntax-check-on-newline nil)
   (setq flymake-no-changes-timeout 5))
 
+(add-hook 'find-file-hook 'flymake-find-file-hook)
 
 ;; editorconfig hooks
 (add-hook 'editorconfig-custom-hooks
@@ -211,3 +212,21 @@
 
 ; block saving of php files unless they are syntactically valid
 (autoload 'php-lint-mode "php-lint-mode" "PHP lint mode" t)
+(add-hook 'php-mode-hook '(lambda () (php-lint-mode 1)))
+
+(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+(load-theme 'solarized t)
+(set-frame-parameter nil 'background-mode 'dark)
+(set-terminal-parameter nil 'background-mode 'dark)
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(solarized-contrast (quote high)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
