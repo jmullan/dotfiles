@@ -164,7 +164,7 @@
 
 
 ;; editorconfig hooks
-(add-to-list 'edconf-custom-hooks
+(add-hook 'editorconfig-custom-hooks
   '(lambda (props)
        (let ((max_line_length (gethash 'max_line_length props)))
            (column-marker-1
@@ -173,7 +173,7 @@
        )
     )
 
-(add-to-list 'edconf-custom-hooks
+(add-hook 'editorconfig-custom-hooks
   '(lambda (props)
        (let ((indent_size (gethash 'indent_size props)))
            (setq-default c-basic-offset
@@ -186,7 +186,7 @@
        )
     )
 
-(add-to-list 'edconf-custom-hooks
+(add-hook 'editorconfig-custom-hooks
   '(lambda (props)
        (let ((tab_width (gethash 'tab_width props)))
            (setq-default tab-width
@@ -195,7 +195,7 @@
        )
     )
 
-(add-to-list 'edconf-custom-hooks
+(add-hook 'editorconfig-custom-hooks
   '(lambda (props)
        (let ((indent_style (gethash 'indent_style props)))
            (setq-default indent-tabs-mode (eq indent_style "tab")
