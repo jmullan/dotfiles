@@ -1,15 +1,53 @@
-;;; XEmacs backwards compatibility file
-(define-coding-system-alias 'UTF-8 'utf-8)
-(setq-default indent-tabs-mode nil)
-(setq user-init-file (expand-file-name "init.el"   (expand-file-name ".xemacs" "~")))
-(setq custom-file    (expand-file-name "custom.el" (expand-file-name ".xemacs" "~")))
-(setq split-height-threshold 400)
-(setq split-width-threshold 121)
+(defun add-search-dir (path)
+  (setq load-path (cons (expand-file-name path) load-path)))
+(add-search-dir "~/lib/emacs/lisp")
 
-(defvar font-lock-preprocessor-face 'font-lock-keyword-face  "Don't even think of using this.")
+(when (>= emacs-major-version 24)
+  (require 'package)
+  (add-to-list
+   'package-archives
+   '("melpa" . "http://melpa.org/packages/") t)
+  (package-initialize))
 
-(load-file user-init-file)
-(load-file custom-file)
+(setq package-list
+      '(
+	color-theme
+	color-theme-solarized
+	column-marker
+	cs
+	dash
+	editorconfig
+	editorconfig-core
+	editorconfig-fnmatch
+	epl
+	flycheck
+	flycheck-color-mode-line
+	flycheck-pyflakes
+	flymake-css
+	flymake-easy
+	flymake-jshint
+	flymake-json
+	flymake-less
+	flymake-php
+	flymake-python-pyflakes
+	js3-mode
+	less-css-mode
+	let-alist
+	lua-mode
+	php-mode
+	pkg-info
+	scala-mode2
+	seq
+	sql-indent
+	)
+      )
+
+(mapc
+ (lambda (package)
+   (or (package-installed-p package)
+       (package-install package)))
+ package-list)
+
 (defun my-docbook-settings()
     (interactive)
     (setq sgml-indent-step 1)
@@ -18,315 +56,77 @@
     (setq sgml-default-dtd-file nil)
 )
 
-(load "~/lib/emacs/lisp/syntax")
-(load "~/lib/emacs/lisp/editorconfig")
-
-
-(add-hook
- 'sql-mode-hook
- (function
-  (lambda ()
-    ;; C-style comments /**/ (see elisp manual "Syntax Flags"))
-    (modify-syntax-entry ?/ ". 14" sql-mode-syntax-table)
-    (modify-syntax-entry ?* ". 23" sql-mode-syntax-table)
-    ;; double-dash starts comments
-    (modify-syntax-entry ?- ". 12b" sql-mode-syntax-table)
-    (modify-syntax-entry ?# "< b" sql-mode-syntax-table)
-    (modify-syntax-entry ?\n "> b" sql-mode-syntax-table)
-    ;; single quotes (`) delimit strings
-    (modify-syntax-entry ?` "\"" sql-mode-syntax-table)
-    ;; single quotes (') delimit strings
-    (modify-syntax-entry ?' "\"" sql-mode-syntax-table)
-    ;; double quotes (") don't delimit strings
-    (modify-syntax-entry ?\" "." sql-mode-syntax-table)
-    ;; backslash is no escape character
-    (modify-syntax-entry ?\\ "." sql-mode-syntax-table)
-    (setq indent-tabs-mode nil)
-    )
-  )
- )
-
-(defconst yahoo-zend-style
-  '((c-basic-offset . 4)
-
-    (my-c-continuation-offset . 8)
-
-    (c-comment-only-line-offset . (0 . 0))
-    (setq indent-tabs-mode nil)
-    (c-offsets-alist . ((inline-open . 0)
-                        (topmost-intro-cont    . 0)
-                        (statement-block-intro . +)
-                        (knr-argdecl-intro     . 5)
-                        (substatement-open     . +)
-                        (label                 . 0)
-                        (arglist-intro         . +)
-                        (arglist-cont          . 0)
-                        (arglist-close         . 0)
-                        (case-label            . +)
-                        (statement-case-open   . +)
-                        (statement-cont        . +)
-                        (access-label          . 0)
-                        )
-                     )
-    (c-echo-syntactic-information-p . t)     ; turn this on to get debug info
-    )
-  "Zend PHP Style for Yahoo")
-
-(defconst yahoo-zendjs-style
-  '((c-basic-offset . 4)
-    (setq indent-tabs-mode nil)
-    (my-c-continuation-offset . 8)
-    (c-comment-only-line-offset . (0 . 0))
-    (c-offsets-alist . (
-                        (inline-open . 0)
-                        (topmost-intro-cont    . +)
-                        (statement-block-intro . +)
-                        (knr-argdecl-intro     . 5)
-                        (substatement-open     . +)
-                        (label                 . +)
-                        (arglist-intro         . +)
-                        (arglist-cont          . 0)
-                        (arglist-close         . 0)
-                        (case-label            . +)
-                        (statement-case-open   . +)
-                        (statement-cont        . +)
-                        (access-label          . 0)
-                        (block-close           . 2)
-                        (defun-close           . 2)
-                        )
-                     )
-    (c-echo-syntactic-information-p . t)     ; turn this on to get debug info
-    )
-  "Zend Javascript Style for Yahoo")
-
-(defconst psrtwo-style
-  '((c-basic-offset . 4)
-    (my-c-continuation-offset . 8)
-    (c-comment-only-line-offset . (0 . 0))
-    (setq indent-tabs-mode nil)
-    (c-offsets-alist . ((inline-open . 0)
-                        (topmost-intro-cont    . 0)
-                        (statement-block-intro . +)
-                        (knr-argdecl-intro     . 5)
-                        (substatement-open     . 0)
-                        (label                 . 0)
-                        (arglist-intro         . +)
-                        (arglist-cont          . 0)
-                        (arglist-close         . 0)
-                        (case-label            . +)
-                        (statement-case-open   . +)
-                        (statement-cont        . +)
-                        (access-label          . 0)
-                        )
-                     )
-    (c-echo-syntactic-information-p . t)     ; turn this on to get debug info
-    )
-  "PSR2 Mode")
-
-
-(add-hook
- 'php-mode-hook
- (function
-  (lambda ()
-    (set (make-local-variable 'compile-command) (format "phpcs --report=emacs --standard=PSR2 %s" (buffer-file-name)))
-    (modify-syntax-entry ?/ ". 124b" php-mode-syntax-table)
-    (modify-syntax-entry ?* ". 23" php-mode-syntax-table)
-    (modify-syntax-entry ?# "< b" php-mode-syntax-table)
-    (modify-syntax-entry ?\n "> b" php-mode-syntax-table)
-    (setq indent-tabs-mode nil)
-    (setq c-electric-flag t)
-    (c-add-style "PSR2" psrtwo-style t)
-    )
-  )
-)
-
-(add-hook
- 'espresso-mode-hook
- (function
-  (lambda ()
-    (setq indent-tabs-mode nil)
-    (c-add-style "Zend Yahoo js" yahoo-zendjs-style t)
-    (c-echo-syntactic-information-p . t)
-;    (modify-syntax-entry ?/ "\"" espresso-mode-syntax-table)
-    )
-  )
-)
-
-
-;'("\\<\\<\\<\\" . font-lock-string-face)
-;'("\\<\\<\\<\\'([a-zA-Z\_\x7f-\xff][a-zA-Z0-9\_\x7f-\xff]*)\n.*\1" . font-lock-keyword-face)
-
-;; Note whether we're in XEmacs
-(defconst xemacsp (string-match "Lucid\\|XEmacs" emacs-version) "Non nil if using XEmacs.")
-
-(defconst php-font-lock-syntactic-keywords
-  '(
-    ("\\(<\\?php\\)" 1 "(")
-    ("\\(\\?>\\)" 1 ")")
-  )
-)
-(defvar c-echo-syntactic-information-p t)
-
-(add-to-list 'load-path "")
-(add-to-list 'load-path "~/lib/emacs/js3-mode")
-
-(autoload 'php-mode "php-mode" "PHP editing mode" t)
-(autoload 'php-lint-mode "php-lint-mode" "PHP lint mode" t)
-;(autoload 'php-electric-mode "php-electric" "PHP Electric Mode" t)
-;(autoload 'javascript-mode "javascript-mode" "JavaScript mode" t)
-
-;(autoload 'js2-mode "js2-mode" "Starting js2-mode" t)
-(autoload 'js3-mode "js3-mode" "Starting js3-mode" t)
-;(autoload 'espresso-mode "espresso" "Starting espresso-mode" t)
-
-(autoload 'css-mode "css-mode")
-(autoload 'markdown-mode "markdown-mode.el" "Major mode for editing Markdown files" t)
-
-
-(autoload 'lua-mode "lua-mode" "Lua editing mode." t)
-(add-to-list 'auto-mode-alist '("\\.lua$" . lua-mode))
-(add-to-list 'interpreter-mode-alist '("lua" . lua-mode))
-
-(load "~/lib/emacs/lisp/php-cleanup")
-;(load "~/lib/emacs/lisp/js-cleanup")
-(load "~/lib/emacs/lisp/css-cleanup")
-;(load "~/lib/emacs/lisp/less-css-mode")
-
-(setq cssm-indent-level 4)
-(setq cssm-newline-before-closing-bracket t)
-(setq cssm-indent-function #'cssm-c-style-indenter)
-(setq cssm-mirror-mode nil)
-(setq indent-tabs-mode nil)
-(setq-default show-trailing-whitespace t)
-
 (defun indent-buffer ()
     (interactive)
     (save-excursion (indent-region (point-min) (point-max) nil))
 )
-(global-set-key [f2] 'indent-buffer)
 
-
-(setq auto-mode-alist (append '(("\\.php$" . php-mode)) auto-mode-alist))
-(setq auto-mode-alist (append '(("\\.class$" . php-mode)) auto-mode-alist))
-(setq auto-mode-alist (append '(("\\.module$" . php-mode)) auto-mode-alist))
-(setq auto-mode-alist (append '(("\\.inc$" . php-mode)) auto-mode-alist))
-;(setq auto-mode-alist (append '(("\\.js$" . js2-mode)) auto-mode-alist))
-;(setq auto-mode-alist (append '(("\\.json$" . js2-mode)) auto-mode-alist))
-(setq auto-mode-alist (append '(("\\.js$" . js3-mode)) auto-mode-alist))
-(setq auto-mode-alist (append '(("\\.json$" . js3-mode)) auto-mode-alist))
-(setq auto-mode-alist (append '(("Jakefile$" . javascript-mode)) auto-mode-alist))
-(setq auto-mode-alist (append '(("\\.phtml$" . php-mode)) auto-mode-alist))
-(setq auto-mode-alist (append '(("\\.\\(htm\\|html\\)$" . nxml-mode)) auto-mode-alist))
-(setq auto-mode-alist (append '(("\\.css$" . css-mode)) auto-mode-alist))
-(setq auto-mode-alist (append '(("\\.text" . markdown-mode)) auto-mode-alist))
-(setq auto-mode-alist (append '(("\\.md" . markdown-mode)) auto-mode-alist))
-
-;; STUFF FROM DAVID
-(defun my-js2-indent-function ()
-  (interactive)
-  (save-restriction
-    (widen)
-    (let* ((inhibit-point-motion-hooks t)
-           (parse-status (save-excursion (syntax-ppss (point-at-bol))))
-           (offset (- (current-column) (current-indentation)))
-           (indentation (espresso--proper-indentation parse-status))
-           node)
-
-      (save-excursion
-
-        ;; I like to indent case and labels to half of the tab width
-        (back-to-indentation)
-        (if (looking-at "case\\s-")
-            (setq indentation (+ indentation (/ espresso-indent-level 2))))
-
-        ;; consecutive declarations in a var statement are nice if
-        ;; properly aligned, i.e:
-        ;;
-        ;; var foo = "bar",
-        ;;     bar = "foo";
-        (setq node (js2-node-at-point))
-        (when (and node
-                   (= js2-NAME (js2-node-type node))
-                   (= js2-VAR (js2-node-type (js2-node-parent node))))
-          (setq indentation (+ 4 indentation))))
-
-      (indent-line-to indentation)
-      (when (> offset 0) (forward-char offset)))))
-
-(defun my-indent-sexp ()
-  (interactive)
-  (save-restriction
-    (save-excursion
-      (widen)
-      (let* ((inhibit-point-motion-hooks t)
-             (parse-status (syntax-ppss (point)))
-             (beg (nth 1 parse-status))
-             (end-marker (make-marker))
-             (end (progn (goto-char beg) (forward-list) (point)))
-             (ovl (make-overlay beg end)))
-        (set-marker end-marker end)
-        (overlay-put ovl 'face 'highlight)
-        (goto-char beg)
-        (while (< (point) (marker-position end-marker))
-          ;; don't reindent blank lines so we don't set the "buffer
-          ;; modified" property for nothing
-          (beginning-of-line)
-          (unless (looking-at "\\s-*$")
-            (indent-according-to-mode))
-          (forward-line))
-        (run-with-timer 0.5 nil
-                        '(lambda(ovl) (delete-overlay ovl)) ovl)
-        )
-      )
-    )
-)
-
-(defun my-js2-mode-hook ()
-  (require 'espresso)
-  (setq espresso-indent-level 4
-        indent-tabs-mode nil
-        c-basic-offset 4)
-  (c-toggle-auto-state 0)
-  (c-toggle-hungry-state 1)
-  (set (make-local-variable 'indent-line-function) 'my-js2-indent-function)
-  (define-key js2-mode-map [(meta control |)] 'cperl-lineup)
-  (define-key js2-mode-map [(meta control \;)]
-    '(lambda()
-       (interactive)
-       (insert "/* -----[ ")
-       (save-excursion
-         (insert " ]----- */"))
-       ))
-  (define-key js2-mode-map [(return)] 'newline-and-indent)
-  (define-key js2-mode-map [(backspace)] 'c-electric-backspace)
-  (define-key js2-mode-map [(control d)] 'c-electric-delete-forward)
-  (define-key js2-mode-map [(control meta q)] 'my-indent-sexp)
-  (if (featurep 'js2-highlight-vars) (js2-highlight-vars-mode))
-  (message "My JS2 hook")
-)
-
-(define-key function-key-map [delete] nil)
-(global-set-key [delete] 'delete-char)
-
-;;(require 'line-numbers-mode)
-(global-linum-mode 1)
-
-(normal-erase-is-backspace-mode 0)
+;; Everything utf-8
+(define-coding-system-alias 'UTF-8 'utf-8)
+(prefer-coding-system 'utf-8)
 (setq locale-coding-system 'utf-8)
 (set-terminal-coding-system 'utf-8)
 (set-keyboard-coding-system 'utf-8)
 (set-selection-coding-system 'utf-8)
-(prefer-coding-system 'utf-8)
 
+;; default editing settings
+(setq cssm-indent-level 4)
+(setq cssm-newline-before-closing-bracket t)
+(setq cssm-indent-function #'cssm-c-style-indenter)
+(setq cssm-mirror-mode nil)
+(setq py-start-run-py-shell nil)
+(global-font-lock-mode t)
+(setq font-lock-maximum-decoration t)
+(setq-default indent-tabs-mode nil)
+(set-variable 'indent-tabs-mode nil)
+(setq indent-tabs-mode nil)
+
+;; display settings
+(column-number-mode)
+(global-linum-mode 1)
 (menu-bar-mode nil)
+(setq split-height-threshold 400)
+(setq split-width-threshold 121)
+(setq-default show-trailing-whitespace t)
 
-;;; To use this, add the following code to your .emacs file and copy
+;; key settings
+(define-key esc-map "[3~" 'delete-char)
+(define-key global-map [kp-0] "0")
+(define-key global-map [kp-1] "1")
+(define-key global-map [kp-2] "2")
+(define-key global-map [kp-3] "3")
+(define-key global-map [kp-4] "4")
+(define-key global-map [kp-5] "5")
+(define-key global-map [kp-6] "6")
+(define-key global-map [kp-7] "7")
+(define-key global-map [kp-8] "8")
+(define-key global-map [kp-9] "9")
+(define-key global-map [kp-separator] "+")
+(define-key global-map [kp-enter] "
+")
+(define-key global-map [select] 'end-of-line)
+(define-key global-map (kbd "ESC <up>") 'beginning-of-buffer)
+(define-key global-map (kbd "ESC <down>") 'end-of-buffer)
 
-(add-hook 'php-mode-hook '(lambda () (php-lint-mode 1)))
-;(eval-after-load "php-mode" '(add-hook 'php-mode-hook 'php-electric-mode))
+(normal-erase-is-backspace-mode 0)
+(define-key function-key-map [delete] nil)
+(global-set-key [delete] 'delete-char)
+(global-set-key [f2] 'indent-buffer)
 
-(require 'setnu+)
+(fset 'indent-by-four "\C-u4\C-x\C-i")
+(fset 'dedent-by-four "\C-u-4\C-x\C-i")
+(fset 'indent-by-two "\C-u2\C-x\C-i")
+(fset 'dedent-by-two "\C-u-2\C-x\C-i")
 
+(define-key input-decode-map "\e[1;6H" [S-home]) ; control-shift-home
+(define-key input-decode-map "\e[1;6F" [S-end]) ; control-shift-end
+(define-key input-decode-map "\e[1;2H" [S-up]) ; shift-home
+(define-key input-decode-map "\e[1;2F" [S-down]) ; shift-end
+(define-key input-decode-map "\e[1;2A" [S-up])
+;(global-set-key (kbd "C-c TAB") 'indent-by-four)
+;(global-set-key (kbd "C-c q") 'dedent-by-four)
+(global-set-key (kbd "C-c TAB") 'indent-by-two)
+(global-set-key (kbd "C-c q") 'dedent-by-two)
 
 ; From:
 ; http://snarfed.org/space/emacs+page+up+page+down
@@ -343,12 +143,8 @@
     (condition-case nil (scroll-down)
       (beginning-of-buffer (goto-char (point-min))))))
 
-(eval-after-load "sql" '(load-library "sql-indent"))
 
-(column-number-mode)
-(set-variable 'indent-tabs-mode nil)
-(setq indent-tabs-mode nil)
-
+;; python flymake
 (when (load "flymake" t)
   (defun flymake-pyflakes-init ()
     (let*
@@ -366,33 +162,8 @@
   (setq flymake-start-syntax-check-on-newline nil)
   (setq flymake-no-changes-timeout 5))
 
-(add-hook 'find-file-hook 'flymake-find-file-hook)
 
-(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/emacs-color-theme-solarized/")
-(load-theme 'solarized t)
-(set-frame-parameter nil 'background-mode 'dark)
-(set-terminal-parameter nil 'background-mode 'dark)
-
-(require 'flyphpcs)
-(require 'flymake-jshint-simple)
-(add-hook 'javascript-mode-hook (lambda () (flymake-mode t)))
-(require 'python)
-
-(fset 'indent-by-four "\C-u4\C-x\C-i")
-(fset 'dedent-by-four "\C-u-4\C-x\C-i")
-(fset 'indent-by-two "\C-u2\C-x\C-i")
-(fset 'dedent-by-two "\C-u-2\C-x\C-i")
-
-(define-key input-decode-map "\e[1;6H" [S-home]) ; control-shift-home
-(define-key input-decode-map "\e[1;6F" [S-end]) ; control-shift-end
-(define-key input-decode-map "\e[1;2H" [S-up]) ; shift-home
-(define-key input-decode-map "\e[1;2F" [S-down]) ; shift-end
-(define-key input-decode-map "\e[1;2A" [S-up])
-;(global-set-key (kbd "C-c TAB") 'indent-by-four)
-;(global-set-key (kbd "C-c q") 'dedent-by-four)
-(global-set-key (kbd "C-c TAB") 'indent-by-two)
-(global-set-key (kbd "C-c q") 'dedent-by-two)
-
+;; editorconfig hooks
 (add-to-list 'edconf-custom-hooks
   '(lambda (props)
        (let ((max_line_length (gethash 'max_line_length props)))
@@ -419,7 +190,7 @@
   '(lambda (props)
        (let ((tab_width (gethash 'tab_width props)))
            (setq-default tab-width
-               (string-to-number (if tab_width tab_width "8")))
+               (string-to-number (if tab_width tab_width "4")))
            )
        )
     )
@@ -433,9 +204,7 @@
        )
     )
 
-(require 'package)
-(add-to-list 'package-archives
-             '("melpa" . "http://melpa.milkbox.net/packages/") t)
-(package-initialize)
-(unless (package-installed-p 'scala-mode2)
-  (package-refresh-contents) (package-install 'scala-mode2))
+
+;(load "php-style" t t)
+;(load "gallery-template-mode" t t)
+;(setq auto-mode-alist (cons '("\\.r$" . c-mode) auto-mode-alist))

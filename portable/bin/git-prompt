@@ -13,8 +13,13 @@ if [ -f "$GIT_DIR/MERGE_HEAD" ] ; then
     MERGING="MERGING"
     MERGE_HEAD="$(cat "$GIT_DIR/MERGE_HEAD")"
 fi
-ADDED=`git diff --numstat $TRACKING | total`
-DELETED=`git diff --numstat $TRACKING | awk '{print $2}' | total`
+if [ -n "$TRACKING" ] ; then
+    ADDED=`git diff --numstat $TRACKING | total`
+    DELETED=`git diff --numstat $TRACKING | awk '{print $2}' | total`
+else
+    ADDED=0
+    DELETED=0
+fi
 GROSS=`expr $ADDED + $DELETED`
 NET=`expr $ADDED - $DELETED`
 ORIGIN_DIFF_STATS=`echo -n "+$ADDED -$DELETED =$NET ($GROSS)"`
@@ -64,21 +69,26 @@ if [ "$BEHIND" -gt 0 ] ; then
     echo -n " $(tput setaf 1)BEHIND $BEHIND$(tput sgr0)";
 fi
 FEATURE=`git rev-parse --abbrev-ref HEAD | grep ^feature/`
-ORIGIN_DEVELOP=`git for-each-ref --format='%(refname:short)' refs/heads refs/remotes/origin | grep ^origin/develop$`
-if [ -n "$FEATURE" -a -n "$ORIGIN_DEVELOP" -a "$TRACKING" != "$ORIGIN_DEVELOP" ] ; then
-    BEHIND=`git behind origin/develop`
-    AHEAD=`git ahead origin/develop`
-    if [ "$BEHIND" -gt 0 -o "$AHEAD" -gt 0 ] ; then
-        echo -n ' ( o/d'
+REMOTE=`git remote`
+if [ -n "$REMOTE" ] ; then
+    ORIGIN_DEVELOP=`git for-each-ref --format='%(refname:short)' refs/heads refs/remotes/origin | grep ^origin/develop$`
+    if [ -n "$FEATURE" -a -n "$ORIGIN_DEVELOP" -a "$TRACKING" != "$ORIGIN_DEVELOP" ] ; then
+        BEHIND=`git behind origin/develop`
+        AHEAD=`git ahead origin/develop`
+        if [ "$BEHIND" -gt 0 -o "$AHEAD" -gt 0 ] ; then
+            echo -n ' ( o/d'
+        fi
+        if [ "$AHEAD" -gt 0 ] ; then
+            echo -n " +$AHEAD"
+        fi
+        if [ "$BEHIND" -gt 0 ] ; then
+            echo -n " -$BEHIND"
+        fi
+        if [ "$BEHIND" -gt 0 -o "$AHEAD" -gt 0 ] ; then
+            echo -n ' )'
+        fi
     fi
-    if [ "$AHEAD" -gt 0 ] ; then
-        echo -n " +$AHEAD"
-    fi
-    if [ "$BEHIND" -gt 0 ] ; then
-        echo -n " -$BEHIND"
-    fi
-    if [ "$BEHIND" -gt 0 -o "$AHEAD" -gt 0 ] ; then
-        echo -n ' )'
-    fi
+else
+    echo -n " $(tput setaf 1)NO REMOTE$(tput sgr0)";
 fi
 echo -n " ]"
