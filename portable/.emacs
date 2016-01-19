@@ -14,7 +14,6 @@
 	color-theme
 	color-theme-solarized
 	column-marker
-	cs
 	dash
 	editorconfig
 	editorconfig-core
@@ -29,6 +28,7 @@
 	flymake-json
 	flymake-less
 	flymake-php
+	flymake-phpcs
 	flymake-python-pyflakes
 	js3-mode
 	less-css-mode
@@ -208,3 +208,6 @@
 ;(load "php-style" t t)
 ;(load "gallery-template-mode" t t)
 ;(setq auto-mode-alist (cons '("\\.r$" . c-mode) auto-mode-alist))
+
+; block saving of php files unless they are syntactically valid
+(autoload 'php-lint-mode "php-lint-mode" "PHP lint mode" t)
