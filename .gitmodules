@@ -12,7 +12,7 @@
 	url = https://gist.github.com/7933924.git
 [submodule "submodules/git-helpers"]
 	path = submodules/git-helpers
-	url = https://github.com:jmullan/git-helpers.git
+	url = https://github.com/jmullan/git-helpers.git
 [submodule "GitFlowAVH"]
 	path = submodules/gitflow
 	url = https://github.com/petervanderdoes/gitflow.git
