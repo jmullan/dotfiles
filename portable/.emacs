@@ -29,6 +29,8 @@
          flymake-phpcs
          flymake-python-pyflakes
          js3-mode
+         json-mode
+         json-reformat
          less-css-mode
          let-alist
          lua-mode
@@ -230,3 +232,6 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
+
+(setq auto-mode-alist (append '(("\\.arcconfig" . json-mode)) auto-mode-alist))
+(setq auto-mode-alist (append '(("\\.arclint" . json-mode)) auto-mode-alist))

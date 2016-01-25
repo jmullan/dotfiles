@@ -1,15 +1,30 @@
 #!/bin/bash
 trap exit SIGHUP SIGINT SIGTERM
-pyflakes ${1+"$@"}
-pep8 ${1+"$@"}
-epylint ${1+"$@"} 2>&1 | grep -v '\*\*\*\*\*\*\*\*\*\*\*\*\* Module' | egrep -v '^Warning:' | sed 's/^ //'
-pep257 --template='%(filename)s:%(line)s:%(code)s:%(definition)s %(short_desc)s\n' ${1+"$@"} 2>&1 | grep -v Meta
-ag -s --nobreak --nocolor --noheading 'logging.(debug|info|warn|error|exception)' ${1+"$@"}
-ag --nobreak --nocolor --noheading 'assertNone' ${1+"$@"}
-ag --nobreak --nocolor --noheading 'assertNotNone' ${1+"$@"}
-isort -rc --check-only ${1+"$@"} | sed 's/^ERROR: //' | sed 's/ \(Imports are incorrectly sorted.\)/:0:0:\1/'
+[ `which pyflakes` ] && pyflakes ${1+"$@"}
+[ `which pep8` ] && pep8 ${1+"$@"}
+[ `which epylint` ] && epylint ${1+"$@"} 2>&1 | grep -v '\*\*\*\*\*\*\*\*\*\*\*\*\* Module' | egrep -v '^Warning:' | sed 's/^ //'
+[ `which pep257` ] && pep257 --template='%(filename)s:%(line)s:%(code)s:%(definition)s %(short_desc)s\n' ${1+"$@"} 2>&1 | grep -v Meta
+[ `which ags` ] && ag -s --nobreak --nocolor --noheading 'logging.(debug|info|warn|error|exception)' ${1+"$@"}
+[ `which ag` ] && ag --nobreak --nocolor --noheading 'assertNone' ${1+"$@"}
+[ `which ag` ] && ag --nobreak --nocolor --noheading 'assertNotNone' ${1+"$@"}
+[ `which isort` ] && isort -rc --check-only ${1+"$@"} | sed 's/^ERROR: //' | sed 's/ \(Imports are incorrectly sorted.\)/:0:0:\1/'
 if [ -e "vulture.txt" ] ; then
     for i in ${1+"$@"}; do
-        grep $i vulture.txt
+        grep "$i" vulture.txt
+    done
+fi
+COVERAGE=`find_up .coverage`
+if [ -n "${COVERAGE}" ] ; then
+    CWD=`pwd`/
+    COVERAGE_DIR="${COVERAGE%/*}/"
+    PATH_TO_CWD="${CWD##$COVERAGE_DIR}"
+    cd "${COVERAGE_DIR}"
+    for i in ${1+"$@"}; do
+        if [ -n "${PATH_TO_CWD}" ] ; then
+            FILENAME="${PATH_TO_CWD}${i}"
+        else
+            FILENAME="${i}"
+        fi
+         [ `which coverage` ] && coverage report -m --skip-covered | coverage_report_to_line_error.py "$FILENAME"
     done
 fi

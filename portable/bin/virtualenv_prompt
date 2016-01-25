@@ -1,9 +1,32 @@
 #!/bin/bash
-if [[ -n "$VIRTUAL_ENV" ]]; then
-    # Strip out the path and just leave the env name
-    venv="${VIRTUAL_ENV##*/}"
-else
-    # In case you don't have one activated
-    venv=''
+EXPECTED_VENV=
+ACTUAL_VENV=
+VENV_FILE=`find_up .venv`
+if [ -n "$VENV_FILE" ] ; then
+    EXPECTED_VENV=`cat "$VENV_FILE"`
 fi
-[[ -n "$venv" ]] && echo -n "(venv:$venv)"
+if [ -n "$VIRTUAL_ENV" ]; then
+    # Strip out the path and just leave the env name
+    ACTUAL_VENV="${VIRTUAL_ENV##*/}"
+fi
+if [ -n "$EXPECTED_VENV" ] ; then
+    echo -n '( '
+    if [ -n "$ACTUAL_VENV" ] ; then
+        if [ "$ACTUAL_VENV" == "$EXPECTED_VENV" ] ; then
+            echo -n "venv:$ACTUAL_VENV"
+        else
+            echo -n "$(tput setaf 1)"
+            echo -n "INCORRECT VENV $ACTUAL_VENV : workon $EXPECTED_VENV"
+            echo -n "$(tput sgr0)"
+        fi
+    else
+        echo -n "$(tput setaf 3)"
+        echo -n "workon $EXPECTED_VENV"
+        echo -n "$(tput sgr0)"
+    fi
+    echo -n ' ) '
+else
+    if [ -n "$ACTUAL_VENV" ] ; then
+        echo -n " ( venv:$ACTUAL_VENV ) "
+    fi
+fi

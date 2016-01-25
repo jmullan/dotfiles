@@ -4,7 +4,7 @@ git gc
 SEARCHES=(
     "*~"
     "*.bak"
-    "*_flymake.py"
+    "*_flymake.*"
     "*.pyc"
     ".DS_Store"
     "#*#"

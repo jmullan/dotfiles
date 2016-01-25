@@ -1,0 +1,14 @@
+#!/bin/bash
+if [ -z "$1" ] ; then
+    echo "No file to search for" >&2
+    exit 1
+fi
+path=$(pwd)
+while [[ "$path" != "" && ! -e "$path/$1" ]]; do
+  path=${path%/*}
+done
+if [ -e "$path/$1" ]; then
+    echo "$path/$1"
+else
+    exit 1
+fi
