@@ -5,14 +5,17 @@ VENV_FILE=`find_up .venv`
 if [ -n "$VENV_FILE" ] ; then
     EXPECTED_VENV=`cat "$VENV_FILE"`
 fi
+if [ -n "${WORKON_HOME}" ] ; then
+    AVAILABLE_VENV=`ls -1 "${WORKON_HOME}" | grep "${EXPECTED_VENV}"`
+fi
 if [ -n "$VIRTUAL_ENV" ]; then
     # Strip out the path and just leave the env name
     ACTUAL_VENV="${VIRTUAL_ENV##*/}"
 fi
-if [ -n "$EXPECTED_VENV" ] ; then
+if [ -n "${EXPECTED_VENV}" ] ; then
     echo -n '( '
-    if [ -n "$ACTUAL_VENV" ] ; then
-        if [ "$ACTUAL_VENV" == "$EXPECTED_VENV" ] ; then
+    if [ -n "${ACTUAL_VENV}" ] ; then
+        if [ "${ACTUAL_VENV}" == "${EXPECTED_VENV}" ] ; then
             echo -n "venv:$ACTUAL_VENV"
         else
             echo -n "$(tput setaf 1)"
@@ -20,13 +23,25 @@ if [ -n "$EXPECTED_VENV" ] ; then
             echo -n "$(tput sgr0)"
         fi
     else
-        echo -n "$(tput setaf 3)"
-        echo -n "workon $EXPECTED_VENV"
-        echo -n "$(tput sgr0)"
+	if [ -z "${AVAILABLE_VENV}" ] ; then
+            echo -n "$(tput setaf 1)"
+	    echo -n " ( mkvirtualenv ${EXPECTED_VENV} ) "
+            echo -n "$(tput sgr0)"
+	else
+            echo -n "$(tput setaf 3)"
+            echo -n "workon $EXPECTED_VENV"
+            echo -n "$(tput sgr0)"
+	fi
     fi
     echo -n ' ) '
 else
-    if [ -n "$ACTUAL_VENV" ] ; then
-        echo -n " ( venv:$ACTUAL_VENV ) "
+    if [ -n "${ACTUAL_VENV}" ] ; then
+	if [ -z "${AVAILABLE_VENV}" ] ; then
+            echo -n "$(tput setaf 1)"
+	    echo -n " ( mkvirtualenv ${EXPECTED_VENV} ) "
+            echo -n "$(tput sgr0)"
+        else
+            echo -n " ( venv:${ACTUAL_VENV} ) "
+	fi
     fi
 fi
