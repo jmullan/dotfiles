@@ -7,7 +7,7 @@ trap exit SIGHUP SIGINT SIGTERM
 [ `which ags` ] && ag -s --nobreak --nocolor --noheading 'logging.(debug|info|warn|error|exception)' ${1+"$@"}
 [ `which ag` ] && ag --nobreak --nocolor --noheading 'assertNone' ${1+"$@"}
 [ `which ag` ] && ag --nobreak --nocolor --noheading 'assertNotNone' ${1+"$@"}
-[ `which isort` ] && isort -rc --check-only ${1+"$@"} | sed 's/^ERROR: //' | sed 's/ \(Imports are incorrectly sorted.\)/:0:0:\1/'
+[ `which isort` ] && isort -q -rc --check-only ${1+"$@"} | sed 's/^ERROR: //' | sed 's/ \(Imports are incorrectly sorted.\)/:0:0:\1/'
 if [ -e "vulture.txt" ] ; then
     for i in ${1+"$@"}; do
         grep "$i" vulture.txt
@@ -25,6 +25,6 @@ if [ -n "${COVERAGE}" ] ; then
         else
             FILENAME="${i}"
         fi
-         [ `which coverage` ] && coverage report -m --skip-covered | coverage_report_to_line_error.py "$FILENAME"
+        [ `which coverage` ] && coverage report -m --skip-covered | coverage_report_to_line_error.py "$FILENAME"
     done
 fi

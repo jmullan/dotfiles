@@ -65,14 +65,17 @@ def main():
         uncovered = int(match.group('uncovered'))
         if not uncovered:
             continue
-        percent = int(match.group('percent'))
+        # percent = int(match.group('percent'))
         ranges = match.group('ranges').split(', ')
         results[filename] = ranges
 
     if args:
         for filename in args:
+            flymake_name = filename.replace('.py', '_flymake.py')
             if filename in results:
                 dump(filename, results[filename])
+            elif flymake_name in results:
+                dump(flymake_name, results[filename])
 
 if __name__ == "__main__":
     main()
