@@ -11,6 +11,7 @@
 
 (setq package-list
     '(
+         color-theme-solarized
          column-marker
          dash
          editorconfig
