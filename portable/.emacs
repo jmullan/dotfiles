@@ -35,6 +35,7 @@
          less-css-mode
          let-alist
          lua-mode
+         markdown-mode
          php-mode
          pkg-info
          scala-mode2

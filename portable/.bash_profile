@@ -122,3 +122,14 @@ fi
 
 # OPAM configuration
 . /home/jmullan/.opam/opam-init/init.sh > /dev/null 2> /dev/null || true
+
+if which pip >/dev/null; then
+    mkdir -p "${HOME}/.cache/pip/wheelhouse"
+    export STANDARD_CACHE_DIR="${XDG_CACHE_HOME:-${HOME}/.cache}/pip"
+    export WHEELHOUSE="${STANDARD_CACHE_DIR}/wheelhouse"
+    export PIP_FIND_LINKS="file://${WHEELHOUSE}"
+    export PIP_WHEEL_DIR="${WHEELHOUSE}"
+
+    mkdir -p "${HOME}/.cache/pip/packages"
+    export PIP_DOWNLOAD_CACHE="${HOME}/.cache/pip/packages"
+fi
