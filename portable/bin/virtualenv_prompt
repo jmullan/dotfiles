@@ -25,7 +25,7 @@ if [ -n "${EXPECTED_VENV}" ] ; then
     else
 	if [ -z "${AVAILABLE_VENV}" ] ; then
             echo -n "$(tput setaf 1)"
-	    echo -n " ( mkvirtualenv ${EXPECTED_VENV} ) "
+	    echo -n "mkvirtualenv ${EXPECTED_VENV}"
             echo -n "$(tput sgr0)"
 	else
             echo -n "$(tput setaf 3)"
@@ -38,10 +38,10 @@ else
     if [ -n "${ACTUAL_VENV}" ] ; then
 	if [ -z "${AVAILABLE_VENV}" ] ; then
             echo -n "$(tput setaf 1)"
-	    echo -n " ( mkvirtualenv ${EXPECTED_VENV} ) "
+	    echo -n "mkvirtualenv ${EXPECTED_VENV}"
             echo -n "$(tput sgr0)"
         else
-            echo -n " ( venv:${ACTUAL_VENV} ) "
+            echo -n " venv:${ACTUAL_VENV} "
 	fi
     fi
 fi
