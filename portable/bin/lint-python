@@ -1,7 +1,13 @@
 #!/bin/bash
+#set -x
+
 trap exit SIGHUP SIGINT SIGTERM
 [ `which pyflakes` ] && pyflakes ${1+"$@"}
+[ `which flake8` ] && flake8 ${1+"$@"}
 [ `which pep8` ] && pep8 ${1+"$@"}
+# [ `which pyroma` ] && pyroma ${1+"$@"}
+[ `which frosted` ] && frosted -r ${1+"$@"}
+[ `which mccabe` ] && mccabe ${1+"$@"}
 [ `which epylint` ] && epylint ${1+"$@"} 2>&1 | grep -v '\*\*\*\*\*\*\*\*\*\*\*\*\* Module' | egrep -v '^Warning:' | sed 's/^ //' | grep -v '^$'
 [ `which pep257` ] && pep257 --template='%(filename)s:%(line)s:%(code)s:%(definition)s %(short_desc)s\n' ${1+"$@"} 2>&1 | grep -v Meta
 [ `which ags` ] && ag -s --nobreak --nocolor --noheading 'logging.(debug|info|warn|error|exception)' ${1+"$@"}
