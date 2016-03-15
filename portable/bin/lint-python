@@ -1,5 +1,8 @@
 #!/bin/bash
-#set -x
+# set -x
+
+# remoting/api/sibyl.py:74: refactor (R0201, no-self-use, SibylApiV1.browseAction) Method could be a function
+TEMPLATE='{path}:{line}: {category} ({msg_id}, {symbol}, {obj}) {msg}'
 
 trap exit SIGHUP SIGINT SIGTERM
 [ `which pyflakes` ] && pyflakes ${1+"$@"}
@@ -8,7 +11,7 @@ trap exit SIGHUP SIGINT SIGTERM
 # [ `which pyroma` ] && pyroma ${1+"$@"}
 [ `which frosted` ] && frosted -r ${1+"$@"}
 [ `which mccabe` ] && mccabe ${1+"$@"}
-[ `which epylint` ] && epylint ${1+"$@"} 2>&1 | grep -v '\*\*\*\*\*\*\*\*\*\*\*\*\* Module' | egrep -v '^Warning:' | sed 's/^ //' | grep -v '^$'
+[ `which pylint` ] && pylint -r n --msg-template="${TEMPLATE}" ${1+"$@"} 2>&1 | grep -v '\*\*\*\*\*\*\*\*\*\*\*\*\* Module' | sed 's/^ //' | grep -v '^$'
 [ `which pep257` ] && pep257 --template='%(filename)s:%(line)s:%(code)s:%(definition)s %(short_desc)s\n' ${1+"$@"} 2>&1 | grep -v Meta
 [ `which ags` ] && ag -s --nobreak --nocolor --noheading 'logging.(debug|info|warn|error|exception)' ${1+"$@"}
 [ `which ag` ] && ag --nobreak --nocolor --noheading 'assertNone' ${1+"$@"}
