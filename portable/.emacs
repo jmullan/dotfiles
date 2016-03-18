@@ -162,9 +162,13 @@
                '("\\.py\\'" flymake-pyflakes-init)))
 
 (when (require 'flymake)
-  (set-variable 'flymake-log-level 9)
-  (setq flymake-start-syntax-check-on-newline nil)
-  (setq flymake-no-changes-timeout 5))
+    (set-variable 'flymake-log-level 9)
+    (setq flymake-start-syntax-check-on-newline nil)
+    (setq flymake-no-changes-timeout 5))
+
+(custom-set-variables
+    '(help-at-pt-timer-delay 0.25)
+    '(help-at-pt-display-when-idle '(flymake-overlay)))
 
 (add-hook 'find-file-hook 'flymake-find-file-hook)
 
