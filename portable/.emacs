@@ -29,6 +29,7 @@
          flymake-php
          flymake-phpcs
          flymake-python-pyflakes
+         flymake-yaml
          js3-mode
          json-mode
          json-reformat
@@ -41,6 +42,8 @@
          scala-mode2
          seq
          sql-indent
+         yaml-mode
+         yaml-tomato
          )
     )
 
@@ -171,6 +174,8 @@
     '(help-at-pt-display-when-idle '(flymake-overlay)))
 
 (add-hook 'find-file-hook 'flymake-find-file-hook)
+
+(add-to-list 'auto-mode-alist '("\\.pyi\\'" . python-mode))
 
 ;; editorconfig hooks
 (add-hook 'editorconfig-custom-hooks
