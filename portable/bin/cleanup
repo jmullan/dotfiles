@@ -2,12 +2,15 @@
 git prune
 git gc
 SEARCHES=(
+    "*.class"
+    "*.cache*"
     "*~"
     "*.bak"
     "*_flymake.*"
     "*.pyc"
     ".DS_Store"
     "#*#"
+    "*__pycache__*"
 )
 for SEARCH in "${SEARCHES[@]}"; do
     find . -name "${SEARCH}" -delete

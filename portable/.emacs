@@ -1,3 +1,4 @@
+
 (defun add-search-dir (path)
   (setq load-path (cons (expand-file-name path) load-path)))
 (add-search-dir "~/lib/emacs/lisp")
@@ -21,15 +22,6 @@
          flycheck
          flycheck-color-mode-line
          flycheck-pyflakes
-         flymake-css
-         flymake-easy
-         flymake-jshint
-         flymake-json
-         flymake-less
-         flymake-php
-         flymake-phpcs
-         flymake-python-pyflakes
-         flymake-yaml
          js3-mode
          json-mode
          json-reformat
@@ -150,30 +142,9 @@
     (condition-case nil (scroll-down)
       (beginning-of-buffer (goto-char (point-min))))))
 
-
-;; python flymake
-(when (load "flymake" t)
-  (defun flymake-pyflakes-init ()
-    (let*
-        ((temp-file (flymake-init-create-temp-buffer-copy
-                     'flymake-create-temp-inplace))
-         (local-file (file-relative-name
-                      temp-file
-                      (file-name-directory buffer-file-name))))
-      (list "lint-python" (list local-file))))
-  (add-to-list 'flymake-allowed-file-name-masks
-               '("\\.py\\'" flymake-pyflakes-init)))
-
-(when (require 'flymake)
-    (set-variable 'flymake-log-level 9)
-    (setq flymake-start-syntax-check-on-newline nil)
-    (setq flymake-no-changes-timeout 5))
-
 (custom-set-variables
     '(help-at-pt-timer-delay 0.25)
     '(help-at-pt-display-when-idle '(flymake-overlay)))
-
-(add-hook 'find-file-hook 'flymake-find-file-hook)
 
 (add-to-list 'auto-mode-alist '("\\.pyi\\'" . python-mode))
 
@@ -227,6 +198,14 @@
 (autoload 'php-lint-mode "php-lint-mode" "PHP lint mode" t)
 (add-hook 'php-mode-hook '(lambda () (php-lint-mode 1)))
 
+; java stuff
+
+(defun java-indent-setup ()
+    (c-set-offset 'arglist-intro '+))
+(add-hook 'java-mode-hook 'java-indent-setup)
+
+
+
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 (load-theme 'solarized t)
 (set-frame-parameter nil 'background-mode 'dark)
@@ -246,3 +225,73 @@
 
 (setq auto-mode-alist (append '(("\\.arcconfig" . json-mode)) auto-mode-alist))
 (setq auto-mode-alist (append '(("\\.arclint" . json-mode)) auto-mode-alist))
+(setq auto-mode-alist (append '(("\\.apib" . markdown-mode)) auto-mode-alist))
+
+
+;; flycheck stuff
+;collections/src/main/java/com/savagebeast/collections/clustr/CollectionsClustrInitializer.java:82:86: warning: '+' should be on a new line.
+
+(when (load "flycheck" t)
+    (flycheck-define-checker python-checker "Check yer python"
+        :command ("lint-python" source)
+        :error-patterns
+        (
+            (error line-start
+                (file-name)
+                ":"
+                line
+                ":"
+                column
+                ":"
+                (minimal-match (message))
+                line-end
+                )
+            (error line-start
+                (file-name)
+                ":"
+                line
+                ":"
+                (minimal-match (message))
+                line-end
+                )
+            )
+        :modes (python-mode cpython-mode))
+
+
+        (flycheck-define-checker java-checker "Check yer java"
+        :command ("lint-java" source-original)
+        :error-patterns
+        (
+            (error line-start
+                (file-name)
+                ":"
+                line
+                ":"
+                column
+                ": "
+                (message)
+                line-end
+                )
+            (error line-start
+                (file-name)
+                ":"
+                line
+                ": "
+                (minimal-match (message))
+                line-end
+                )
+            )
+        :modes (java-mode))
+
+    (add-to-list 'flycheck-checkers 'python-checker)
+    (add-to-list 'flycheck-checkers 'java-checker)
+
+    (setq flycheck-highlighting-mode 'lines)
+    )
+
+;; (warning line-start (file-name) ":" line ":" column ": W: " (optional (id (one-or-more (not (any ":")))) ": ") (message) line-end)
+;; (error line-start (file-name) ":" line ":" column ": " (or "E" "F") ": " (optional (id (one-or-more (not (any ":")))) ": ") (message) line-end))
+(add-hook 'after-init-hook #'global-flycheck-mode)
+
+(provide '.emacs)
+;;; .emacs ends here

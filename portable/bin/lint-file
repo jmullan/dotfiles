@@ -1,0 +1,15 @@
+#!/bin/bash
+FILENAME="$1"
+EXTENSION="${FILENAME##*.}"
+
+case "${EXTENSION}" in
+    "py")
+        lint-python "${FILENAME}"
+        x=$?
+        ;;
+    "java")
+        lint-java "${FILENAME}"
+        x=$?
+        ;;
+esac
+exit $x

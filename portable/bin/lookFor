@@ -40,6 +40,7 @@ find "$ROOT" \
     ! -iname "#*#" \
     ! -iname "*.fail.html" \
     ! -iname "*.pyc" \
+    ! -iname "*.class" \
     ! -iname "*.min.js" \
     -name "*$@*" \
     \) \

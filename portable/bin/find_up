@@ -3,12 +3,18 @@ if [ -z "$1" ] ; then
     echo "No file to search for" >&2
     exit 1
 fi
-path=$(pwd)
-while [[ "$path" != "" && ! -e "$path/$1" ]]; do
-  path=${path%/*}
+if [ "$#" -eq 2 ]; then
+    path="${1}"
+    target="${2}"
+else
+    path=$(pwd)
+    target="${1}"
+fi
+while [[ "$path" != "" && ! -e "$path/$target" ]]; do
+    path=${path%/*}
 done
-if [ -e "$path/$1" ]; then
-    echo "$path/$1"
+if [ -e "$path/$target" ]; then
+    echo "$path/$target"
 else
     exit 1
 fi

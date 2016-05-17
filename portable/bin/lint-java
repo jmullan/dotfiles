@@ -1,0 +1,39 @@
+#!/bin/bash
+
+trap exit SIGHUP SIGINT SIGTERM
+
+if [ "$#" -lt 1 ]; then
+    echo "No java files specified"
+    exit
+fi
+
+EMACS=`ps | grep emacs | wc -l | sed 's/ //g'`
+
+if [ "$EMACS" == 1 ] ; then
+    cleanup > /dev/null 2>/dev/null
+fi
+
+TMPFILE=`mktemp /tmp/example.XXXXXXXXXX`
+for x in ${1+"$@"}; do
+    CHECKSTYLE_CONFIG_PATH=`find_up "${x}" config/checkstyle/checkstyle.xml`
+    CWD=`pwd`/
+    if [ -n "${CHECKSTYLE_CONFIG_PATH}" ] ; then
+        [ `which checkstyle` ] && checkstyle -c "${CHECKSTYLE_CONFIG_PATH}" "${x}" \
+                | grep -v '^Starting audit...$' \
+                | grep -v '^Audit done.$' \
+                | sed "s#${CWD}##" >> $TMPFILE
+    fi
+done
+if [ -s "$TMPFILE" ] ; then
+    cat "$TMPFILE"
+    ERROR=1
+else
+    ERROR=0
+fi
+rm "$TMPFILE"
+exit 1
+if [ "$ERROR" == 0 ] ; then
+    exit
+else
+    exit 1
+fi
