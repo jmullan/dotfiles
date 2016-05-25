@@ -23,36 +23,46 @@ else
     fi
 fi
 
-OLD_IFS="$IFS"
-POSSIBLE_PATHS="/opt/icon/bin:/usr/local/share/python:/usr/local/bin:/usr/local/icon/bin:/usr/local/sbin:${HOME}/src/hadoop:${HOME}/bin/ec2/bin:/cygdrive/c/Program Files (x86)/CollabNet/Subversion Client:/cygdrive/c/imvu/Reactor/Core/mysql/bin:/cygdrive/c/Program Files/Java/jdk1.6.0_21/bin:/usr/local/mysql/bin/:${HOME}/.local/bin/"
-IFS=":"
-for p in $POSSIBLE_PATHS; do
+POSSIBLE_PATHS=(
+    "/opt/icon/bin"
+    "/usr/local/share/python"
+    "/usr/local/bin"
+    "/usr/local/icon/bin"
+    "/usr/local/sbin"
+    "${HOME}/src/hadoop"
+    "${HOME}/bin/ec2/bin"
+    "/cygdrive/c/Program Files (x86)/CollabNet/Subversion Client"
+    "/cygdrive/c/imvu/Reactor/Core/mysql/bin"
+    "/cygdrive/c/Program Files/Java/jdk1.6.0_21/bin"
+    "/usr/local/mysql/bin/"
+    "${HOME}/.local/bin/"
+    "$HOME/bin"
+)
+for p in "${POSSIBLE_PATHS[@]}"; do
     if [ -d "$p" ] ; then
         export PATH="${p}:${PATH}"
     fi
 done
-IFS="$OLD_IFS"
 
 for _DIR in `find -L $HOME -maxdepth 1 -mindepth 1 -name 'bin-*' -type d` ; do
-    export PATH=$_DIR:"${PATH}";
+    export PATH="${_DIR}:${PATH}";
 done
 
 if [ -e $HOME/bin ] ; then
     for _DIR in `find -L $HOME/bin -maxdepth 1 -mindepth 1 -type d` ; do
-        export PATH=$_DIR:"${PATH}";
+        export PATH="${_DIR}:${PATH}";
     done
-    export PATH=$HOME/bin:"${PATH}"
 fi
 
 if [ -e $HOME/src ] ; then
     for _DIR in `find -L $HOME/src -maxdepth 1 -mindepth 1 -name 'bin-*' -type d` ; do
-        export PATH=$_DIR:"${PATH}";
+        export PATH="${_DIR}:${PATH}";
     done
 fi
 
 if [ -e $HOME/lib/python ] ; then
     for _DIR in `find -L $HOME/lib/python -maxdepth 1 -mindepth 1 -type d` ; do
-        export PYTHONPATH=$_DIR:"${PATH}";
+        export PYTHONPATH="${_DIR}:${PYTHONPATH}";
     done
 fi
 
