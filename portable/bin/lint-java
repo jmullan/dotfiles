@@ -31,7 +31,6 @@ else
     ERROR=0
 fi
 rm "$TMPFILE"
-exit 1
 if [ "$ERROR" == 0 ] ; then
     exit
 else

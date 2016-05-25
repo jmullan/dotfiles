@@ -22,6 +22,7 @@
          flycheck
          flycheck-color-mode-line
          flycheck-pyflakes
+         groovy-mode
          js3-mode
          json-mode
          json-reformat
@@ -226,6 +227,7 @@
 (setq auto-mode-alist (append '(("\\.arcconfig" . json-mode)) auto-mode-alist))
 (setq auto-mode-alist (append '(("\\.arclint" . json-mode)) auto-mode-alist))
 (setq auto-mode-alist (append '(("\\.apib" . markdown-mode)) auto-mode-alist))
+(setq auto-mode-alist (append '(("\\.gradle" . groovy-mode)) auto-mode-alist))
 
 
 ;; flycheck stuff
