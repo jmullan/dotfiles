@@ -108,6 +108,11 @@ fi
 if [ -d /usr/local/mysql/bin/ ] ; then
     export PATH=/usr/local/mysql/bin/:"${PATH}";
 fi
+
+if [ -d .local/bin/ ] ; then
+    export PATH=.local/bin/:"${PATH}";
+fi
+
 test -r /sw/bin/init.sh && . /sw/bin/init.sh
 
 alias nodeunit=node_modules/nodeunit/bin/nodeunit
