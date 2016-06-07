@@ -34,8 +34,8 @@ POSSIBLE_PATHS=(
     "/cygdrive/c/Program Files (x86)/CollabNet/Subversion Client"
     "/cygdrive/c/imvu/Reactor/Core/mysql/bin"
     "/cygdrive/c/Program Files/Java/jdk1.6.0_21/bin"
-    "/usr/local/mysql/bin/"
-    "${HOME}/.local/bin/"
+    "/usr/local/mysql/bin"
+    "${HOME}/.local/bin"
     "$HOME/bin"
 )
 for p in "${POSSIBLE_PATHS[@]}"; do
