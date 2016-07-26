@@ -13,6 +13,18 @@ if [ "$EMACS" == 1 ] ; then
     cleanup > /dev/null 2>/dev/null
 fi
 
+PMDRULESFILE=`find_up .pmdrules`
+if [ -n "${PMDRULESFILE}" ] ; then
+    if [ -e ~/.pmdrules ] ; then
+        PMDRULESFILE=~/.pmdrules
+    fi
+fi
+if [ -z "${PMDRULESFILE}" ] ; then
+    PMDRULES=`cat "${PMDRULESFILE}" | tr '\n' ',' | sed 's/,$/\n/'`
+else
+    PMDRULES=java-imports,java-unusedcode
+fi
+
 TMPFILE=`mktemp /tmp/example.XXXXXXXXXX`
 for x in ${1+"$@"}; do
     CHECKSTYLE_CONFIG_PATH=`find_up "${x}" config/checkstyle/checkstyle.xml`
@@ -22,6 +34,10 @@ for x in ${1+"$@"}; do
                 | grep -v '^Starting audit...$' \
                 | grep -v '^Audit done.$' \
                 | sed "s#${CWD}##" >> $TMPFILE
+        [ `which pmd` ] && pmd pmd -f emacs \
+                               -rulesets "${PMDRULES}" \
+                               -encoding UTF-8 \
+                               -d "${x}" >> $TMPFILE
     fi
 done
 if [ -s "$TMPFILE" ] ; then
@@ -31,6 +47,7 @@ else
     ERROR=0
 fi
 rm "$TMPFILE"
+
 if [ "$ERROR" == 0 ] ; then
     exit
 else

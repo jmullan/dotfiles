@@ -2,9 +2,11 @@
 import argparse
 import random
 import re
-import string
+import sys
+
 
 FILENAME = '/usr/share/dict/words'
+
 
 class Generator(object):
     def __init__(self, options):
@@ -16,9 +18,13 @@ class Generator(object):
         if self.password is None:
             return True
         password_length = len(self.password)
-        if (password_length < self.options.get('minimum_password_length')
-                  and password_length > self.options.get('maximum_password_length')):
-              return True
+        minimum_length = self.options.get('minimum_password_length')
+        maximum_length = self.options.get('maximum_password_length')
+        if (
+                password_length < minimum_length and
+                password_length > maximum_length
+        ):
+            return True
         lowercase = sum(1 for c in self.password if c.islower())
         if (lowercase < self.options.get('minimum_lowercase')):
             return True
@@ -31,8 +37,8 @@ class Generator(object):
         special = password_length - lowercase - uppercase - numeric
         if (special < self.options.get('minimum_special')):
             return True
-        if (special > self.options.get('maximum_special', self.options.get('maximum_password_length'))):
-            return False
+        if (special > self.options.get('maximum_special')):
+            return True
         return False
 
     def generate(self):
@@ -46,21 +52,36 @@ class Generator(object):
 
         chosen_words = output[0:3]
         passphrase = ' '.join(chosen_words)
-        characters = string.lowercase + string.uppercase + string.digits + self.options.get('special')
-        if self.options.get('minimum_password_length') == self.options.get('maximum_password_length'):
+        character_classes = [
+            ''.join(chr(x) for x in range(97, 123)),
+            ''.join(chr(x) for x in range(65, 91)),
+            ''.join(chr(x) for x in range(48, 58))
+        ]
+        if self.options.get('maximum_special'):
+            character_classes.append(''.join(character_classes))
+
+        characters = ''.join(character_classes)
+        if (
+                self.options.get('minimum_password_length') ==
+                self.options.get('maximum_password_length')
+        ):
             password_length = self.options.get('minimum_password_length')
         else:
             password_length = random.randint(
-                self.options.get('minimum_password_length'), self.options.get('maximum_password_length'))
+                self.options.get('minimum_password_length'),
+                self.options.get('maximum_password_length'))
 
         self.password = None
         while self.fails():
+            print('trying', self.password)
             self.password = ''
-            for i in range(0, password_length):
-                self.password += characters[random.randint(0, len(characters) - 1)]
+            for _ in range(0, password_length):
+                self.password += characters[
+                    random.randint(0, len(characters) - 1)]
 
         assert len(self.password) == password_length
         return self.password, passphrase
+
 
 def main():
     """
@@ -138,17 +159,29 @@ def main():
         default=False
     )
     options = vars(parser.parse_args())
-    if options.get('minimum_password_length') > options.get('maximum_password_length'):
-        raise ValueError('Minimum password length must be less than or equal to the maximum')
+    if (
+            options.get('minimum_password_length') >
+            options.get('maximum_password_length')
+    ):
+        raise ValueError(
+            'Minimum password length must be'
+            ' less than or equal to the maximum')
+    if (
+            options.get('minimum_special') >
+            options.get('maximum_special')
+    ):
+        raise ValueError(
+            'Minimum special requirement must be'
+            ' less than or equal to the maximum')
     generator = Generator(options)
     password, passphrase = generator.generate()
     if not options['phrase']:
-        print password
+        sys.stdout.write("%s\n" % password)
     if not options['word']:
-        print passphrase
+        sys.stdout.write("%s\n" % passphrase)
     if options['phrase'] and options['word']:
-        print password
-        print passphrase
+        sys.stdout.write("%s\n" % password)
+        sys.stdout.write("%s\n" % passphrase)
 
 if __name__ == "__main__":
     main()
