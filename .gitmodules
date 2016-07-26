@@ -15,4 +15,4 @@
 	url = https://github.com/jmullan/git-helpers.git
 [submodule "GitFlowAVH"]
 	path = submodules/gitflow
-	url = https://github.com/petervanderdoes/gitflow.git
+	url = https://github.com/petervanderdoes/gitflow-avh.git

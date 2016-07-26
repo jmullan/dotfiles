@@ -3,6 +3,7 @@ PWD = $(shell pwd)
 all: install
 
 submodules:
+	git submodule sync
 	git submodule update --recursive
 	git submodule update --init --recursive
 	git submodule foreach git pull origin master
