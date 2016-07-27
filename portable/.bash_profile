@@ -36,6 +36,7 @@ POSSIBLE_PATHS=(
     "/cygdrive/c/Program Files/Java/jdk1.6.0_21/bin"
     "/usr/local/mysql/bin"
     "${HOME}/.local/bin"
+    "${HOME}/.go/bin"
     "$HOME/bin"
 )
 for p in "${POSSIBLE_PATHS[@]}"; do
