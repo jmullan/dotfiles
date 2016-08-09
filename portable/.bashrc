@@ -107,20 +107,7 @@ export LANG="en_US"
 
 # set a fancy prompt
 function __prompt_command() {
-    local EXIT="$?"
-    SMILEY=`echo -e "\xf0\x9f\x92\x80 "`
-    FROWNY='😡  '
-    PS1="\$(git sanity)"
-    PS1+="\[\e[36m\u@$(tput bold)$(tput setaf $HOST_COLOR)\]\h\[$(tput sgr0)\]"
-    PS1+=" \$(virtualenv_prompt)"
-    PS1+=":\[\w\e[0m\]"
-    PS1+=" \$(git prompt)\n"
-    if [ $EXIT -eq 0 ]; then
-        PS1+="$SMILEY "
-    else
-        PS1+="$FROWNY "
-    fi
-    PS1+="\$ "
+    . ~/bin/jmprompt
 }
 export PROMPT_COMMAND=__prompt_command
 export SVN_EDITOR=emacs
