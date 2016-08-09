@@ -3,8 +3,14 @@ VIRTUALENVWRAPPER=`which virtualenvwrapper.sh`
 EXPECTED_VENV=
 ACTUAL_VENV=
 VENV_FILE=`find_up .venv`
+VENV3_FILE=`find_up .venv3`
+PYTHONV=""
 if [ -n "$VENV_FILE" ] ; then
     EXPECTED_VENV=`cat "$VENV_FILE"`
+fi
+if [ -n "$VENV3_FILE" ] ; then
+    EXPECTED_VENV=`cat "$VENV3_FILE"`
+    PYTHONV="--python="`which python3`
 fi
 if [ -n "${WORKON_HOME}" ] ; then
     AVAILABLE_VENV=`ls -1 "${WORKON_HOME}" | grep "${EXPECTED_VENV}"`
@@ -47,7 +53,7 @@ else
         else
 	    if [ -z "${AVAILABLE_VENV}" ] ; then
                 echo -n "$(tput setaf 1)"
-	        echo -n "mkvirtualenv ${EXPECTED_VENV}"
+	        echo -n "mkvirtualenv $PYTHONV ${EXPECTED_VENV}"
                 echo -n "$(tput sgr0)"
 	    else
                 echo -n "$(tput setaf 3)"
