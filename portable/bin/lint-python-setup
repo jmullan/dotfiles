@@ -1,0 +1,2 @@
+#!/bin/bash
+pip install --upgrade pyflakes flake8 pep8 frosted pyroma mccabe pylint isort pep257

@@ -1,7 +1,5 @@
 #!/bin/bash
 # set -x
-
-# remoting/api/sibyl.py:74: refactor (R0201, no-self-use, SibylApiV1.browseAction) Method could be a function
 TEMPLATE='{path}:{line}: {category} ({msg_id}, {symbol}, {obj}) {msg}'
 
 trap exit SIGHUP SIGINT SIGTERM
@@ -33,11 +31,11 @@ fi
 [ `which pylint` ] && pylint -r n --msg-template="${TEMPLATE}" ${1+"$@"} 2>&1 | grep -v '\*\*\*\*\*\*\*\*\*\*\*\*\* Module' | sed 's/^ //' | grep -v '^$'
 
 if [ `which pep257` ] ; then
-    HAS_TEMPLATE=`pylint --help | grep template | head -n 1`
+    HAS_TEMPLATE=`pep257 --help | grep template | head -n 1`
     if [ -z "$HAS_TEMPLATE" ] ; then
-        pep257 --template='%(filename)s:%(line)s:%(code)s:%(definition)s %(short_desc)s\n' ${1+"$@"} 2>&1
+        pep257 ${1+"$@"} 2>&1 | grep -v 'Unknown option'
     else
-        pep257 ${1+"$@"} 2>&1
+        pep257 --template='%(filename)s:%(line)s:%(code)s:%(definition)s %(short_desc)s\n' ${1+"$@"} 2>&1 | grep -v 'Unknown option'
     fi
 fi
 [ `which ag` ] && ag -s --nobreak --nocolor --noheading 'logging.(debug|info|warn|error|exception)' ${1+"$@"}

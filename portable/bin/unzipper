@@ -1,0 +1,17 @@
+#!/bin/bash
+if [ -z "$1" ] ; then
+   (>&2 echo "No input file specified")
+   exit 1
+fi
+FILENAME=$1
+DIR="${FILENAME%%.zip}"
+if [ "${FILENAME}" == "${DIR}" ] ; then
+   (>&2 echo "Invalid zip file name: '${FILENAME}'")
+   exit 1
+fi
+if [ ! -f "${FILENAME}" ] ; then
+   (>&2 echo "File does not exist: '${FILENAME}'")
+   exit 1
+fi
+unzip "${FILENAME}" -d "${DIR}" && rm "${FILENAME}"
+touch "${DIR}"

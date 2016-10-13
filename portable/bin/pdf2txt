@@ -1,0 +1,31 @@
+#!/bin/sh
+
+if [ -z "$1" ] ; then
+    echo "No first argument";
+    exit 1;
+fi
+if [ -z "$2" ] ; then
+    echo "No second argument";
+    exit 1;
+fi
+
+SOURCE="$1" # set to the file name of the PDF
+OUTPUT="$2" # set to the final output file
+RESOLUTION=600 # set to the resolution of the scanner - the higher, the better
+STARTPAGE=1 # set to pagenumber of the first page of PDF you wish to convert
+
+# set to pagenumber of the last page of PDF you wish to convert
+ENDPAGE=`pdfinfo "$SOURCE" | grep Pages: | awk '{print $2}'`
+TMPTIFNAME=$(mktemp /tmp/pdf2txt.XXXXXX.tif)
+TMPOUTPUT=tmpoutput
+
+touch $OUTPUT
+for i in `seq $STARTPAGE $ENDPAGE`; do
+    echo making image $i
+    convert -monochrome -density $RESOLUTION "${SOURCE}"\[$(($i - 1 ))\] "${TMPTIFNAME}"
+    echo processing page $i
+    tesseract "${TMPTIFNAME}" "${TMPOUTPUT}"
+    cat "${TMPOUTPUT}".txt >> $OUTPUT
+    rm -f "${TMPTIFNAME}"
+    rm -f "${TMPOUTPUT}".txt
+done
