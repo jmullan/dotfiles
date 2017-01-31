@@ -1,5 +1,5 @@
 #!/bin/bash
-# set -x
+set -x
 TEMPLATE='{path}:{line}: {category} ({msg_id}, {symbol}, {obj}) {msg}'
 
 trap exit SIGHUP SIGINT SIGTERM

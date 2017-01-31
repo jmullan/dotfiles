@@ -34,3 +34,9 @@ fi
 if [ -e ~/Library/Preferences/PyCharm30/colors ]; then
     cp "submodules/pycharm-solarized/Solarized Dark.xml" ~/Library/Preferences/PyCharm30/colors/;
 fi
+if [ -e ~/Library ]; then
+    mkdir -p ~/Library/KeyBindings
+    if [ ! -e ~/Library/KeyBindings/DefaultKeyBinding.dict ] ; then
+        ln -s local/osx/Library/KeyBindings/DefaultKeyBinding.dict ~/Library/KeyBindings/DefaultKeyBinding.dict
+    fi
+fi

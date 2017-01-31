@@ -116,3 +116,4 @@ if which pip >/dev/null; then
     mkdir -p "${HOME}/.cache/pip/packages"
     export PIP_DOWNLOAD_CACHE="${HOME}/.cache/pip/packages"
 fi
+export PIP_REQUIRE_VIRTUALENV=true

@@ -638,13 +638,13 @@
 	<key>NSWindow Frame Preferences</key>
 	<string>269 404 606 456 0 0 1440 877 </string>
 	<key>NSWindow Frame SUUpdateAlert</key>
-	<string>410 375 620 392 0 0 1440 877 </string>
+	<string>1730 573 620 392 1440 -573 1200 1920 </string>
 	<key>NSWindow Frame SessionsPreferences</key>
 	<string>378 82 606 456 0 0 1440 877 </string>
 	<key>NSWindow Frame SharedPreferences</key>
 	<string>340 422 918 381 0 0 1440 877 </string>
 	<key>NSWindow Frame iTerm Window 0</key>
-	<string>1440 31 1195 1316 1440 -573 1200 1920 </string>
+	<string>1442 134 1195 1211 1440 -573 1200 1920 </string>
 	<key>NSWindow Frame iTerm Window 1</key>
 	<string>1460 -916 1181 1428 1440 -1020 1200 1920 </string>
 	<key>NeverWarnAboutPossibleOverrides</key>
@@ -1445,10 +1445,14 @@
 	<true/>
 	<key>NoSyncHaveShownPromoWithId_4</key>
 	<true/>
+	<key>NoSyncHaveWarnedAboutPasteConfirmationChange</key>
+	<true/>
 	<key>NoSyncInstallationId</key>
 	<string>674B728E-6D6A-4378-8083-8C3E157527A0</string>
 	<key>NoSyncLastTipTime</key>
 	<real>494876772.53844601</real>
+	<key>NoSyncNeverAskAboutSettingAlternateMouseScroll</key>
+	<true/>
 	<key>NoSyncNeverRemindPrefsChangesCopy</key>
 	<true/>
 	<key>NoSyncNeverRemindPrefsChangesLostForFile</key>
@@ -1603,7 +1607,7 @@
 	<key>SUHasLaunchedBefore</key>
 	<true/>
 	<key>SULastCheckTime</key>
-	<date>2016-10-07T17:54:55Z</date>
+	<date>2016-12-30T19:37:52Z</date>
 	<key>SavePasteHistory</key>
 	<false/>
 	<key>ShowBookmarkName</key>
@@ -1651,7 +1655,7 @@
 	<key>findRegex_iTerm</key>
 	<false/>
 	<key>iTerm Version</key>
-	<string>3.0.10</string>
+	<string>3.0.13</string>
 	<key>kCPKSelectionViewPreferredModeKey</key>
 	<integer>0</integer>
 	<key>kCPKSelectionViewShowHSBTextFieldsKey</key>
