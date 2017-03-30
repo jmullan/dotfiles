@@ -117,3 +117,4 @@ if which pip >/dev/null; then
     export PIP_DOWNLOAD_CACHE="${HOME}/.cache/pip/packages"
 fi
 export PIP_REQUIRE_VIRTUALENV=true
+export LESS="-XFR"
