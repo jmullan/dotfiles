@@ -20,7 +20,8 @@ def main():
             matches = re.match(r'URL=(.*)', line)
             if matches is not None:
                 url = matches.group(1)
-                cmd = ["youtubedown", '--no-mux', url]
+                # cmd = ["youtubedown", '--no-mux', url]
+                cmd = ["youtubedown", url]
                 print url, cmd
                 result = subprocess.call(cmd)
                 if not result:
