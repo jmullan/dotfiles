@@ -5,9 +5,10 @@ PS1=""
 PS1+="\$(git sanity)"
 PS1+="\$(date '+[%-m/%-d %H:%M:%S]')"
 PS1+=" \[\e[36m\u@$(tput bold)$(tput setaf $HOST_COLOR)\]\h\[$(tput sgr0)\]"
+PS1+=" \$(screen_prompt)"
 PS1+=" \$(virtualenv_prompt)"
 PS1+=":\[\w\e[0m\]"
-PS1+=" \$(git prompt)\n"
+PS1+="\$(git prompt)\n"
 if [ $EXIT -eq 0 ]; then
     PS1+="$SMILEY "
 else
