@@ -585,6 +585,8 @@
 	<integer>0</integer>
 	<key>HotkeyCode</key>
 	<integer>0</integer>
+	<key>HotkeyMigratedFromSingleToMulti</key>
+	<true/>
 	<key>HotkeyModifiers</key>
 	<integer>0</integer>
 	<key>IRMemory</key>
@@ -599,6 +601,8 @@
 	<true/>
 	<key>MaxVertically</key>
 	<false/>
+	<key>NSFontPanelAttributes</key>
+	<string>1, 4</string>
 	<key>NSNavLastRootDirectory</key>
 	<string>~/dotfiles/portable/lib/iTerm2</string>
 	<key>NSNavPanelExpandedSizeForOpenMode</key>
@@ -635,25 +639,29 @@
 		<key>TB Is Shown</key>
 		<integer>1</integer>
 	</dict>
+	<key>NSWindow Frame NSFontPanel</key>
+	<string>3382 -80 445 103 2880 -702 1440 2560 </string>
 	<key>NSWindow Frame Preferences</key>
 	<string>269 404 606 456 0 0 1440 877 </string>
+	<key>NSWindow Frame SUStatusFrame</key>
+	<string>3040 770 400 129 2640 -573 1200 1920 </string>
 	<key>NSWindow Frame SUUpdateAlert</key>
-	<string>1730 573 620 392 1440 -573 1200 1920 </string>
+	<string>1850 656 620 392 1440 -970 1440 2560 </string>
 	<key>NSWindow Frame SessionsPreferences</key>
 	<string>378 82 606 456 0 0 1440 877 </string>
 	<key>NSWindow Frame SharedPreferences</key>
-	<string>340 422 918 381 0 0 1440 877 </string>
+	<string>3036 224 1016 502 2880 -702 1440 2560 </string>
 	<key>NSWindow Frame iTerm Window 0</key>
-	<string>1440 126 1195 1162 1440 -632 1200 1920 </string>
+	<string>1440 -134 1440 1724 1440 -970 1440 2560 </string>
 	<key>NSWindow Frame iTerm Window 1</key>
-	<string>1460 -916 1181 1428 1440 -1020 1200 1920 </string>
+	<string>1534 -941 1346 1628 1440 -970 1440 2560 </string>
 	<key>NeverWarnAboutPossibleOverrides</key>
 	<true/>
 	<key>New Bookmarks</key>
 	<array>
 		<dict>
 			<key>ASCII Anti Aliased</key>
-			<true/>
+			<false/>
 			<key>Allow Title Reporting</key>
 			<false/>
 			<key>Ambiguous Double Width</key>
@@ -926,7 +934,7 @@
 			<key>Hide After Opening</key>
 			<false/>
 			<key>Horizontal Spacing</key>
-			<real>1</real>
+			<real>0.97299745858433728</real>
 			<key>Idle Code</key>
 			<integer>0</integer>
 			<key>Initial Text</key>
@@ -1260,9 +1268,9 @@
 			<key>Non Ascii Font</key>
 			<string>Menlo-Regular 11</string>
 			<key>Non-ASCII Anti Aliased</key>
-			<true/>
+			<false/>
 			<key>Normal Font</key>
-			<string>Menlo-Regular 11</string>
+			<string>AndaleMono 14</string>
 			<key>Option Key Sends</key>
 			<integer>0</integer>
 			<key>Prompt Before Closing 2</key>
@@ -1417,6 +1425,8 @@
 			<array/>
 			<key>Terminal Type</key>
 			<string>xterm-256color</string>
+			<key>Thin Strokes</key>
+			<integer>1</integer>
 			<key>Transparency</key>
 			<real>0.0</real>
 			<key>Triggers</key>
@@ -1432,7 +1442,7 @@
 			<key>Use Italic Font</key>
 			<false/>
 			<key>Vertical Spacing</key>
-			<real>1.0405405759811401</real>
+			<real>1</real>
 			<key>Visual Bell</key>
 			<true/>
 			<key>Window Type</key>
@@ -1607,7 +1617,7 @@
 	<key>SUHasLaunchedBefore</key>
 	<true/>
 	<key>SULastCheckTime</key>
-	<date>2017-02-01T19:16:37Z</date>
+	<date>2017-07-25T19:09:35Z</date>
 	<key>SavePasteHistory</key>
 	<false/>
 	<key>ShowBookmarkName</key>
@@ -1655,7 +1665,7 @@
 	<key>findRegex_iTerm</key>
 	<false/>
 	<key>iTerm Version</key>
-	<string>3.0.13</string>
+	<string>3.1.beta.5</string>
 	<key>kCPKSelectionViewPreferredModeKey</key>
 	<integer>0</integer>
 	<key>kCPKSelectionViewShowHSBTextFieldsKey</key>

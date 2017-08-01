@@ -74,6 +74,10 @@ DEVELOP_NAME=`git config --get gitflow.branch.develop`
 if [ -z "${DEVELOP_NAME}" ] ; then
     DEVELOP_NAME=develop
 fi
+DEVELOP_REV=`git rev-parse --abbrev-ref "${DEVELOP_NAME}" 2>&1 | grep 'unknown revision or path not in the working tree'`
+if [ -n "${DEVELOP_REV}" ] ; then
+    DEVELOP_NAME=master
+fi
 if [ -n "$REMOTE" ] ; then
     ORIGIN_DEVELOP=`git for-each-ref --format='%(refname:short)' refs/heads refs/remotes/origin | grep "^origin/${DEVELOP_NAME}\$"`
     if [ -n "$FEATURE" -a -n "$ORIGIN_DEVELOP" -a "$TRACKING" != "$ORIGIN_DEVELOP" ] ; then

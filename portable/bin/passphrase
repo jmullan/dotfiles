@@ -99,18 +99,25 @@ def main():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        '--length',
+        dest='length',
+        help='force this password length',
+        type=int,
+        default=None
+    )
+    parser.add_argument(
         '--minimum-length',
         dest='minimum_password_length',
         help='minimum length of pass phrase to generate',
         type=int,
-        default=8
+        default=10
     )
     parser.add_argument(
         '--maximum-length',
         dest='maximum_password_length',
         help='maximum length of pass phrase to generate',
         type=int,
-        default=10
+        default=None
     )
     parser.add_argument(
         '--minimum-lowercase',
@@ -177,12 +184,36 @@ def main():
     if options.get('verbose'):
         logging.basicConfig(level=logging.DEBUG)
     if (
+            options.get('minimum_password_length') is None and
+            options.get('length') is not None
+    ):
+        options['minimum_password_length'] = options.get('length')
+    if (
+            options.get('maximum_password_length') is None and
+            options.get('length') is not None
+    ):
+        options['maximum_password_length'] = options.get('length')
+
+    if (
+            options.get('maximum_password_length') is None and
+            options.get('minimum_password_length') is not None
+    ):
+        options['maximum_password_length'] = options.get(
+            'minimum_password_length')
+
+    if (
             options.get('minimum_password_length') >
             options.get('maximum_password_length')
     ):
         raise ValueError(
             'Minimum password length must be'
             ' less than or equal to the maximum')
+    if (
+            options.get('minimum_password_length') < 1 or
+            options.get('maximum_password_length') < 1
+    ):
+        raise ValueError(
+            'Password length must be 1 or more')
     if (
             options.get('minimum_special') >
             options.get('maximum_special')
