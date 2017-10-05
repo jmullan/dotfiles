@@ -1,18 +1,26 @@
-#!/usr/bin/env php
-<?php
-array_shift($argv);
-if (!$argv) {
-  readfile('php://stdin');
-} else {
-  $regex = '/' . join('|', $argv) . '/S';
-  $handle = fopen('php://stdin', 'r');
-  if ($handle) {
-    while (!feof($handle)) {
-      $buffer = fgets($handle);
-      if (!preg_match($regex, $buffer)) {
-	echo $buffer;
-      }
-    }
-    fclose($handle);
-  }
-}
+#!/usr/bin/env python3
+
+import argparse
+import sys
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        'excludes',
+        nargs='+',
+        help="Filter out lines with any of these strings"
+    )
+    args = parser.parse_args()
+    excludes = args.excludes
+    for line in sys.stdin:
+        okay = True
+        for exclude in excludes:
+            if exclude in line:
+                okay = False
+                break
+        if okay:
+            print(line.rstrip('\n\r'))
+
+if __name__ == '__main__':
+   main()

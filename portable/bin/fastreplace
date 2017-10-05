@@ -7,4 +7,4 @@ if [ -z "$2" ] ; then
     echo "No second argument";
     exit 1;
 fi
-recursiveReplace.php "$1" "$2" `ag -l "$1"`
+rpl "$1" "$2" `ag -l "$1"`

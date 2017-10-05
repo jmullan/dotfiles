@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+import argparse
+import re
+import time
+
+from dateutil.parser import parse
+
+
+def main():
+    """
+    Dispatch the checker from the command line.
+    """
+    status = 0
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        'time_string',
+        help='1284101485 or "today" or "1/1/2010"'
+    )
+    parser.add_argument(
+        '--time_format',
+        required=False,
+        default='%Y-%m-%d %H:%M:%S %Z',
+        help='python strftime, like "%Y-%m-%d %H:%M:%S"'
+    )
+    args = parser.parse_args()
+    time_format = args.time_format
+    time_string = args.time_string
+    if re.match('^[0-9]{,10}$', time_string):
+        output = time.strftime(
+            time_format,
+            time.localtime(int(time_string))
+        )
+    elif re.match('^[0-9]{13,}$', time_string):
+        output = time.strftime(
+            time_format,
+            time.localtime(float(time_string) / 1000)
+        )
+    else:
+        output = time.strftime(
+            time_format,
+            parse(time_string)
+        )
+    print(output)
+    exit(status)
+
+
+if __name__ == '__main__':
+    main()

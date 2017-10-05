@@ -9,6 +9,7 @@ import subprocess
 FORMAT = '%(levelname)s %(lineno)d %(message)s'
 logging.basicConfig(format=FORMAT)
 
+
 def main():
     """Do it."""
     parser = argparse.ArgumentParser()
@@ -22,10 +23,11 @@ def main():
                 url = matches.group(1)
                 # cmd = ["youtubedown", '--no-mux', url]
                 cmd = ["youtubedown", url]
-                print url, cmd
+                print(url, cmd)
                 result = subprocess.call(cmd)
                 if not result:
                     os.unlink(url_file)
+
 
 if __name__ == "__main__":
     main()
