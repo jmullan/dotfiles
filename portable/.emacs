@@ -1,4 +1,3 @@
-
 (defun add-search-dir (path)
   (setq load-path (cons (expand-file-name path) load-path)))
 (add-search-dir "~/lib/emacs/lisp")
@@ -228,6 +227,7 @@
 (setq auto-mode-alist (append '(("\\.arclint" . json-mode)) auto-mode-alist))
 (setq auto-mode-alist (append '(("\\.apib" . markdown-mode)) auto-mode-alist))
 (setq auto-mode-alist (append '(("\\.gradle" . groovy-mode)) auto-mode-alist))
+(setq auto-mode-alist (append '(("\\.ino" . c++-mode)) auto-mode-alist))
 
 
 ;; flycheck stuff

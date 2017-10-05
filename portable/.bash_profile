@@ -37,8 +37,10 @@ POSSIBLE_PATHS=(
     "/usr/local/mysql/bin"
     "${HOME}/.local/bin"
     "${HOME}/.go/bin"
-    "$HOME/bin"
+    "${HOME}/bin"
+    "${HOME}/anaconda3/bin"
 )
+
 for p in "${POSSIBLE_PATHS[@]}"; do
     if [ -d "$p" ] ; then
         export PATH="${p}:${PATH}"
