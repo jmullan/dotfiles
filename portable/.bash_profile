@@ -38,7 +38,7 @@ POSSIBLE_PATHS=(
     "${HOME}/.local/bin"
     "${HOME}/.go/bin"
     "${HOME}/bin"
-    "${HOME}/anaconda3/bin"
+    "${HOME}/.pyenv/bin"
 )
 
 for p in "${POSSIBLE_PATHS[@]}"; do
@@ -92,6 +92,10 @@ if [ -e $HOME/.ec2 ] ; then
     if [ -e $HOME/.ec2/cert.pem ] ; then
         export EC2_CERT="${HOME}/.ec2/cert.pem"
     fi
+fi
+
+if [ -e $HOME/.pyenv ] ; then
+    export PYENV_ROOT="$HOME/.pyenv"
 fi
 
 test -r /sw/bin/init.sh && . /sw/bin/init.sh
