@@ -41,7 +41,7 @@
 [push]
 	default = simple
 [gc]
-        auto=1
+	auto = 1
 [merge]
         summary=true
 [diff]
@@ -62,3 +62,5 @@
 	smudge = git-lfs smudge -- %f
 	process = git-lfs filter-process
 	required = true
+[prompt]
+	enabled = 1
