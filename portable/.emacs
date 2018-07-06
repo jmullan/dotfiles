@@ -3,11 +3,19 @@
 (add-search-dir "~/lib/emacs/lisp")
 
 (when (>= emacs-major-version 24)
-  (require 'package)
-  (add-to-list
-   'package-archives
-   '("melpa" . "http://melpa.org/packages/") t)
-  (package-initialize))
+    (require 'package)
+
+
+    (let* ((no-ssl (and (memq system-type '(windows-nt ms-dos))
+                       (not (gnutls-available-p))))
+              (proto (if no-ssl "http" "https")))
+        ;; Comment/uncomment these two lines to enable/disable MELPA and MELPA Stable as desired
+        (add-to-list 'package-archives (cons "melpa" (concat proto "://melpa.org/packages/")) t)
+        ;;(add-to-list 'package-archives (cons "melpa-stable" (concat proto "://stable.melpa.org/packages/")) t)
+        (when (< emacs-major-version 24)
+            ;; For important compatibility libraries like cl-lib
+            (add-to-list 'package-archives '("gnu" . (concat proto "://elpa.gnu.org/packages/")))))
+    (package-initialize))
 
 (setq package-list
     '(
@@ -31,6 +39,7 @@
          markdown-mode
          php-mode
          pkg-info
+         rjsx-mode
          scala-mode2
          seq
          sql-indent
@@ -143,8 +152,16 @@
       (beginning-of-buffer (goto-char (point-min))))))
 
 (custom-set-variables
-    '(help-at-pt-timer-delay 0.25)
-    '(help-at-pt-display-when-idle '(flymake-overlay)))
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(help-at-pt-display-when-idle (quote (flymake-overlay)) nil (help-at-pt))
+ '(help-at-pt-timer-delay 0.25)
+    '(package-selected-packages
+         (quote
+             (rjsx-mode yaml-tomato yaml-mode sql-indent scala-mode2 php-mode markdown-mode+ lua-mode json-mode js3-mode groovy-mode flymake-yaml flymake-python-pyflakes flymake-phpcs flymake-php flymake-less flymake-json flymake-jshint flymake-cursor flymake-css flycheck-status-emoji flycheck-pyflakes flycheck-color-mode-line editorconfig column-marker color-theme-solarized)))
+ '(solarized-contrast (quote high)))
 
 (add-to-list 'auto-mode-alist '("\\.pyi\\'" . python-mode))
 
@@ -210,12 +227,7 @@
 (load-theme 'solarized t)
 (set-frame-parameter nil 'background-mode 'dark)
 (set-terminal-parameter nil 'background-mode 'dark)
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(solarized-contrast (quote high)))
+
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -228,6 +240,7 @@
 (setq auto-mode-alist (append '(("\\.apib" . markdown-mode)) auto-mode-alist))
 (setq auto-mode-alist (append '(("\\.gradle" . groovy-mode)) auto-mode-alist))
 (setq auto-mode-alist (append '(("\\.ino" . c++-mode)) auto-mode-alist))
+(setq auto-mode-alist (append '(("Jenkinsfile" . groovy-mode)) auto-mode-alist))
 
 
 ;; flycheck stuff

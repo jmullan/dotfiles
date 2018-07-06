@@ -1,0 +1,19 @@
+#!/bin/bash
+WAS=`pwd`
+GC_AUTO=`git config --global gc.auto`
+git config --global gc.auto 0
+for x in `ls -1d */.git | sed 's/.git$//'`; do
+    cd "$x";
+    echo "$x";
+    git fetch --all
+    GIT_STATUS="`git status -unormal 2>&1`"
+    if [[ "${GIT_STATUS}" =~ "nothing to commit, working tree clean" ]] ; then
+        if [[ "${GIT_STATUS}" =~ "can be fast-forwarded." ]] ; then
+            git rebase
+        fi
+    fi
+    git gc
+    git prune
+    cd "${WAS}"
+done
+git config --global gc.auto "$GC_AUTO"

@@ -1,0 +1,7 @@
+#!/bin/bash
+while read CANDIDATE; do
+    CANDIDATE=`echo ${CANDIDATE} | grep .java | grep src/main | sed 's#src/main#src/test#' | sed 's/.java$/Test.java/'`
+    if [ -n "${CANDIDATE}" ] ; then
+        echo "${CANDIDATE}"
+    fi
+done
