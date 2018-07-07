@@ -156,6 +156,9 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+    '(custom-safe-themes
+         (quote
+             ("8db4b03b9ae654d4a57804286eb3e332725c84d7cdab38463cb6b97d5762ad26" default)))
  '(help-at-pt-display-when-idle (quote (flymake-overlay)) nil (help-at-pt))
  '(help-at-pt-timer-delay 0.25)
     '(package-selected-packages
@@ -223,10 +226,10 @@
 
 
 
-(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
-(load-theme 'solarized t)
-(set-frame-parameter nil 'background-mode 'dark)
-(set-terminal-parameter nil 'background-mode 'dark)
+; (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+; (load-theme 'solarized t)
+; (set-frame-parameter nil 'background-mode 'dark)
+; (set-terminal-parameter nil 'background-mode 'dark)
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
