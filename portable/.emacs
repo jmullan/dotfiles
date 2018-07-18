@@ -19,7 +19,6 @@
 
 (setq package-list
     '(
-         color-theme-solarized
          column-marker
          dash
          editorconfig
@@ -158,13 +157,12 @@
  ;; If there is more than one, they won't work right.
     '(custom-safe-themes
          (quote
-             ("a8245b7cc985a0610d71f9852e9f2767ad1b852c2bdea6f4aadc12cce9c4d6d0" "8db4b03b9ae654d4a57804286eb3e332725c84d7cdab38463cb6b97d5762ad26" default)))
+             ("d677ef584c6dfc0697901a44b885cc18e206f05114c8a3b7fde674fce6180879" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" "a8245b7cc985a0610d71f9852e9f2767ad1b852c2bdea6f4aadc12cce9c4d6d0" "8db4b03b9ae654d4a57804286eb3e332725c84d7cdab38463cb6b97d5762ad26" default)))
  '(help-at-pt-display-when-idle (quote (flymake-overlay)) nil (help-at-pt))
  '(help-at-pt-timer-delay 0.25)
     '(package-selected-packages
          (quote
-             (solarized-theme rjsx-mode yaml-tomato yaml-mode sql-indent scala-mode2 php-mode markdown-mode+ lua-mode json-mode js3-mode groovy-mode flymake-yaml flymake-python-pyflakes flymake-phpcs flymake-php flymake-less flymake-json flymake-jshint flymake-cursor flymake-css flycheck-status-emoji flycheck-pyflakes flycheck-color-mode-line editorconfig column-marker color-theme-solarized)))
- '(solarized-contrast (quote high)))
+             (solarized-theme rjsx-mode yaml-tomato yaml-mode sql-indent scala-mode2 php-mode markdown-mode+ lua-mode json-mode js3-mode groovy-mode flymake-yaml flymake-python-pyflakes flymake-phpcs flymake-php flymake-less flymake-json flymake-jshint flymake-cursor flymake-css flycheck-status-emoji flycheck-pyflakes flycheck-color-mode-line editorconfig column-marker))))
 
 (add-to-list 'auto-mode-alist '("\\.pyi\\'" . python-mode))
 
@@ -227,7 +225,6 @@
 
 
 ; (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
-; (load-theme 'solarized t)
 ; (set-frame-parameter nil 'background-mode 'dark)
 ; (set-terminal-parameter nil 'background-mode 'dark)
 
@@ -313,3 +310,7 @@
 
 (provide '.emacs)
 ;;; .emacs ends here
+
+;; make the modeline high contrast
+(setq solarized-high-contrast-mode-line t)
+(load-theme 'solarized-dark)
