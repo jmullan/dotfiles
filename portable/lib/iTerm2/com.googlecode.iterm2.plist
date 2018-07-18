@@ -606,7 +606,7 @@
 	<key>NSFontPanelAttributes</key>
 	<string>1, 4</string>
 	<key>NSNavLastRootDirectory</key>
-	<string>~/dotfiles/portable/lib/iTerm2</string>
+	<string>~/Documents</string>
 	<key>NSNavPanelExpandedSizeForOpenMode</key>
 	<string>{712, 448}</string>
 	<key>NSNavPanelExpandedSizeForSaveMode</key>
@@ -646,15 +646,15 @@
 	<key>NSWindow Frame Preferences</key>
 	<string>269 404 606 456 0 0 1440 877 </string>
 	<key>NSWindow Frame SUStatusFrame</key>
-	<string>1960 1197 400 129 1440 -626 1440 2560 </string>
+	<string>3556 96 400 129 2880 -1660 1440 2560 </string>
 	<key>NSWindow Frame SUUpdateAlert</key>
 	<string>410 375 620 392 0 0 1440 877 </string>
 	<key>NSWindow Frame SessionsPreferences</key>
-	<string>378 82 606 469 0 0 1440 877 </string>
+	<string>428 165 606 469 0 0 1440 877 </string>
 	<key>NSWindow Frame SharedPreferences</key>
 	<string>1760 571 1018 447 1440 -626 1440 2560 </string>
 	<key>NSWindow Frame iTerm Window 0</key>
-	<string>1437 129 1440 1804 1440 -626 1440 2560 </string>
+	<string>1440 -741 1440 2560 1440 -741 1440 2560 </string>
 	<key>NSWindow Frame iTerm Window 1</key>
 	<string>1534 -941 1346 1628 1440 -970 1440 2560 </string>
 	<key>NeverWarnAboutPossibleOverrides</key>
@@ -1625,7 +1625,7 @@
 	<key>SUHasLaunchedBefore</key>
 	<true/>
 	<key>SULastCheckTime</key>
-	<date>2017-09-27T18:58:53Z</date>
+	<date>2018-07-09T18:48:04Z</date>
 	<key>SavePasteHistory</key>
 	<false/>
 	<key>ShowBookmarkName</key>
@@ -1670,10 +1670,12 @@
 	<string>/-+\~_.</string>
 	<key>findIgnoreCase_iTerm</key>
 	<true/>
+	<key>findMode_iTerm</key>
+	<integer>0</integer>
 	<key>findRegex_iTerm</key>
 	<false/>
 	<key>iTerm Version</key>
-	<string>3.1.3.beta.1</string>
+	<string>3.2.0beta5</string>
 	<key>kCPKSelectionViewPreferredModeKey</key>
 	<integer>0</integer>
 	<key>kCPKSelectionViewShowHSBTextFieldsKey</key>
