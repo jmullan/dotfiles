@@ -233,7 +233,8 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- )
+ '(py-class-name-face ((t (:inherit font-lock-type-face))))
+ '(py-def-class-face ((t (:inherit font-lock-keyword-face)))))
 
 (setq auto-mode-alist (append '(("\\.arcconfig" . json-mode)) auto-mode-alist))
 (setq auto-mode-alist (append '(("\\.arclint" . json-mode)) auto-mode-alist))

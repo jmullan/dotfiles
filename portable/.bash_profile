@@ -124,3 +124,4 @@ if which pip >/dev/null; then
 fi
 export PIP_REQUIRE_VIRTUALENV=true
 export LESS="-XFRK"
+alias bwd='pwd | sed -e "s:/:🥖:g"'
