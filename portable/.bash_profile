@@ -125,3 +125,5 @@ fi
 export PIP_REQUIRE_VIRTUALENV=true
 export LESS="-XFRK"
 alias bwd='pwd | sed -e "s:/:🥖:g"'
+GZIP=-9
+XZ_OPT=-9
