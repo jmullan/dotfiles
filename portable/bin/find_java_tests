@@ -1,7 +1,30 @@
 #!/bin/bash
-while read CANDIDATE; do
-    CANDIDATE=`echo ${CANDIDATE} | grep .java | grep -v Test | grep src/main | sed 's#src/main#src/test#' | sed 's/.java$/Test.java/'`
-    if [ -e "${CANDIDATE}" ] ; then
-        echo "${CANDIDATE}"
+while read SOURCE_FILE; do
+    # don't look test versions of non-java files, or test versions of test files
+    SOURCE_FILE=$(echo "${SOURCE_FILE}" | grep .java | grep -v Test)
+    if [ ! -z "${SOURCE_FILE}" -a -e "${SOURCE_FILE}" ] ; then
+        echo "${SOURCE_FILE}"
+        UNITTEST=`echo ${SOURCE_FILE} | grep src/main | sed 's#src/main#src/test#' | sed 's/.java$/Test.java/'`
+        if [ -e "${UNITTEST}" ] ; then
+            CHANGED=$(git diff --name-only origin/master "${UNITTEST}")
+            if [ -n "${CHANGED}" ] ; then
+                echo "$(tput setaf 7)${UNITTEST}$(tput sgr0)"
+            else
+                echo "${UNITTEST}"
+            fi
+        else
+            echo "$(tput setaf 3)${UNITTEST}$(tput sgr0)"
+        fi
+        INTEGRATION=`echo ${SOURCE_FILE} | grep src/main | sed 's#src/main#src/integrationTest#' | sed 's/.java$/IntegrationTest.java/'`
+        if [ -e "${INTEGRATION}" ] ; then
+            CHANGED=$(git diff --name-only origin/master "${INTEGRATION}")
+            if [ -n "${CHANGED}" ] ; then
+                echo "$(tput setaf 2)${INTEGRATION}$(tput sgr0)"
+            else
+                echo "${INTEGRATION}"
+            fi
+        else
+            echo "$(tput setaf 1)${INTEGRATION}$(tput sgr0)"
+        fi
     fi
 done

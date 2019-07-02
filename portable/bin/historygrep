@@ -1,0 +1,2 @@
+#!/bin/bash
+ag --nonumbers "$@" "${HISTFILE}" | uniq

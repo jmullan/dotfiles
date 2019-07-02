@@ -47,24 +47,24 @@ for p in "${POSSIBLE_PATHS[@]}"; do
     fi
 done
 
-for _DIR in `find -L $HOME -maxdepth 1 -mindepth 1 -name 'bin-*' -type d` ; do
+for _DIR in `find -L "${HOME}" -maxdepth 1 -mindepth 1 -name 'bin-*' -type d` ; do
     export PATH="${_DIR}:${PATH}";
 done
 
-if [ -e $HOME/bin ] ; then
-    for _DIR in `find -L $HOME/bin -maxdepth 1 -mindepth 1 -type d` ; do
+if [ -e "${HOME}/bin" ] ; then
+    for _DIR in `find -L "${HOME}/bin" -maxdepth 1 -mindepth 1 -type d` ; do
         export PATH="${_DIR}:${PATH}";
     done
 fi
 
-if [ -e $HOME/src ] ; then
-    for _DIR in `find -L $HOME/src -maxdepth 1 -mindepth 1 -name 'bin-*' -type d` ; do
+if [ -e "${HOME}/src" ] ; then
+    for _DIR in `find -L "${HOME}/src" -maxdepth 1 -mindepth 1 -name 'bin-*' -type d` ; do
         export PATH="${_DIR}:${PATH}";
     done
 fi
 
-if [ -e $HOME/lib/python ] ; then
-    for _DIR in `find -L $HOME/lib/python -maxdepth 1 -mindepth 1 -type d` ; do
+if [ -e "${HOME}/lib/python" ] ; then
+    for _DIR in `find -L "${HOME}/lib/python" -maxdepth 1 -mindepth 1 -type d` ; do
         export PYTHONPATH="${_DIR}:${PYTHONPATH}";
     done
 fi
@@ -77,26 +77,27 @@ if [ -e /usr/libexec/java_home ] ; then
     export JAVA_HOME=`/usr/libexec/java_home`
 fi
 
-if [ -e $HOME/src/hadoop ] ; then
-    export HADOOP_HOME=$HOME/src/hadoop
+if [ -e "${HOME}/src/hadoop" ] ; then
+    export HADOOP_HOME="${HOME}/src/hadoop"
 fi
 
-if [ -e $HOME/bin/ec2/bin ] ; then
-    export EC2_HOME=$HOME/bin/ec2
+if [ -e "${HOME}/bin/ec2/bin" ] ; then
+    export EC2_HOME="${HOME}/bin/ec2"
 fi
 
-if [ -e $HOME/.ec2 ] ; then
-    if [ -e $HOME/.ec2/pk.pem ] ; then
+if [ -e "${HOME}/.ec2" ] ; then
+    if [ -e "${HOME}/.ec2/pk.pem" ] ; then
         export EC2_PRIVATE_KEY="${HOME}/.ec2/pk.pem"
     fi
-    if [ -e $HOME/.ec2/cert.pem ] ; then
+    if [ -e "${HOME}/.ec2/cert.pem" ] ; then
         export EC2_CERT="${HOME}/.ec2/cert.pem"
     fi
 fi
 
-if [ -e $HOME/.pyenv ] ; then
-    export PYENV_ROOT="$HOME/.pyenv"
+if [ -e "${HOME}/.pyenv" ] ; then
+    export PYENV_ROOT="${HOME}/.pyenv"
 fi
+
 
 test -r /sw/bin/init.sh && . /sw/bin/init.sh
 
@@ -127,3 +128,17 @@ export LESS="-XFRK"
 alias bwd='pwd | sed -e "s:/:🥖:g"'
 GZIP=-9
 XZ_OPT=-9
+
+export REQUESTS_CA_BUNDLE='/usr/local/etc/openssl/cert.pem'
+export NODE_EXTRA_CA_CERTS='/usr/local/etc/openssl/cert.pem'
+
+if [ -e "${HOME}/dotfiles/submodules/ssh-find-agent/ssh-find-agent.sh" ] ; then
+    source "${HOME}/dotfiles/submodules/ssh-find-agent/ssh-find-agent.sh"
+    set_ssh_agent_socket
+fi
+
+if [ -e "${HOME}/.sdkman" ] ; then
+    #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+    export SDKMAN_DIR="${HOME}/.sdkman"
+    [[ -s "${HOME}/.sdkman/bin/sdkman-init.sh" ]] && source "${HOME}/.sdkman/bin/sdkman-init.sh"
+fi

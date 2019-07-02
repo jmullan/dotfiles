@@ -1,19 +1,19 @@
 #!/bin/bash
-VIRTUALENVWRAPPER=`which virtualenvwrapper.sh`
+VIRTUALENVWRAPPER=$(which virtualenvwrapper.sh)
 EXPECTED_VENV=
 ACTUAL_VENV=
-VENV_FILE=`find_up .venv`
-VENV3_FILE=`find_up .venv3`
+VENV_FILE=$(find_up .venv)
+VENV3_FILE=$(find_up .venv3)
 PYTHONV=""
 if [ -n "$VENV_FILE" ] ; then
-    EXPECTED_VENV=`cat "$VENV_FILE"`
+    EXPECTED_VENV=$(cat "$VENV_FILE")
 fi
 if [ -n "$VENV3_FILE" ] ; then
-    EXPECTED_VENV=`cat "$VENV3_FILE"`
-    PYTHONV="--python="`which python3`
+    EXPECTED_VENV=$(cat "$VENV3_FILE")
+    PYTHONV="--python="$(which python3)
 fi
 if [ -n "${WORKON_HOME}" ] ; then
-    AVAILABLE_VENV=`ls -1 "${WORKON_HOME}" | grep "${EXPECTED_VENV}"`
+    AVAILABLE_VENV=$(ls -1 "${WORKON_HOME}" | grep "${EXPECTED_VENV}")
 fi
 if [ -n "$VIRTUAL_ENV" ]; then
     # Strip out the path and just leave the env name

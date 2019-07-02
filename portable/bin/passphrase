@@ -8,6 +8,7 @@ import sys
 logger = logging.getLogger(__name__)
 
 FILENAME = '/usr/share/dict/words'
+DEFAULT_SPECIAL = '-_!@#$%^&*()+=,./|'
 
 
 class Generator(object):
@@ -61,16 +62,30 @@ class Generator(object):
 
         chosen_words = output[0:3]
         passphrase = ' '.join(chosen_words)
-        character_classes = [
-            ''.join(chr(x) for x in range(97, 123)),
-            ''.join(chr(x) for x in range(65, 91)),
-            ''.join(chr(x) for x in range(48, 58))
-        ]
-        if self.options.get('minimum_special'):
-            special = self.options.get('special')
-            logger.debug('Adding special characters: %r', special)
-            character_classes.append(''.join(special))
+        special = self.options.get('special')
+        if special is None or special == '':
+            special = DEFAULT_SPECIAL
+        if self.options.get('paperchars'):
+            paper_special = '!#%+:=?@'
+            paper_numeric = '23456789'
+            paper_upper = 'ABCDEFGHJKLMNPRSTUVWXYZ'
+            paper_lower = 'abcdefghijkmnopqrstuvwxyz'
+            character_classes = [paper_upper, paper_lower, paper_numeric]
+            if self.options.get('minimum_special'):
+                if len(special):
+                    character_classes.append(special)
+                else:
+                    character_classes.append(paper_special)
+        else:
+            character_classes = [
+                ''.join(chr(x) for x in range(97, 123)), # a-z
+                ''.join(chr(x) for x in range(65, 91)), # A-Z
+                ''.join(chr(x) for x in range(48, 58)) # 0-9
+            ]
+            if self.options.get('minimum_special'):
 
+                logger.debug('Adding special characters: %r', special)
+                character_classes.append(''.join(special))
         characters = ''.join(character_classes)
         if (
                 self.options.get('minimum_password_length') ==
@@ -159,7 +174,7 @@ def main():
         dest='special',
         help='what characters are used for special characters',
         type=str,
-        default='-_!@#$%^&*()+=,./|'
+        default=None
     )
     parser.add_argument(
         '--word',
@@ -179,6 +194,11 @@ def main():
         '-v', '--verbose', dest='verbose',
         action='store_true', default=False,
         help='verbose is more verbose'
+    )
+    parser.add_argument(
+        '--paper', dest='paper',
+        action='store_true', default=False,
+        help='Use "!#%+23456789:=?@ABCDEFGHJKLMNPRSTUVWXYZabcdefghijkmnopqrstuvwxyz"'
     )
     options = vars(parser.parse_args())
     if options.get('verbose'):

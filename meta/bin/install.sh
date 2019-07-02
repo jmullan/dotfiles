@@ -37,6 +37,6 @@ fi
 if [ -e ~/Library ]; then
     mkdir -p ~/Library/KeyBindings
     if [ ! -e ~/Library/KeyBindings/DefaultKeyBinding.dict ] ; then
-        ln -s local/osx/Library/KeyBindings/DefaultKeyBinding.dict ~/Library/KeyBindings/DefaultKeyBinding.dict
+        ln -s `pwd`/local/osx/Library/KeyBindings/DefaultKeyBinding.dict ~/Library/KeyBindings/DefaultKeyBinding.dict
     fi
 fi

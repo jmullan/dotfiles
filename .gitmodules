@@ -16,3 +16,6 @@
 [submodule "GitFlowAVH"]
 	path = submodules/gitflow
 	url = https://github.com/petervanderdoes/gitflow-avh.git
+[submodule "submodules/ssh-find-agent"]
+	path = submodules/ssh-find-agent
+	url = https://github.com/wwalker/ssh-find-agent.git
