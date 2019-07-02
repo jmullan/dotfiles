@@ -2,6 +2,7 @@
 SDK=$(sdk v 2>/dev/null)
 if [ -n "${SDK}" ] ; then
     EXPECTED_SDKENV=
+    SDK_MISSING_ENVS=
     FOUND_EXPECTED=
     SDKENV_FILE=$(find_up .sdkenv)
     if [ -n "${SDKENV_FILE}" ] ; then
@@ -11,7 +12,7 @@ if [ -n "${SDK}" ] ; then
 
     SDK_CURRENTS=$(sdk current | grep -v 'Using:' | awk '/./ {print}')
 
-    SDK_FOUND_ENVS=""
+    SDK_FOUND_ENVS=
     if [ -n "${EXPECTED_SDKENV}" ] ; then
         while read -r x ; do
             FOUND_EXPECTED=$(echo "${SDK_CURRENTS}" | grep "${x}")
@@ -32,7 +33,7 @@ if [ -n "${SDK}" ] ; then
         S=" "
     fi
     if [ -n "${SDK_VERSIONS}" ] ; then
-        SDK_PROMPT="${SDK_PROMPT}${S}$(tput setaf 3)${SDK_VERSIONS}$(tput sgr0)"
+        SDK_PROMPT="${SDK_PROMPT}${S}${SDK_VERSIONS}"
         S=" "
     fi
     if [ -n "${SDK_MISSING_ENVS}" ] ; then
