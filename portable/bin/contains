@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+
+import argparse
+import mmap
+import os
+import sys
+
+
+def _contains(filename, text, should_contain):
+    utf = text.encode('utf-8')
+    try:
+        with open(filename, 'rb', 0) as file_handle:
+            with mmap.mmap(file_handle.fileno(), 0, access=mmap.ACCESS_READ) as s:
+                if should_contain:
+                    return s.find(utf) != -1
+                else:
+                    return s.find(utf) == -1
+    except Exception as e:
+        print(e)
+        return False
+    return False
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        'contains',
+        nargs=1,
+        help="Filter out lines that are not files or do not contain the string"
+    )
+    parser.add_argument(
+        '--not',
+        dest='not_contains',
+        action='store_true',
+        default=False
+    )
+    args = parser.parse_args()
+    contains = args.contains[0]
+    should_contain = not args.not_contains
+    for line in sys.stdin:
+        filename = line.strip('\n\r')
+        okay = os.path.isfile(filename) and _contains(filename, contains, should_contain)
+        if okay:
+            print(filename)
+
+if __name__ == '__main__':
+   main()

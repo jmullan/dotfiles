@@ -102,7 +102,7 @@ fi
 test -r /sw/bin/init.sh && . /sw/bin/init.sh
 
 alias nodeunit=node_modules/nodeunit/bin/nodeunit
-
+alias idea-all='xargs -L 10 -P 1 idea'
 if which ruby >/dev/null && which gem >/dev/null; then
     RUBYPATH="$(ruby -rrubygems -e 'puts Gem.user_dir')/bin"
     if [ -e "${RUBYPATH}" ] ; then
