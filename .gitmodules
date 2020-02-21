@@ -19,3 +19,6 @@
 [submodule "submodules/ssh-find-agent"]
 	path = submodules/ssh-find-agent
 	url = https://github.com/wwalker/ssh-find-agent.git
+[submodule "submodules/git-toolbelt"]
+	path = submodules/git-toolbelt
+	url = https://github.com/nvie/git-toolbelt.git

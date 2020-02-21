@@ -21,6 +21,16 @@ def main():
         with open(filename) as f:
             original_contents = f.read(filesize)
             contents = original_contents
+
+        plaintext_replacements = [
+            ('To change body of implemented methods use File | Settings | File Templates.', ''),
+            ('To change this template use File | Settings | File Templates.', ''),
+            ('Created with IntelliJ IDEA.', '')
+        ]
+
+        for find, replace in plaintext_replacements:
+            contents = contents.replace(find, replace)
+
         delete_patterns = [
             r'[\n\r]*\s*\*\s*@version\s*\$Id\$ *',
             r'[\n\r]*\s*\*\s*\$Id\$ *',
@@ -39,7 +49,8 @@ def main():
             r'/\*+([\n\r]*\s*\**\s*)\*/\s*',
 
             r'[\n\r]*\s*\*\s*@version \$Id :\$',
-
+            r'[\n\r]*\s*\*\s*@Version\s*\:?\s*$',
+            r'[\n\r]*\s*\*\s+$',
         ]
         for pattern in delete_patterns:
             contents = re.sub(pattern, '', contents)
@@ -50,16 +61,20 @@ def main():
             r'[\n\r]*\s*\* @throws\s*[A-Za-z]*Exception\s*[\n\r]+',
             r'[\n\r]*\s*\* @throws\s*[A-Za-z]*Exception\s*error\s*[\n\r]+',
             r'[\n\r]*\s*\* @throws\s*[A-Za-z]*Exception\s*exception\s*[\n\r]+',
-            r'\s*[\n\r]+\s*\*\s*@param\s+[A-Za-z]*\s*[\n\r]+'
+            r'\s*[\n\r]+\s*\*\s*@param\s+[A-Za-z]*\s*[\n\r]+',
+            r'\s*//\s*[\n\r]+'
         ]
         for pattern in newline_patterns:
             contents = re.sub(pattern, '\n', contents)
 
-        replace_patterns = {
-            r'[\n\r]*\s*\*\s*([\n\r]\s*\*/)': r'\1',
-        }
-        for pattern, replacement in replace_patterns.items():
+        replace_patterns = [
+            (r'[\n\r]*\s*\*\s*([\n\r]\s*\*/)', r'\1'),
+            (r'/\*\s*[\n\r]+\s\**\s*[\n\r]+', '/*\n'),
+            (r'/\*\*+\s*[\n\r]+\s\**\s*[\n\r]+', '/**\n'),
+        ]
+        for pattern, replacement in replace_patterns:
             contents = re.sub(pattern, replacement, contents)
+
 
         changed = contents != original_contents
         if changed:

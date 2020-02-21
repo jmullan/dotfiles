@@ -10,6 +10,8 @@
 	<false/>
 	<key>AppleAntiAliasingThreshold</key>
 	<integer>1</integer>
+	<key>ApplePressAndHoldEnabled</key>
+	<false/>
 	<key>AppleScrollAnimationEnabled</key>
 	<integer>0</integer>
 	<key>AppleSmoothFixedFontsSizeThreshold</key>
@@ -610,7 +612,7 @@
 	<key>NSFontPanelAttributes</key>
 	<string>1, 4</string>
 	<key>NSNavLastRootDirectory</key>
-	<string>~/Documents</string>
+	<string>~</string>
 	<key>NSNavLastUserSetHideExtensionButtonState</key>
 	<false/>
 	<key>NSNavPanelExpandedSizeForOpenMode</key>
@@ -659,15 +661,15 @@
 		<integer>1</integer>
 	</dict>
 	<key>NSWindow Frame NSColorPanel</key>
-	<string>0 135 224 275 0 0 1440 877 </string>
+	<string>0 137 224 275 0 0 1440 877 </string>
 	<key>NSWindow Frame NSFontPanel</key>
 	<string>3382 -80 445 103 2880 -702 1440 2560 </string>
 	<key>NSWindow Frame Preferences</key>
 	<string>269 404 606 456 0 0 1440 877 </string>
 	<key>NSWindow Frame SUStatusFrame</key>
-	<string>520 574 400 129 0 0 1440 877 </string>
+	<string>1960 1082 400 129 1440 -741 1440 2560 </string>
 	<key>NSWindow Frame SUUpdateAlert</key>
-	<string>1850 885 620 392 1440 -741 1440 2560 </string>
+	<string>410 376 620 392 0 0 1440 877 </string>
 	<key>NSWindow Frame SessionsPreferences</key>
 	<string>428 165 606 469 0 0 1440 877 </string>
 	<key>NSWindow Frame SharedPreferences</key>
@@ -675,7 +677,7 @@
 	<key>NSWindow Frame UKCrashReporter</key>
 	<string>99 86 1136 791 0 0 1440 877 </string>
 	<key>NSWindow Frame iTerm Window 0</key>
-	<string>0 77 1345 800 0 0 1440 877 </string>
+	<string>0 51 1345 826 0 0 1440 877 </string>
 	<key>NSWindow Frame iTerm Window 1</key>
 	<string>1534 -941 1346 1628 1440 -970 1440 2560 </string>
 	<key>NeverWarnAboutPossibleOverrides</key>
@@ -2273,18 +2275,27 @@
 	<array>
 		<string>3.3.3beta1</string>
 		<string>3.3.5beta2</string>
+		<string>3.3.7beta1</string>
 		<string>3.3.2beta1</string>
-		<string>3.3.0beta12</string>
-		<string>3.3.0beta13</string>
+		<string>3.3.7beta3</string>
 		<string>3.3.1beta1</string>
 		<string>3.2.0beta5</string>
-		<string>3.3.0beta15</string>
 		<string>3.3.5beta1</string>
 		<string>3.3.0beta16</string>
+		<string>3.3.0beta15</string>
 		<string>3.3.3beta2</string>
+		<string>3.3.0beta13</string>
+		<string>3.3.0beta12</string>
 		<string>3.3.5beta3</string>
+		<string>3.3.7beta2</string>
 		<string>3.3.4beta1</string>
 		<string>3.3.2beta2</string>
+		<string>3.3.7beta4</string>
+		<string>3.3.8beta1</string>
+		<string>3.3.8beta2</string>
+		<string>3.3.8beta3</string>
+		<string>3.3.8beta4</string>
+		<string>3.3.8beta5</string>
 	</array>
 	<key>NoSyncConfirmBeta</key>
 	<true/>
@@ -2304,7 +2315,7 @@
 	<key>NoSyncLastTipTime</key>
 	<real>588551315.96832097</real>
 	<key>NoSyncLaunchExperienceControllerRunCount</key>
-	<integer>110</integer>
+	<integer>224</integer>
 	<key>NoSyncNeverAskAboutSettingAlternateMouseScroll</key>
 	<true/>
 	<key>NoSyncNeverRemindPrefsChangesCopy</key>
@@ -3019,6 +3030,11 @@
 	</dict>
 	<key>NoSyncSaveDocumentAsPathSet_saveDocumentAs:</key>
 	<true/>
+	<key>NoSyncSavePanelSavedSettings_StartSessionLog</key>
+	<dict>
+		<key>Initial Directory</key>
+		<string>/Users/jmullan</string>
+	</dict>
 	<key>NoSyncSearchHistory</key>
 	<array>
 		<string>ag pandoraIdFromMusicIdOrPandoraIdString </string>
@@ -3185,7 +3201,7 @@
 	<key>SUHasLaunchedBefore</key>
 	<true/>
 	<key>SULastCheckTime</key>
-	<date>2019-10-01T18:05:02Z</date>
+	<date>2020-01-21T18:02:56Z</date>
 	<key>SUUpdateRelaunchingMarker</key>
 	<false/>
 	<key>SavePasteHistory</key>
@@ -3217,7 +3233,7 @@
 	<key>TripleClickSelectsFullWrappedLines</key>
 	<false/>
 	<key>UKCrashReporterLastCrashReportDate</key>
-	<real>1569441280</real>
+	<real>1570928000</real>
 	<key>URLHandlersByGuid</key>
 	<dict/>
 	<key>UseBorder</key>
@@ -3245,7 +3261,7 @@
 	<key>findRegex_iTerm</key>
 	<false/>
 	<key>iTerm Version</key>
-	<string>3.3.5beta3</string>
+	<string>3.3.8beta5</string>
 	<key>kCPKSelectionViewPreferredModeKey</key>
 	<integer>0</integer>
 	<key>kCPKSelectionViewShowHSBTextFieldsKey</key>

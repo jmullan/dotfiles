@@ -5,7 +5,7 @@ import sys
 from optparse import OptionParser
 
 DESIRED = '// Copyright {date_stuff} {who}'
-STAR_COMMENT_COPYRIGHT_REGEX = r'^\s*\*\s*(Copyright.*)$'
+STAR_COMMENT_COPYRIGHT_REGEX = r'(?:^|\n)\s*\*\s*(Copyright[^\n]*)(?:$|\n)'
 
 
 def update_contents(contents, verbose):
@@ -19,12 +19,11 @@ def update_contents(contents, verbose):
             print("No change, found: %s", first_line)
         return contents
     matches = re.search(STAR_COMMENT_COPYRIGHT_REGEX, contents)
-    print("matches", matches)
-    print("contents", contents)
     if matches:
         if verbose:
             print("Moving copyright to first line: %s" % matches.group(0))
-        copyright_line = '// ' + matches.group(1).trim()
+        copyright_line = '// ' + matches.group(1).strip()
+        remainder = remainder.replace(matches.group(0), "\n")
     else:
         copyright_line = DESIRED.format(**copyright_dict)
         if verbose:
@@ -61,9 +60,9 @@ def main():
     options = options.__dict__
     verbose = options.get('verbose')
     if options.get('diagnostic'):
-        re.search(STAR_COMMENT_COPYRIGHT_REGEX, ' * Copyright 2007 Pandora Media, Inc.')
+        assert re.search(STAR_COMMENT_COPYRIGHT_REGEX, ' * Copyright 2007 Pandora Media, Inc.')
         comment = """\n\n/**\n * Copyright 2007 Pandora Media, Inc.\n */\npublic class VendorSku"""
-        re.search(STAR_COMMENT_COPYRIGHT_REGEX, comment)
+        assert re.search(STAR_COMMENT_COPYRIGHT_REGEX, comment)
     for filename in args:
         process_file(filename, verbose)
 
