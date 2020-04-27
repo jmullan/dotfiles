@@ -14,6 +14,7 @@ for x in `ls -1d */.git | sed 's/.git$//'`; do
     fi
     git gc
     git prune
+    git remote prune origin
     cd "${WAS}"
 done
 git config --global gc.auto "$GC_AUTO"

@@ -10,6 +10,13 @@ logger = logging.getLogger(__name__)
 FILENAME = '/usr/share/dict/words'
 DEFAULT_SPECIAL = '-_!@#$%^&*()+=,./|'
 
+PAPER_SPECIAL = '!#%+:=?@'
+PAPER_NUMERIC = '23456789'
+PAPER_UPPER = 'ABCDEFGHJKLMNPRSTUVWXYZ'
+PAPER_LOWER = 'abcdefghijkmnopqrstuvwxyz'
+
+PAPER_ALL = PAPER_UPPER + PAPER_LOWER + PAPER_NUMERIC + PAPER_SPECIAL
+
 
 class Generator(object):
     def __init__(self, options):
@@ -62,30 +69,28 @@ class Generator(object):
 
         chosen_words = output[0:3]
         passphrase = ' '.join(chosen_words)
-        special = self.options.get('special')
-        if special is None or special == '':
-            special = DEFAULT_SPECIAL
-        if self.options.get('paperchars'):
-            paper_special = '!#%+:=?@'
-            paper_numeric = '23456789'
-            paper_upper = 'ABCDEFGHJKLMNPRSTUVWXYZ'
-            paper_lower = 'abcdefghijkmnopqrstuvwxyz'
-            character_classes = [paper_upper, paper_lower, paper_numeric]
-            if self.options.get('minimum_special'):
-                if len(special):
-                    character_classes.append(special)
-                else:
-                    character_classes.append(paper_special)
+        if self.options.get('paper'):
+            character_classes = [PAPER_UPPER, PAPER_LOWER, PAPER_NUMERIC]
         else:
             character_classes = [
                 ''.join(chr(x) for x in range(97, 123)), # a-z
                 ''.join(chr(x) for x in range(65, 91)), # A-Z
                 ''.join(chr(x) for x in range(48, 58)) # 0-9
             ]
-            if self.options.get('minimum_special'):
 
-                logger.debug('Adding special characters: %r', special)
+        if self.options.get('minimum_special'):
+            special = self.options.get('special')
+            if special is not None and len(special):
+                print('custom special')
                 character_classes.append(''.join(special))
+            elif self.options.get('paper'):
+                print('paper special')
+                character_classes.append(PAPER_SPECIAL)
+            else:
+                print('default special')
+                character_classes.append(DEFAULT_SPECIAL)
+                logger.debug('Adding special characters: %r', special)
+        print('joining %r' % character_classes)
         characters = ''.join(character_classes)
         if (
                 self.options.get('minimum_password_length') ==
@@ -198,7 +203,7 @@ def main():
     parser.add_argument(
         '--paper', dest='paper',
         action='store_true', default=False,
-        help='Use "!#%+23456789:=?@ABCDEFGHJKLMNPRSTUVWXYZabcdefghijkmnopqrstuvwxyz"'
+        help='Use "' + PAPER_ALL.replace('%', '%%') + '"'
     )
     options = vars(parser.parse_args())
     if options.get('verbose'):
