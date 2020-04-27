@@ -96,7 +96,7 @@ if [ "$TERM" != "dumb" ]; then
     fi
 fi
 alias bc='bc -lq .bcrc'
-alias gcc='gcc -Wall'
+alias gcc='gcc -Wall -O3'
 
 ######################################################################
 # Prefer US English and use UTF-8
