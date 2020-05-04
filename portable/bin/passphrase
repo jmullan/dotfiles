@@ -81,16 +81,12 @@ class Generator(object):
         if self.options.get('minimum_special'):
             special = self.options.get('special')
             if special is not None and len(special):
-                print('custom special')
                 character_classes.append(''.join(special))
             elif self.options.get('paper'):
-                print('paper special')
                 character_classes.append(PAPER_SPECIAL)
             else:
-                print('default special')
                 character_classes.append(DEFAULT_SPECIAL)
                 logger.debug('Adding special characters: %r', special)
-        print('joining %r' % character_classes)
         characters = ''.join(character_classes)
         if (
                 self.options.get('minimum_password_length') ==
