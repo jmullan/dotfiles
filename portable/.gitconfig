@@ -64,3 +64,7 @@
 	required = true
 [prompt]
 	enabled = 1
+[filter "black_py"]
+	clean = "black -q - "
+[filter "black_py.indent"]
+	smudge = cat

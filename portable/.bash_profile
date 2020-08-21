@@ -38,7 +38,14 @@ POSSIBLE_PATHS=(
     "${HOME}/.local/bin"
     "${HOME}/.go/bin"
     "${HOME}/bin"
-    "${HOME}/.pyenv/bin"
+    "${HOME}/.pyenv/bin",
+    "/usr/local/opt/libxml2/bin:$PATH"
+    "/Users/jmullan/rdio/arcanist/arcanist/bin"
+    "/usr/local/opt/coreutils/libexec/gnubin"
+    "/usr/local/opt/gnu-tar/libexec/gnubin"
+    "/usr/local/opt/coreutils/libexec/gnubin"
+    "/usr/local/opt/openssl@1.1/bin:$PATH"
+    "/usr/local/opt/libxml2/bin"
 )
 
 for p in "${POSSIBLE_PATHS[@]}"; do
@@ -142,3 +149,5 @@ if [ -e "${HOME}/.sdkman" ] ; then
     export SDKMAN_DIR="${HOME}/.sdkman"
     [[ -s "${HOME}/.sdkman/bin/sdkman-init.sh" ]] && source "${HOME}/.sdkman/bin/sdkman-init.sh"
 fi
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home
+export BASH_SILENCE_DEPRECATION_WARNING=1
