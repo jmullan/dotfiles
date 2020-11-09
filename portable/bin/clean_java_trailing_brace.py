@@ -23,7 +23,8 @@ def main():
             contents = original_contents
 
         replace_patterns = [
-            (r'\n+}[\n\s]*\Z', r'\n}\n')
+            (r'\n+}[\n\s]*\Z', r'\n}\n'),
+            (r'}[\n\s]+}\n\Z', r'}\n}\n')
         ]
         for pattern, replacement in replace_patterns:
             contents = re.sub(pattern, replacement, contents)

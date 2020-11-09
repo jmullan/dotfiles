@@ -2,21 +2,22 @@
 import os
 import re
 import sys
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 
 def main():
     """Strip $Id$ and stuff."""
     changed = False
-    parser = OptionParser()
-    parser.add_option('-v', '--verbose', dest='verbose',
-                      action='store_true', default=False,
-                      help='verbose is more verbose')
-    (options, args) = parser.parse_args()
+    parser = ArgumentParser()
+    parser.add_argument('-v', '--verbose', dest='verbose',
+                        action='store_true', default=False,
+                         help='verbose is more verbose')
+    parser.add_argument('filenames', nargs='+', help='filenames to process')
+    options = parser.parse_args()
     options = options.__dict__
     verbose = options.get('verbose')
 
-    for filename in args:
+    for filename in options['filenames']:
         filesize = os.path.getsize(filename)
         with open(filename) as f:
             original_contents = f.read(filesize)
@@ -25,7 +26,10 @@ def main():
         plaintext_replacements = [
             ('To change body of implemented methods use File | Settings | File Templates.', ''),
             ('To change this template use File | Settings | File Templates.', ''),
-            ('Created with IntelliJ IDEA.', '')
+            ('Created with IntelliJ IDEA.', ''),
+            ('Created with IntelliJ IDEA', ''),
+            ('Created by IntelliJ IDEA.', ''),
+            ('Created by IntelliJ IDEA', ''),
         ]
 
         for find, replace in plaintext_replacements:
