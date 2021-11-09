@@ -1,12 +1,23 @@
+#!/bin/bash
 EXIT="$?"
 _SMILEY=$(echo -e "\xf0\x9f\x92\x80")
 _FROWNY=$(echo -e "\xf0\x9f\x98\xa1")
+_CLOUDY=$(echo -e "\xf0\x9f\x8c\xa9")
 SMILEY="${SMILEY:-$_SMILEY}"
 FROWNY="${FROWNY:-$_FROWNY}"
+CLOUDY="${_CLOUDY:-$_CLOUDY}"
 PS1=""
 PS1+="\$(git sanity)"
 PS1+="\$(date '+[%-m/%-d %H:%M:%S]')"
-PS1+=" \[\e[36m\u@$(tput bold)$(tput setaf $HOST_COLOR)\]\h\[$(tput sgr0)\]"
+PS1+=" \[\e[36m\u@$(tput bold)$(tput setaf "$HOST_COLOR")\]\h\[$(tput sgr0)\]"
+if [ -n "$SC_REGION" ]; then
+  PS1+=" ($CLOUDY  $SC_REGION"
+  if [ -n "$SC_PROJECT" ]; then
+    PS1+="/$SC_PROJECT)"
+  else
+    PS1+=")"
+  fi
+fi
 PS1+="\$(screen_prompt)"
 PS1+="\$(virtualenv_prompt)"
 PS1+="\$(. sdk-prompt)"

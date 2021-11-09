@@ -1,6 +1,8 @@
 # ~/.bashrc: executed by bash(1) for non-login shells.
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples
+
+# quit early if there is no prompt?
 [ -z "$PS1" ] && return
 
 HOST_SYMBOL="SET UP YOUR LOCALRC FREAL"
@@ -69,9 +71,9 @@ bind '"\e[8~": end-of-line'
 
 export HISTCONTROL=ignoredups
 if [ -n "$YROOT_NAME" ]; then
-    export HISTFILE="$HOME/.history_`hostname`_$YROOT_NAME"
+    export HISTFILE="$HOME/.history_$(hostname)_$YROOT_NAME"
 else
-    export HISTFILE="$HOME/.history_`hostname`"
+    export HISTFILE="$HOME/.history_$(hostname)"
 fi
 export HISTSIZE=10000
 export HISTFILESIZE=1000000
@@ -87,10 +89,10 @@ if [ "$TERM" != "dumb" ]; then
     else
         alias ls='ls --color=auto'
     fi
-    if [ `which dircolors` ] ; then
+    if [ $(which dircolors) ] ; then
         [ -e "$HOME/.dircolors" ] && DIR_COLORS="$HOME/.dircolors"
         [ -e "$DIR_COLORS" ] || DIR_COLORS=""
-        eval `dircolors -b $DIR_COLORS`
+        eval $(dircolors -b "$DIR_COLORS")
     else
         export LS_COLORS='no=00:fi=00:di=01;34:ln=01;36:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arj=01;31:*.taz=01;31:*.lzh=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.gz=01;31:*.bz2=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.jpg=01;35:*.jpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.avi=01;35:*.fli=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.ogg=01;35:*.mp3=01;35:*.wav=01;35:'
     fi
@@ -109,12 +111,13 @@ export LANG="en_US"
 function __prompt_command() {
     . ~/bin/jmprompt
 }
+export -f __prompt_command
 export PROMPT_COMMAND=__prompt_command
 export SVN_EDITOR=emacs
 export VISUAL=emacs
 export EDITOR=emacs
 export TZ='America/Los_Angeles'
-export HOSTNAME=`hostname`
+export HOSTNAME=$(hostname)
 
 if [ ! -s $DISPLAY ]; then
     EMACS=`which emacs`

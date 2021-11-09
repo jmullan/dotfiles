@@ -24,7 +24,7 @@ if [ -z "${ACTUAL_ENV}${EXPECTED_VENV}" ] ; then
     exit
 fi
 
-echo -n '( '
+echo -n ' ('
 if [ -z "${VIRTUALENVWRAPPER_SCRIPT}" ] ; then
     if [ -e ~/.virtualenvs ] ; then
         if [ -z "${VIRTUALENVWRAPPER}" ] ; then
@@ -73,4 +73,4 @@ else
         fi
     fi
 fi
-echo -n ' ) '
+echo -n ') '

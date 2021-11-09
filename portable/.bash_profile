@@ -1,8 +1,6 @@
 # ~/.bash_profile: executed by bash(1) for login shells.
 # see /usr/share/doc/bash/examples/startup-files for examples.
 # the files are located in the bash-doc package.
-
-
 umask 022
 
 if [ -f ~/.bash_profile_local ]; then
@@ -120,17 +118,18 @@ fi
 # OPAM configuration
 . /home/jmullan/.opam/opam-init/init.sh > /dev/null 2> /dev/null || true
 
+export PIP_REQUIRE_VIRTUALENV=true
 if which pip >/dev/null; then
-    mkdir -p "${HOME}/.cache/pip/wheelhouse"
     export STANDARD_CACHE_DIR="${XDG_CACHE_HOME:-${HOME}/.cache}/pip"
     export WHEELHOUSE="${STANDARD_CACHE_DIR}/wheelhouse"
+    mkdir -p "${WHEELHOUSE}"
+
     export PIP_FIND_LINKS="file://${WHEELHOUSE}"
     export PIP_WHEEL_DIR="${WHEELHOUSE}"
 
-    mkdir -p "${HOME}/.cache/pip/packages"
-    export PIP_DOWNLOAD_CACHE="${HOME}/.cache/pip/packages"
+    export PIP_DOWNLOAD_CACHE="${STANDARD_CACHE_DIR}/packages"
+    mkdir -p "${PIP_DOWNLOAD_CACHE}"
 fi
-export PIP_REQUIRE_VIRTUALENV=true
 export LESS="-XFRK"
 alias bwd='pwd | sed -e "s:/:🥖:g"'
 GZIP=-9
@@ -148,6 +147,7 @@ if [ -e "${HOME}/.sdkman" ] ; then
     #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
     export SDKMAN_DIR="${HOME}/.sdkman"
     [[ -s "${HOME}/.sdkman/bin/sdkman-init.sh" ]] && source "${HOME}/.sdkman/bin/sdkman-init.sh"
+    sdk offline > /dev/null
 fi
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home
 export BASH_SILENCE_DEPRECATION_WARNING=1

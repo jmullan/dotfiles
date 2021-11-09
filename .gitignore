@@ -3,3 +3,4 @@
 *.bak
 /portable/.travis/.build
 /portable/.emacs.d/elpa/
+.DS_Store

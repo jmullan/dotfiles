@@ -1,0 +1,15 @@
+#!/bin/bash
+BLACK=$(which black)
+if [ -z "${BLACK}" ] ; then
+    # black is not installed
+    exit 0
+fi
+CONFIGURED=$(grep tool.black pyproject.toml 2>/dev/null)
+if [ -n "${CONFIGURED}" ] ; then
+    "${BLACK}" "$@"
+fi
+CHECK=$(grep -r 'black --check' -- Jenkinsfile* ci* z* *gradle* */*gradle* 2>/dev/null | head -n 1)
+if [ -n "${CHECK}" ] ; then
+    "${BLACK}" "$@"
+fi
+exit 0
