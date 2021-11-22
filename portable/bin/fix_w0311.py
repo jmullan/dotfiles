@@ -35,15 +35,15 @@ def main():
                 remainder = matches.group(2)
                 this_indentation = indentation
                 if len(indentation) > len(prior_indentation):
-                    print '>' * width, line
+                    print('>' * width, line)
                     diff = len(indentation) - len(prior_indentation)
                     indentation_level.append(' ' * diff)
                 elif len(indentation) < len(prior_indentation):
-                    print '<' * width, line
+                    print('<' * width, line)
                     while len(''.join(indentation_level)) > len(indentation):
                         indentation_level.pop()
                 else:
-                    print ' ' * width, line
+                    print(' ' * width, line)
                 indentation = len(indentation_level) * width * ' '
                 prior_indentation = this_indentation
                 line = '%s%s' % (indentation, remainder)
@@ -52,7 +52,7 @@ def main():
         changed = new_contents != contents
         if changed:
             if verbose:
-                print 'updated file %s' % filename
+                print('updated file %s' % filename)
             with open(filename, 'w') as f:
                 f.write(new_contents)
 
