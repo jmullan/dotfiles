@@ -7,7 +7,6 @@ from optparse import OptionParser
 
 def main():
     """Snug up final curly braces"""
-    changed = False
     parser = OptionParser()
     parser.add_option('-v', '--verbose', dest='verbose',
                       action='store_true', default=False,
@@ -28,7 +27,6 @@ def main():
         ]
         for pattern, replacement in replace_patterns:
             contents = re.sub(pattern, replacement, contents)
-
 
         changed = contents != original_contents
         if changed:

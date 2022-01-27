@@ -14,7 +14,6 @@ def blank(line):
 
 def main():
     """Remove trailing whitespace"""
-    changed = False
     parser = OptionParser()
     parser.add_option('-v', '--verbose', dest='verbose',
                       action='store_true', default=False,
@@ -32,7 +31,6 @@ def main():
     only_blank_lines = options.get('only_blank_lines')
 
     for filename in args:
-        contents = ''
         filesize = os.path.getsize(filename)
         with open(filename) as f:
             contents = f.read(filesize)

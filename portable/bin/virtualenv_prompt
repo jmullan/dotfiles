@@ -3,17 +3,21 @@ VIRTUALENVWRAPPER=$(which virtualenvwrapper.sh)
 EXPECTED_VENV=
 ACTUAL_VENV=
 VENV_FILE=$(find_up .venv)
-VENV3_FILE=$(find_up .venv3)
 PYTHONV=""
 if [ -n "$VENV_FILE" ] ; then
-    EXPECTED_VENV=$(cat "$VENV_FILE")
+    EXPECTED_VENV=$(head -n 1 "$VENV_FILE")
+    PYTHONV=$(tail -n +2 "$VENV_FILE" | head -n 1)
 fi
-if [ -n "$VENV3_FILE" ] ; then
-    EXPECTED_VENV=$(cat "$VENV3_FILE")
-    PYTHONV="--python="$(which python3)
+if [ -n "${PYTHONV}" ] ; then
+    if [ -e "${HOME}/.pyenv/versions/${PYTHONV}/bin/python" ] ; then
+        VERSION=$("${HOME}/.pyenv/versions/${PYTHONV}/bin/python")
+    else
+        VERSION=$(glob "${HOME}/.pyenv/versions/${PYTHONV}*/bin/python" | sort -nr | head -n 1)
+    fi
 fi
+
 if [ -n "${WORKON_HOME}" ] ; then
-    AVAILABLE_VENV=$(ls -1 "${WORKON_HOME}" | grep "${EXPECTED_VENV}")
+    AVAILABLE_VENV=$(glob "${WORKON_HOME}/*" | sed 's#.*/##' | grep "${EXPECTED_VENV}")
 fi
 if [ -n "$VIRTUAL_ENV" ]; then
     # Strip out the path and just leave the env name
@@ -53,7 +57,10 @@ else
         else
 	    if [ -z "${AVAILABLE_VENV}" ] ; then
                 echo -n "$(tput setaf 1)"
-	        echo -n "mkvirtualenv $PYTHONV ${EXPECTED_VENV}"
+	        echo -n "mkvirtualenv ${EXPECTED_VENV}"
+                if [ -n "${VERSION}" ] ; then
+                    echo -n " --python $VERSION"
+                fi
                 echo -n "$(tput sgr0)"
 	    else
                 echo -n "$(tput setaf 3)"
@@ -66,6 +73,9 @@ else
 	    if [ -z "${AVAILABLE_VENV}" ] ; then
                 echo -n "$(tput setaf 1)"
 	        echo -n "mkvirtualenv ${EXPECTED_VENV}"
+                if [ -n "${VERSION}" ] ; then
+                    echo -n " --python $VERSION"
+                fi
                 echo -n "$(tput sgr0)"
             else
                 echo -n " venv:${ACTUAL_VENV} "

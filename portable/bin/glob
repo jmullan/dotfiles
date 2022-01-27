@@ -6,30 +6,40 @@ import re
 import sys
 
 
-def globber(ignore_case, path, subpath):
+def globber(ignore_case: bool, path: str, subpath: str, depth: int = 0, verbose: bool = False):
+    """Look for subpath in path"""
     found = False
     chunk = subpath
     subchunks = None
     if '/' in subpath:
         chunk, subchunks = subpath.split('/', 1)
-
+    indent = depth * 4
+    if verbose:
+        print(' ' * indent, path, chunk, subchunks)
     rule = re.compile(fnmatch.translate(chunk), re.IGNORECASE)
 
     def match(name):
-        return (ignore_case and rule.match(name)) or (fnmatch.fnmatch(name, chunk))
+        if ignore_case:
+            return rule.match(name)
+        return fnmatch.fnmatch(name, chunk)
 
     for name in os.listdir(path):
+        if verbose:
+            print(' ' * indent, '-', name)
         if match(name):
-            child = path + '/' + name
+            if path.endswith('/'):
+                child = path + name
+            else:
+                child = path + '/' + name
             if subchunks is None:
-                print child
+                print(child)
                 found = True
             elif subchunks == '':
                 if os.path.isdir(child):
-                    print child
+                    print(child)
                     found = True
             elif os.path.isdir(child):
-                found = globber(ignore_case, child, subchunks) or found
+                found = globber(ignore_case, child, subchunks, depth + 1, verbose=verbose) or found
     return found
 
 def main():
@@ -44,6 +54,12 @@ def main():
         dest='ignore_case',
         help='case insensitive matching'
     )
+    parser.add_argument(
+        '-v', '--verbose',
+        action='store_true',
+        dest='verbose',
+        help='print more stuff'
+    )
     parser.add_argument('--cwd', nargs='?', help='', default=os.getcwd())
     parser.add_argument('globs', nargs='+')
     args = parser.parse_args()
@@ -53,13 +69,13 @@ def main():
         cwd = os.getcwd() + '/' + args.cwd
     for glob in args.globs:
         if glob.startswith('/'):
-            found = globber(args.ignore_case, glob[0], glob[1:])
+            found = globber(args.ignore_case, glob[0], glob[1:], verbose=args.verbose)
         else:
-            found = globber(args.ignore_case, cwd, glob)
-        if not found:
-            print >> sys.stderr, 'Did not find %s in %s' % (glob, cwd)
+            found = globber(args.ignore_case, cwd, glob, verbose=args.verbose)
+        if not found and args.verbose:
+            print('Did not find %s in %s' % (glob, cwd), file=sys.stderr)
             status = 1
-    exit(status)
+    sys.exit(status)
 
 if __name__ == "__main__":
     main()

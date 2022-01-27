@@ -74,14 +74,6 @@ if [ -e "${HOME}/lib/python" ] ; then
     done
 fi
 
-if [ -e /usr/lib/jvm/java-6-sun ] ; then
-    export JAVA_HOME="/usr/lib/jvm/java-6-sun"
-fi
-
-if [ -e /usr/libexec/java_home ] ; then
-    export JAVA_HOME=`/usr/libexec/java_home`
-fi
-
 if [ -e "${HOME}/src/hadoop" ] ; then
     export HADOOP_HOME="${HOME}/src/hadoop"
 fi
@@ -149,5 +141,4 @@ if [ -e "${HOME}/.sdkman" ] ; then
     [[ -s "${HOME}/.sdkman/bin/sdkman-init.sh" ]] && source "${HOME}/.sdkman/bin/sdkman-init.sh"
     sdk offline > /dev/null
 fi
-export JAVA_HOME=/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home
 export BASH_SILENCE_DEPRECATION_WARNING=1
