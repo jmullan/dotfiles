@@ -10,11 +10,18 @@ if [ -n "$VENV_FILE" ] ; then
 fi
 if [ -n "${PYTHONV}" ] ; then
     if [ -e "${HOME}/.pyenv/versions/${PYTHONV}/bin/python" ] ; then
-        VERSION=$("${HOME}/.pyenv/versions/${PYTHONV}/bin/python")
+        VERSION="${HOME}/.pyenv/versions/${PYTHONV}/bin/python"
     else
         VERSION=$(glob "${HOME}/.pyenv/versions/${PYTHONV}*/bin/python" | sort -nr | head -n 1)
     fi
 fi
+COMMAND="mkvirtualenv ${EXPECTED_VENV}"
+"${VERSION}" -m venv -h >/dev/null 2>/dev/null
+if [ $? -eq 0 ]; then
+    COMMAND="${VERSION} -m venv ${EXPECTED_VENV} ~/.virtualenvs/${EXPECTED_VENV}"
+    VERSION=
+fi
+
 
 if [ -n "${WORKON_HOME}" ] ; then
     AVAILABLE_VENV=$(glob "${WORKON_HOME}/*" | sed 's#.*/##' | grep "${EXPECTED_VENV}")
@@ -57,7 +64,7 @@ else
         else
 	    if [ -z "${AVAILABLE_VENV}" ] ; then
                 echo -n "$(tput setaf 1)"
-	        echo -n "mkvirtualenv ${EXPECTED_VENV}"
+	        echo -n "${COMMAND}"
                 if [ -n "${VERSION}" ] ; then
                     echo -n " --python $VERSION"
                 fi
@@ -72,7 +79,7 @@ else
         if [ -n "${ACTUAL_VENV}" ] ; then
 	    if [ -z "${AVAILABLE_VENV}" ] ; then
                 echo -n "$(tput setaf 1)"
-	        echo -n "mkvirtualenv ${EXPECTED_VENV}"
+	        echo -n "${COMMAND}"
                 if [ -n "${VERSION}" ] ; then
                     echo -n " --python $VERSION"
                 fi
