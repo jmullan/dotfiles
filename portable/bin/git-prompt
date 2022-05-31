@@ -1,15 +1,15 @@
 #!/bin/bash
-GIT_DIR=`git rev-parse --git-dir 2>/dev/null`
+GIT_DIR="$(git rev-parse --git-dir 2>/dev/null)"
 if [ -z "$GIT_DIR" ] ; then
     exit
 fi
-GIT_PROMPT_ENABLED=$(git config prompt.enabled)
+GIT_PROMPT_ENABLED="$(git config prompt.enabled)"
 if [ "${GIT_PROMPT_ENABLED}" != "1" ] ; then
     exit
 fi
-GIT_STATUS="`git status -unormal 2>&1`"
-TRACKING=`git track`
-REBASE=`git rebasing`
+GIT_STATUS="$(git status -unormal 2>&1)"
+TRACKING="$(git track)"
+REBASE="$(git rebasing)"
 if [ -f "$GIT_DIR/rebase-merge/head-name" ] ; then
     REBASE_HEAD="$(cat "$GIT_DIR/rebase-merge/head-name")"
 fi
@@ -18,15 +18,15 @@ if [ -f "$GIT_DIR/MERGE_HEAD" ] ; then
     MERGE_HEAD="$(cat "$GIT_DIR/MERGE_HEAD")"
 fi
 if [ -n "$TRACKING" ] ; then
-    ADDED=`git diff --numstat $TRACKING | total`
-    DELETED=`git diff --numstat $TRACKING | awk '{print $2}' | total`
+    ADDED="$(git diff --numstat "${TRACKING}" | total)"
+    DELETED="$(git diff --numstat "${TRACKING}" | awk '{print $2}' | total)"
 else
     ADDED=0
     DELETED=0
 fi
-GROSS=`expr $ADDED + $DELETED`
-NET=`expr $ADDED - $DELETED`
-ORIGIN_DIFF_STATS=`echo -n "+$ADDED -$DELETED =$NET ($GROSS)"`
+GROSS="$(expr "${ADDED}" + "${DELETED}")"
+NET="$(expr "${ADDED}" - "${DELETED}")"
+ORIGIN_DIFF_STATS=$(echo -n "+$ADDED -$DELETED =$NET ($GROSS)")
 if [[ "$GIT_STATUS" =~ nothing\ to\ commit ]]; then
     ansi=2
 elif [[ "$GIT_STATUS" =~ nothing\ added\ to\ commit\ but\ untracked\ files\ present ]]; then
@@ -47,7 +47,7 @@ fi
 if [ -n "$MERGE_HEAD" ]; then
     echo -n " $MERGE_HEAD";
 fi
-BRANCHNAME=`git rev-parse --abbrev-ref HEAD`
+BRANCHNAME="$(git rev-parse --abbrev-ref HEAD)"
 if [ -n "$BRANCHNAME" ]; then
     echo -n " $(tput setaf $ansi)$BRANCHNAME$(tput sgr0)"
     if [[ "$GIT_STATUS" =~ Changes\ to\ be\ committed ]] ; then
@@ -60,34 +60,38 @@ if [ -n "$BRANCHNAME" ]; then
         echo -n " $(tput setaf 1)untracked$(tput sgr0)"
     fi
 fi
-if [ $GROSS -gt 0 ]; then
+if [ "${GROSS}" -gt 0 ]; then
     echo -n " $ORIGIN_DIFF_STATS "
     git diff-graph
 fi
-AHEAD=`git ahead || echo 0`
-if [ "$AHEAD" -gt 0 ] ; then
+AHEAD="$(git ahead || echo 0)"
+if [ "${AHEAD}" -gt 0 ] ; then
     echo -n " $(tput setaf 2)AHEAD $AHEAD$(tput sgr0)";
 fi
-BEHIND=`git behind || echo 0`
-if [ "$BEHIND" -gt 0 ] ; then
+BEHIND="$(git behind || echo 0)"
+if [ "${BEHIND}" -gt 0 ] ; then
     echo -n " $(tput setaf 1)BEHIND $BEHIND$(tput sgr0)";
 fi
-FEATURE=`git rev-parse --abbrev-ref HEAD | grep ^feature/`
-REMOTE=`git remote`
-DEVELOP_NAME=`git config --get gitflow.branch.develop`
+FEATURE=$(git rev-parse --abbrev-ref HEAD | grep ^feature/)
+REMOTE=$(git remote)
+MAIN_NAME=$(git config --get gitflow.branch.main)
+if [ -z "${MAIN_NAME}" ] ; then
+    MAIN_NAME=master
+fi
+DEVELOP_NAME=$(git config --get gitflow.branch.develop)
 if [ -z "${DEVELOP_NAME}" ] ; then
     DEVELOP_NAME=develop
 fi
-DEVELOP_REV=`git rev-parse --abbrev-ref "${DEVELOP_NAME}" 2>&1 | grep 'unknown revision or path not in the working tree'`
+DEVELOP_REV=$(git rev-parse --abbrev-ref "${DEVELOP_NAME}" 2>&1 | grep 'unknown revision or path not in the working tree')
 if [ -n "${DEVELOP_REV}" ] ; then
-    DEVELOP_NAME=master
+    DEVELOP_NAME="${MAIN_NAME}"
 fi
 if [ -n "$REMOTE" ] ; then
-    ORIGIN_DEVELOP=`git for-each-ref --format='%(refname:short)' refs/heads refs/remotes/origin | grep "^origin/${DEVELOP_NAME}\$"`
-    if [ -n "$FEATURE" -a -n "$ORIGIN_DEVELOP" -a "$TRACKING" != "$ORIGIN_DEVELOP" ] ; then
-        BEHIND=`git behind "origin/${DEVELOP_NAME}"`
-        AHEAD=`git ahead "origin/${DEVELOP_NAME}"`
-        if [ "$BEHIND" -gt 0 -o "$AHEAD" -gt 0 ] ; then
+    ORIGIN_DEVELOP=$(git for-each-ref --format='%(refname:short)' refs/heads refs/remotes/origin | grep "^origin/${DEVELOP_NAME}\$")
+    if [ -n "$FEATURE" ] && [ -n "$ORIGIN_DEVELOP" ] && [ "$TRACKING" != "$ORIGIN_DEVELOP" ] ; then
+        BEHIND=$(git behind "origin/${DEVELOP_NAME}")
+        AHEAD=$(git ahead "origin/${DEVELOP_NAME}")
+        if [ "$BEHIND" -gt 0 ] || [ "$AHEAD" -gt 0 ] ; then
             echo -n " ( o/${DEVELOP_NAME}"
         fi
         if [ "$AHEAD" -gt 0 ] ; then
@@ -96,7 +100,7 @@ if [ -n "$REMOTE" ] ; then
         if [ "$BEHIND" -gt 0 ] ; then
             echo -n " -$BEHIND"
         fi
-        if [ "$BEHIND" -gt 0 -o "$AHEAD" -gt 0 ] ; then
+        if [ "$BEHIND" -gt 0 ] || [ "$AHEAD" -gt 0 ] ; then
             echo -n ' )'
         fi
     fi
