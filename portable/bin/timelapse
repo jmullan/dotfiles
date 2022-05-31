@@ -3,12 +3,14 @@
 #ffmpeg -i "$@" -r 1 -f image2 ffmpeg_temp/%05d.png
 #ffmpeg -i ffmpeg_temp/%05d.png -b 512 output.mpg
 #rm -rf ./ffmpeg_temp
-rm -f list.txt
-for x in "$@"; do
-    echo "file $x" >> list.txt
-done
-mv list.txt list2.txt
-sort list2.txt -t _ -k 2,3 > list.txt
-rm list2.txt
+set -xe
+#rm -f list.txt
+#for x in "$@"; do
+#    echo "file $x" >> list.txt
+#done
+#mv list.txt list2.txt
+#sort list2.txt -t _ -k 2,3 > list.txt
+#rm list2.txt
+find . -name '*.avi' | sed 's#./##' | sort -t _ -k 2,3 | awk '{print "file "$0}' > list.txt
 ffmpeg -f concat -i list.txt -vf scale=iw*.5:ih*.5 -preset ultrafast -filter:v "setpts=0.01*PTS" -c:a copy -nostdin -an timelapsed.mkv
 #rm list.txt

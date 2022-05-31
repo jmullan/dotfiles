@@ -23,7 +23,7 @@
 [core]
     whitespace = "trailing-space,space-before-tab"
     autocrlf = input
-    excludesfile = /Users/jmullan/.gitignore
+    excludesfile = ~/.gitignore
 [apply]
     whitespace = "fix"
 [alias]
@@ -35,36 +35,38 @@
 [rerere]
     enabled = true
 [commit]
-	template = ~/.arc-commit-template.txt
+    template = ~/.arc-commit-template.txt
 [user]
-	name = Jesse Mullan
+    name = Jesse Mullan
 [push]
-	default = simple
+    default = simple
 [gc]
-	auto = 0
+    auto = 0
 [merge]
         summary=true
 [diff]
-	renames = copies
-	mnemonicprefix = true
-	algorithm = patience
-	renameLimit = 2000
+    renames = copies
+    mnemonicprefix = true
+    algorithm = patience
+    renameLimit = 2000
 [branch]
-	autosetupmerge = true
+    autosetupmerge = true
 [difftool "sourcetree"]
-	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
-	path =
+    cmd = opendiff \"$LOCAL\" \"$REMOTE\"
+    path =
 [mergetool "sourcetree"]
-	cmd = /Applications/SourceTree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
-	trustExitCode = true
+    cmd = /Applications/SourceTree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+    trustExitCode = true
 [filter "lfs"]
-	clean = git-lfs clean -- %f
-	smudge = git-lfs smudge -- %f
-	process = git-lfs filter-process
-	required = true
+    clean = git-lfs clean -- %f
+    smudge = git-lfs smudge -- %f
+    process = git-lfs filter-process
+    required = true
 [prompt]
-	enabled = 1
+    enabled = 1
 [filter "black_py"]
-	clean = "black -q - "
+    clean = "black -q - "
 [filter "black_py.indent"]
-	smudge = cat
+    smudge = cat
+[include]
+    path = .gitconfig.local
