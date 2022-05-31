@@ -1,7 +1,0 @@
-0 3 * * * /usr/bin/find /www/galleryupdates.jpmullan.com/html/G3/ -mtime +15 -iname '*zip' -exec /bin/rm "{}" \;
-0 * * * * /home/jmullan/orsolya_bin/mailboxes >/home/jmullan/.mailboxlist
-4 * * * * /usr/bin/php /home/jmullan/orsolya_bin/mySqlOptimize.php
-30 3 * * * /home/jmullan/bin/doreleases.sh
-4 1 * * * df -h
-* * * * * /usr/bin/fetchmail >>/home/jmullan/logs/fetchmail.log
-0 * * * * sh /home/jmullan/src/minecraft/make_map.sh >>/home/jmullan/logs/make_minecraft_map.log

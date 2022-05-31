@@ -1,3 +1,0 @@
-#!/bin/bash
-cd
-find mail/ -type f|grep -v zmail|grep -v '.lock$' |sort -f |awk '{print $0}'
