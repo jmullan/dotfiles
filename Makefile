@@ -4,9 +4,11 @@ all: install
 
 submodules:
 	git submodule sync
-	git submodule update --recursive
 	git submodule update --init --recursive
-	git submodule foreach git pull origin master
+	git submodule update --recursive
+	git submodule foreach git fetch
+	git submodule foreach 'git checkout main 2>/dev/null || git checkout master'
+	git submodule foreach git rebase
 
 portable/.dircolors: submodules
 	cp submodules/dircolors-solarized/dircolors.ansi-dark portable/.dircolors
