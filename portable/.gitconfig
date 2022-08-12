@@ -41,9 +41,9 @@
 [push]
     default = simple
 [gc]
-    auto = 0
+	auto = 0
 [merge]
-        summary=true
+    summary=true
 [diff]
     renames = copies
     mnemonicprefix = true

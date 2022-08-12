@@ -4,3 +4,7 @@
 /portable/.travis/.build
 /portable/.emacs.d/elpa/
 .DS_Store
+portable/bin/back
+portable/bin/git-helpers
+portable/bin/git-toolbelt
+portable/bin/gitflow
