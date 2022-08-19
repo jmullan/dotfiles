@@ -52,24 +52,24 @@ for p in "${POSSIBLE_PATHS[@]}"; do
     fi
 done
 
-for _DIR in `find -L "${HOME}" -maxdepth 1 -mindepth 1 -name 'bin-*' -type d` ; do
+for _DIR in $(find -L "${HOME}" -maxdepth 1 -mindepth 1 -name 'bin-*' -type d) ; do
     export PATH="${_DIR}:${PATH}";
 done
 
 if [ -e "${HOME}/bin" ] ; then
-    for _DIR in `find -L "${HOME}/bin" -maxdepth 1 -mindepth 1 -type d` ; do
+    for _DIR in $(find -L "${HOME}/bin" -maxdepth 1 -mindepth 1 -type d | sort -r) ; do
         export PATH="${_DIR}:${PATH}";
     done
 fi
 
 if [ -e "${HOME}/src" ] ; then
-    for _DIR in `find -L "${HOME}/src" -maxdepth 1 -mindepth 1 -name 'bin-*' -type d` ; do
+    for _DIR in $(find -L "${HOME}/src" -maxdepth 1 -mindepth 1 -name 'bin-*' -type d | sort -r) ; do
         export PATH="${_DIR}:${PATH}";
     done
 fi
 
 if [ -e "${HOME}/lib/python" ] ; then
-    for _DIR in `find -L "${HOME}/lib/python" -maxdepth 1 -mindepth 1 -type d` ; do
+    for _DIR in $(find -L "${HOME}/lib/python" -maxdepth 1 -mindepth 1 -type d | sort ) ; do
         export PYTHONPATH="${_DIR}:${PYTHONPATH}";
     done
 fi
