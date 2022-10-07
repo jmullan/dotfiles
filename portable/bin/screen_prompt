@@ -1,6 +1,9 @@
 #!/bin/bash
 # STY is current screen
 # TERM=screen
+if [ "${DEBUG_PROMPT}" == "true" ] ; then
+   set -x
+fi
 SCREENDIR=/var/run/screen/S-`whoami`
 if [ ! -e "${SCREENDIR}" ] ; then
     exit 0
@@ -21,3 +24,7 @@ else
     echo -n "$(tput sgr0))"
 fi
 echo
+
+if [ "${DEBUG_PROMPT}" == "true"  ] ; then
+   set +x
+fi

@@ -1,4 +1,7 @@
 #!/bin/bash
+if [ "${DEBUG_PROMPT}" == "true" ] ; then
+   set -x
+fi
 SDK=$(sdk v 2>/dev/null)
 if [ -z "${SDK}" ] ; then
     exit
@@ -11,9 +14,7 @@ if [ -n "${SDKENV_FILE}" ] ; then
     EXPECTED_SDKENV="$(cat "${SDKENV_FILE}" | awk '/./ {print}')"
     SDK_MISSING_ENVS="$(cat "${SDKENV_FILE}" | awk '/./ {print}')"
 fi
-
 SDK_CURRENTS="$(sdk current | grep -v 'Using:' | awk '/./ {print}')"
-
 SDK_FOUND_ENVS=
 if [ -n "${EXPECTED_SDKENV}" ] ; then
     while read -r x ; do
@@ -45,4 +46,8 @@ fi
 SDK_PROMPT="${SDK_PROMPT})"
 if [ -n "${S}" ] ; then
     echo -n "${SDK_PROMPT}" | sed 's/java/jv/g' | sed 's/scala/sc/g' | sed 's/  */ /g'
+fi
+
+if [ "${DEBUG_PROMPT}" == "true"  ] ; then
+   set +x
 fi

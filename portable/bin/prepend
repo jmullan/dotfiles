@@ -1,0 +1,23 @@
+#!/bin/bash
+OUTPUT="${1}"
+if [ -z "${OUTPUT}" ] ; then
+   echo "No output file specified" 1>&2
+   exit 1
+fi
+if [ -d "${OUTPUT}" ] ; then
+   echo "Cannot prepend to a directory" 1>&2
+   exit 1
+fi
+BACKUP="${OUTPUT}.bak"
+if [ -d "${BACKUP}" ] ; then
+   echo "Cannot backup to a directory" 1>&2
+fi
+if [ -f "${OUTPUT}" ] ; then
+   cp "${OUTPUT}" "${BACKUP}"
+fi
+TMPFILE=$(mktemp /tmp/example.XXXXXXXXXX)
+cat > "${TMPFILE}"
+if [ -f "${BACKUP}" ] ; then
+   cat "${BACKUP}" >> "${TMPFILE}"
+fi
+mv "${TMPFILE}" "${OUTPUT}"

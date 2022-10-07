@@ -1,5 +1,8 @@
 #!/bin/bash
 EXIT="$?"
+if [ "${DEBUG_PROMPT}" == "true" ] ; then
+   set -x
+fi
 _SMILEY=$(echo -e "\xf0\x9f\x92\x80")
 _FROWNY=$(echo -e "\xf0\x9f\x98\xa1")
 _CLOUDY=$(echo -e "\xf0\x9f\x8c\xa9")
@@ -29,3 +32,7 @@ else
     PS1+="$FROWNY "
 fi
 PS1+="\$ "
+
+if [ "${DEBUG_PROMPT}" == "true"  ] ; then
+   set +x
+fi

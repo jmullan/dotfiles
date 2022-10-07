@@ -140,5 +140,6 @@ if [ -e "${HOME}/.sdkman" ] ; then
     export SDKMAN_DIR="${HOME}/.sdkman"
     [[ -s "${HOME}/.sdkman/bin/sdkman-init.sh" ]] && source "${HOME}/.sdkman/bin/sdkman-init.sh"
     sdk offline > /dev/null
+    export SDKMAN_OFFLINE_MODE=true
 fi
 export BASH_SILENCE_DEPRECATION_WARNING=1

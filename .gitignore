@@ -8,3 +8,5 @@ portable/bin/back
 portable/bin/git-helpers
 portable/bin/git-toolbelt
 portable/bin/gitflow
+.idea
+dotfiles.iml
