@@ -31,12 +31,14 @@ if [ -e "$SRC_DIR" ] ; then
         fi
     done
 fi
-if [ -e ~/Library/Preferences/PyCharm30/colors ]; then
-    cp "submodules/pycharm-solarized/Solarized Dark.xml" ~/Library/Preferences/PyCharm30/colors/;
-fi
-if [ -e ~/Library ]; then
+if [ -e ~/Library/ ] ; then
+    if [ -e ~/Library/Preferences/PyCharm30/colors ]; then
+        cp "submodules/pycharm-solarized/Solarized Dark.xml" ~/Library/Preferences/PyCharm30/colors/;
+    fi
     mkdir -p ~/Library/KeyBindings
-    if [ ! -e ~/Library/KeyBindings/DefaultKeyBinding.dict ] ; then
-        ln -s "$(pwd)/local/osx/Library/KeyBindings/DefaultKeyBinding.dict" "~/Library/KeyBindings/DefaultKeyBinding.dict"
+    if [ -e "$(pwd)/local/osx/Library/KeyBindings/DefaultKeyBinding.dict" ] ; then
+        if [ ! -e ~/Library/KeyBindings/DefaultKeyBinding.dict ] ; then
+            ln -s "$(pwd)/local/osx/Library/KeyBindings/DefaultKeyBinding.dict" "~/Library/KeyBindings/DefaultKeyBinding.dict"
+        fi
     fi
 fi
