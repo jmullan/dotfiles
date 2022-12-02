@@ -76,7 +76,7 @@ FEATURE=$(git rev-parse --abbrev-ref HEAD | grep ^feature/)
 REMOTE=$(git remote)
 MAIN_NAME=$(git config --get gitflow.branch.main)
 if [ -z "${MAIN_NAME}" ] ; then
-    MAIN_NAME=master
+    MAIN_NAME=$(git main)
 fi
 DEVELOP_NAME=$(git config --get gitflow.branch.develop)
 if [ -z "${DEVELOP_NAME}" ] ; then

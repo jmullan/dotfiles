@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import difflib
 import os
 import re
 from argparse import ArgumentParser
@@ -10,10 +9,10 @@ def main():
     parser = ArgumentParser()
     parser.add_argument('-v', '--verbose', dest='verbose',
                         action='store_true', default=False,
-                         help='verbose is more verbose')
-    parser.add_argument('-b', '--', dest='verbose',
-                        action='store_true', default=False,
-                         help='verbose is more verbose')
+                        help='verbose is more verbose')
+    parser.add_argument('-n', '--noop', dest="noop", action='store_true', default=False, help="Dry run only")
+    parser.add_argument('-s', '--spaces', dest="spaces", action='store_true', default=False, help="Ignore tabs, embrace spaces")
+    parser.add_argument('-t', '--tabs', dest="tabs", action='store_true', default=False, help="Ignore spaces, embrace tabs")
     parser.add_argument('filenames', nargs='+', help='filenames to process')
     options = parser.parse_args()
     options = options.__dict__
@@ -39,49 +38,41 @@ def main():
         if verbose and (contents != original_contents):
             print("something changed")
 
-        tabs = 0
-        spaces = 0
-        use = "spaces"
-        for line in stripped_lines:
-            if line.startswith('\t'):
-                tabs += 1
-            if line.startswith(' '):
-                spaces += 1
-        if tabs > spaces:
-            if verbose:
-                print('using tabs')
-            use = 'tabs'
-        if spaces == tabs and verbose:
-            print('Same number of tabs and spaces: %s' % spaces)
-
-        if use == 'spaces':
-            replace_patterns = [
-                (r'\t', ' ' * 4),
-                (r'\t ', ' ' * 5),
-                (r' \t', ' ' * 5),
-                (r'[ \t]+\n', '\n'),
-            ]
+        if options.get("tabs"):
+            use = "tabs"
+        elif options.get("spaces"):
+            use = "spaces"
         else:
-            replace_patterns = [
-                (r' {4}\t', '\t\t'),
-                (r'\t {4}', '\t\t'),
-                (r' {3}\t', '\t\t'),
-                (r'\t {3}', '\t\t'),
-                (r' {3}\t', '\t\t'),
-                (r'\t {3}', '\t\t'),
-                (r' \t', '\t\t'),
-                (r'[ \t]+\n', '\n'),
-            ]
-
-        for pattern, replacement in replace_patterns:
-            new_contents = ''
-            while new_contents != contents:
+            tabs = 0
+            spaces = 0
+            use = "spaces"
+            for line in stripped_lines:
+                if line.startswith('\t'):
+                    tabs += 1
+                if line.startswith(' '):
+                    spaces += 1
+            if tabs > spaces:
                 if verbose:
-                    print("replacing %r with %r" % (pattern, replacement))
-                new_contents = contents
-                contents = re.sub(pattern, replacement, new_contents)
-                if verbose and (contents != new_contents):
-                    print("replaced %r with %r" % (pattern, replacement))
+                    print('using tabs')
+                use = 'tabs'
+            if spaces == tabs and verbose:
+                print('Same number of tabs and spaces: %s' % spaces)
+
+        lines = contents.split("\n")
+        new_lines = []
+        for line in lines:
+            matches = re.match(r"^([ \t]+)(.*)", line)
+
+            if matches:
+                leading_whitespace = matches.group(1)
+                rest_of_line = matches.group(2)
+                if use == 'spaces' and "\t" in leading_whitespace:
+                    leading_whitespace = leading_whitespace.replace("\t", " " * 4)
+                elif use =="tabs" and " " in leading_whitespace:
+                    leading_whitespace = leading_whitespace.replace(" " * 4, "\t")
+                line = f"{leading_whitespace}{rest_of_line}"
+            new_lines.append(line)
+        contents = "\n".join(lines)
 
         changed = contents != original_contents
         if changed:
@@ -102,8 +93,9 @@ def main():
                         print('+ %r' % updated)
                     else:
                         print('  %r' % original)
-            with open(filename, 'w') as f:
-                f.write(contents)
+            if not options.get("noop"):
+                with open(filename, 'w') as f:
+                    f.write(contents)
         else:
             if verbose:
                 print('did not update file %s' % filename)
