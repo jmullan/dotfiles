@@ -15,7 +15,7 @@ if [ -n "${PYTHONV}" ] ; then
     if [ -e "${HOME}/.pyenv/versions/${PYTHONV}/bin/python" ] ; then
         VERSION="${HOME}/.pyenv/versions/${PYTHONV}/bin/python"
     else
-        VERSION=$(glob "${HOME}/.pyenv/versions/${PYTHONV}*/bin/python" | sort -nr | head -n 1)
+        VERSION=$(glob "${HOME}/.pyenv/versions/${PYTHONV}*/bin/python" | sort -Vr | head -n 1)
     fi
 fi
 COMMAND="mkvirtualenv ${EXPECTED_VENV}"

@@ -1,0 +1,78 @@
+#!/bin/bash
+trap exit SIGHUP SIGINT SIGTERM
+
+GIT_DIR="$(git rev-parse --git-dir 2>/dev/null)"
+if [ -z "$GIT_DIR" ] ; then
+    echo "No git dir available" >&2
+    exit 1
+fi
+
+export GC_AUTO=$(git config gc.auto)
+export GC_AUTODETACH=$(git config gc.autodetach)
+
+restore_settings() {
+    git gc
+    git prune
+    git gc
+
+    git config gc.auto "${GC_AUTO}"
+    git config gc.autodetach "${GC_AUTODETACH}"
+}
+
+git fetch --all --tags || ( echo "Could not git fetch" >&2 && restore_settings && exit 1 )
+git config gc.auto 0
+git config gc.autodetach 0
+git remote prune origin
+
+BRANCHNAME="$(git rev-parse --abbrev-ref HEAD)"
+if [ -z "${BRANCHNAME}" ] ; then
+  echo "Could not determine current branch" >&2
+  restore_settings
+  exit 1
+fi
+GIT_STATUS="$(git status -unormal 2>&1)"
+if [[ "${GIT_STATUS}" =~ Changes\ to\ be\ committed ]] ; then
+    echo 'Changes to be committed' >&2
+    restore_settings
+    exit 1
+fi
+if [[ "${GIT_STATUS}" =~ not\ staged ]] ; then
+    echo 'Unstaged files present' >&2
+    restore_settings
+    exit 1
+fi
+if [[ "${GIT_STATUS}" =~ ntracked ]] ; then
+    echo 'Untracked files present' >&2
+    restore_settings
+    exit 1
+fi
+
+MERGE="$(git config branch."$BRANCHNAME".merge)"
+ARGCOUNT=$#
+if [ $ARGCOUNT -eq 1 ] ; then
+    MERGE="$1"
+fi
+if [ -n "$MERGE" ] ; then
+    # git merge -q --ff || git merge --abort
+    git rebase --keep-empty --rebase-merges "$MERGE" || git rebase --abort
+fi
+for branch in $(git branch | awk '"*" != $1 {print $1}'); do
+    MERGE="$(git config branch."$branch".merge)"
+    if [ $ARGCOUNT -eq 1 ] ; then
+        MERGE="$1"
+    fi
+    if [ -n "$MERGE" ] ; then
+        git rev-parse --abbrev-ref "${MERGE}"
+        git checkout "$branch"
+        TRACKING=$(git track)
+        if [ -z "${TRACKING}" ] ; then
+            echo "Missing upstream" >&2
+        else
+            # git merge -q --ff || git merge --abort
+            git rebase --keep-empty --rebase-merges "$MERGE" || git rebase --abort
+        fi
+    fi
+done
+git checkout "${BRANCHNAME}"
+
+restore_settings

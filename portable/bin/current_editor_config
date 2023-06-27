@@ -1,8 +1,8 @@
 #!/bin/bash
-CWD=`pwd`
+CWD=$(pwd)
 if [ -z "$1" ] ; then
     editorconfig "${CWD}/foo.py"
 else
-    SETTING=`editorconfig "${CWD}/foo.py" | grep "${1}" | sed "s#${1}=##"`
+    SETTING="$(editorconfig "${CWD}/foo.py" | grep "${1}" | sed "s#${1}=##")"
     echo $SETTING
 fi

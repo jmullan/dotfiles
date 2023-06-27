@@ -4,22 +4,22 @@
 if [ "${DEBUG_PROMPT}" == "true" ] ; then
    set -x
 fi
-SCREENDIR=/var/run/screen/S-`whoami`
+SCREENDIR="/var/run/screen/S-$(whoami)"
 if [ ! -e "${SCREENDIR}" ] ; then
     exit 0
 fi
-FOUND=`find "${SCREENDIR}" -type p | wc -l`
+FOUND="$(find "${SCREENDIR}" -type p | wc -l)"
 if [ "${FOUND}" -eq 0 ] ; then
     exit 0
 fi
 if [ -n "${STY}" ] ; then
     echo -n " (att $(tput setaf 2)"
-    echo -n "${STY}" | sed s/.`hostname`// | sed 's/.pts-[0-9]*//'
+    echo -n "${STY}" | sed "s/.$(hostname)//" | sed 's/.pts-[0-9]*//'
     echo -n "$(tput sgr0))"
 else
     echo -n " (det $(tput setaf 1)"
-    for x in `find "${SCREENDIR}" -type p -printf '%f'` ; do
-        echo -n "$x" | sed s/.`hostname`// | sed 's/.pts-[0-9]*//'
+    for x in $(find "${SCREENDIR}" -type p -printf '%f') ; do
+        echo -n "$x" | sed "s/.$(hostname)//" | sed 's/.pts-[0-9]*//'
     done
     echo -n "$(tput sgr0))"
 fi

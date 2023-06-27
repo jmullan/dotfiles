@@ -1,5 +1,5 @@
 #!/bin/bash
-FILE=`tempfile`
+FILE="$(tempfile)"
 cat > "$FILE"
 #xfewer "$FILE" >/dev/null </dev/null  2>&1 &
 xterm -e less -asrRix8 "$FILE" >/dev/null </dev/null 2>&1 &

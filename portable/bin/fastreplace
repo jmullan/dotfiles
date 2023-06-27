@@ -7,4 +7,5 @@ if [ -z "$2" ] ; then
     echo "No second argument";
     exit 1;
 fi
-rpl "$1" "$2" `ag -lQ "$1"`
+FILES="$(ag -lQ "$1")"
+rpl "$1" "$2" $FILES

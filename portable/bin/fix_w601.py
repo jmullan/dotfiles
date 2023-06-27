@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os
 import re
 from optparse import OptionParser
@@ -17,7 +17,6 @@ def main():
     verbose = options.get('verbose')
 
     for filename in args:
-        contents = ''
         filesize = os.path.getsize(filename)
         with open(filename) as f:
             contents = f.read(filesize)
@@ -29,19 +28,20 @@ def main():
             if match:
                 find = match.group(0)
                 if verbose:
-                    print 'Found match %s in %s' % (find, filename)
+                    print('Found match %s in %s' % (find, filename))
                 replace = '%s in %s' % (match.group(2), match.group(1))
                 changed = True
                 contents = contents.replace(find, replace)
             else:
                 if verbose:
-                    print 'no match', REGEX
+                    print('no match', REGEX)
 
         if changed:
             if verbose:
-                print 'updated file %s' % filename
+                print('updated file %s' % filename)
             with open(filename, 'w') as f:
                 f.write(contents)
+
 
 if __name__ == "__main__":
     main()

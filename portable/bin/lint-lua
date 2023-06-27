@@ -2,4 +2,4 @@
 
 trap exit SIGHUP SIGINT SIGTERM
 
-[ `which luacheck` ] && luacheck ${1+"$@"}
+[ $(which luacheck) ] && luacheck ${1+"$@"}

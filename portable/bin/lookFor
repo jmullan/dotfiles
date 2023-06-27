@@ -1,18 +1,18 @@
 #!/bin/bash
-curdir=`pwd`
-ROOT="$curdir"
-while [ "`pwd`" != '/' ]; do
+START_DIR="$(pwd)"
+ROOT="$START_DIR"
+while [ "$(pwd)" != '/' ]; do
     if [ -f ".lookHere" ]; then
         if [ -s ".lookHere" ]; then
-            ROOT=`cat .lookHere`
+            ROOT="$(cat .lookHere)"
         else
-            ROOT=`pwd`
+            ROOT="$(pwd)"
         fi
         break
     fi
     cd ..
 done
-cd $curdir
+cd "$START_DIR"
 find "$ROOT" \
     \( \
     -not -iname '*.bak' \
@@ -49,5 +49,5 @@ find "$ROOT" \
     | grep -v 'coverage/coverage-Phantom' \
     | grep -v '^cover/' \
     | grep -v 'docs/backend/build/html' \
-    | sed s=^$curdir/==
-ag -r -Q "$@" "$ROOT" | sed s=^`pwd`/== | except api_request_cache.json
+    | sed s=^$START_DIR/==
+ag -r -Q "$@" "$ROOT" | sed "s=^$(pwd)/==" | except api_request_cache.json

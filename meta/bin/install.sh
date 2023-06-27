@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 if [ $# -lt 1 ] ; then
     echo "You have to supply the source directory as an argument"
     exit
