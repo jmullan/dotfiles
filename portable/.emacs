@@ -1,10 +1,12 @@
+;;; package dot emacs -- emacs configs
 (defun add-search-dir (path)
   (setq load-path (cons (expand-file-name path) load-path)))
 (add-search-dir "~/lib/emacs/lisp")
 
 (when (>= emacs-major-version 24)
     (require 'package)
-
+    (when (not package-archive-contents)
+          (package-refresh-contents))
 
     (let* ((no-ssl (and (memq system-type '(windows-nt ms-dos))
                        (not (gnutls-available-p))))
@@ -26,7 +28,6 @@
          editorconfig-fnmatch
          epl
          flycheck
-         flycheck-color-mode-line
          flycheck-pyflakes
          groovy-mode
          js3-mode
@@ -314,4 +315,4 @@
 
 ;; make the modeline high contrast
 (setq solarized-high-contrast-mode-line t)
-(load-theme 'solarized-dark)
+;;(load-theme 'solarized-dark)
