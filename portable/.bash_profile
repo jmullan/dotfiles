@@ -29,9 +29,6 @@ POSSIBLE_PATHS=(
     "/usr/local/sbin"
     "${HOME}/src/hadoop"
     "${HOME}/bin/ec2/bin"
-    "/cygdrive/c/Program Files (x86)/CollabNet/Subversion Client"
-    "/cygdrive/c/imvu/Reactor/Core/mysql/bin"
-    "/cygdrive/c/Program Files/Java/jdk1.6.0_21/bin"
     "/usr/local/mysql/bin"
     "${HOME}/.local/bin"
     "${HOME}/.go/bin"
@@ -132,7 +129,7 @@ export NODE_EXTRA_CA_CERTS='/usr/local/etc/openssl/cert.pem'
 
 if [ -e "${HOME}/dotfiles/submodules/ssh-find-agent/ssh-find-agent.sh" ] ; then
     source "${HOME}/dotfiles/submodules/ssh-find-agent/ssh-find-agent.sh"
-    set_ssh_agent_socket
+    sfa_set_ssh_agent_socket
 fi
 
 if [ -e "${HOME}/.sdkman" ] ; then
