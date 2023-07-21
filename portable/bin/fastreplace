@@ -8,4 +8,4 @@ if [ -z "$2" ] ; then
     exit 1;
 fi
 FILES="$(ag -lQ "$1")"
-rpl "$1" "$2" $FILES
+rpl -F "$1" "$2" $FILES

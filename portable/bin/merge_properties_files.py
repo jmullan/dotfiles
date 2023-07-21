@@ -9,31 +9,43 @@ def main():
     """Merge properties files"""
     changed = False
     parser = OptionParser()
-    parser.add_option('-v', '--verbose', dest='verbose',
-                      action='store_true', default=False,
-                      help='verbose is more verbose')
-    parser.add_option('-c', '--crush', dest='crush',
-                      action='store_true', default=False,
-                      help='Crush into application.properties')
-    parser.add_option('--target', dest='target', default=None, help='crush into this file')
+    parser.add_option(
+        "-v",
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        default=False,
+        help="verbose is more verbose",
+    )
+    parser.add_option(
+        "-c",
+        "--crush",
+        dest="crush",
+        action="store_true",
+        default=False,
+        help="Crush into application.properties",
+    )
+    parser.add_option(
+        "--target", dest="target", default=None, help="crush into this file"
+    )
     (options, args) = parser.parse_args()
     options = options.__dict__
-    verbose = options.get('verbose')
-    crush = options.get('crush')
-    target = options.get('target')
+    verbose = options.get("verbose")
+    crush = options.get("crush")
+    target = options.get("target")
 
     values_by_file = {}
     defaults = {}
     for filename in args:
         values_by_file[filename] = {}
-        contents = ''
+        contents = ""
         filesize = os.path.getsize(filename)
         with open(filename) as f:
             contents = f.read(filesize)
-        for x in contents.split('\n'):
+        for x in contents.split("\n"):
             x = x.strip()
-            if not x.startswith("#") and len(x) > 0 and '=' in x:
-                key, value = x.split('=', 1)
+            if not x.startswith("#") and len(x) > 0 and "=" in x:
+                key, value = x.split("=", 1)
                 values_by_file[filename][key] = value
                 defaults[key] = value
     changed_files = set()
@@ -44,22 +56,19 @@ def main():
                 changed_files.add(filename)
     if crush:
         if target is None:
-            target = 'application.properties'
+            target = "application.properties"
         crush_files(verbose, args, defaults, target)
     else:
         merge(verbose, changed_files, values_by_file)
 
 
 def get_new_contents(verbose, values):
-    new_contents = [
-        '%s=%s' % (key, value)
-        for key, value in values.items()
-    ]
+    new_contents = ["%s=%s" % (key, value) for key, value in values.items()]
     new_contents = sorted(new_contents)
 
-    new_contents = '\n'.join(new_contents)
+    new_contents = "\n".join(new_contents)
     if len(new_contents) > 0:
-        new_contents = new_contents + '\n'
+        new_contents = new_contents + "\n"
     return new_contents
 
 
@@ -87,7 +96,7 @@ def crush_files(verbose, filenames, defaults, target):
     application_filename = list(application_filenames)[0]
     print("Writing to ", application_filename)
     new_contents = get_new_contents(verbose, defaults)
-    with open(filename, 'w') as f:
+    with open(filename, "w") as f:
         f.write(new_contents)
     for filename in filenames:
         if filename != application_filename:
@@ -98,8 +107,8 @@ def merge(verbose, changed_files, values_by_file):
     for filename in changed_files:
         new_contents = get_new_contents(verbose, values_by_file[filename])
         if verbose:
-            print('updated file %s' % filename)
-        with open(filename, 'w') as f:
+            print("updated file %s" % filename)
+        with open(filename, "w") as f:
             f.write(new_contents)
 
 

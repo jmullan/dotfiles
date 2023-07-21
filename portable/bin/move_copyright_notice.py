@@ -4,17 +4,15 @@ import re
 import sys
 from optparse import OptionParser
 
-DESIRED = '// Copyright {date_stuff} {who}'
-STAR_COMMENT_COPYRIGHT_REGEX = r'(?:^|\n)\s*\*\s*(Copyright[^\n]*)(?:$|\n)'
-SLASH_COMMENT_COPYRIGHT_REGEX = r'(?:^|\n)\s*//\s*(Copyright[^\n]*)(?:$|\n)'
+DESIRED = "// Copyright {date_stuff} {who}"
+STAR_COMMENT_COPYRIGHT_REGEX = r"(?:^|\n)\s*\*\s*(Copyright[^\n]*)(?:$|\n)"
+SLASH_COMMENT_COPYRIGHT_REGEX = r"(?:^|\n)\s*//\s*(Copyright[^\n]*)(?:$|\n)"
+
 
 def update_contents(contents, verbose):
-    copyright_dict = {
-        "date_stuff": '2020',
-        "who": 'Pandora Media Inc.'
-    }
+    copyright_dict = {"date_stuff": "2020", "who": "Pandora Media Inc."}
     first_line, new_line, remainder = contents.partition("\n")
-    if first_line.startswith('//') and 'copyright' in first_line.lower():
+    if first_line.startswith("//") and "copyright" in first_line.lower():
         if verbose:
             print("No change, found: %s", first_line)
         return contents
@@ -24,17 +22,17 @@ def update_contents(contents, verbose):
         copyright = matches.group(0)
         if verbose:
             print("Moving star copyright to first line: %r" % copyright)
-        copyright_line = '// ' + matches.group(1).strip()
-        contents = contents.replace(copyright.strip('\\n'), "\n")
+        copyright_line = "// " + matches.group(1).strip()
+        contents = contents.replace(copyright.strip("\\n"), "\n")
         updated = True
 
     matches = re.search(SLASH_COMMENT_COPYRIGHT_REGEX, contents)
     if matches:
-        copyright = '%s' % matches.group(0)
+        copyright = "%s" % matches.group(0)
         if verbose:
             print("Moving slash copyright to first line: %r" % copyright)
-        copyright_line = '// ' + matches.group(1).strip()
-        contents = contents.replace(copyright.strip('\n'), "\n")
+        copyright_line = "// " + matches.group(1).strip()
+        contents = contents.replace(copyright.strip("\n"), "\n")
         updated = True
 
     if not updated:
@@ -54,8 +52,8 @@ def process_file(filename, verbose):
     changed = contents != original_contents
     if changed:
         if verbose:
-            print('updated file %s' % filename)
-        with open(filename, 'w') as f:
+            print("updated file %s" % filename)
+        with open(filename, "w") as f:
             f.write(contents)
 
 
@@ -63,19 +61,33 @@ def main():
     """Strip $Id$ and stuff."""
     changed = False
     parser = OptionParser()
-    parser.add_option('-v', '--verbose', dest='verbose',
-                      action='store_true', default=False,
-                      help='verbose is more verbose')
-    parser.add_option('-d', '--diagnostic', dest='diagnostic',
-                      action='store_true', default=False,
-                      help='run some assertions first')
+    parser.add_option(
+        "-v",
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        default=False,
+        help="verbose is more verbose",
+    )
+    parser.add_option(
+        "-d",
+        "--diagnostic",
+        dest="diagnostic",
+        action="store_true",
+        default=False,
+        help="run some assertions first",
+    )
     (options, args) = parser.parse_args()
     options = options.__dict__
-    verbose = options.get('verbose')
-    if options.get('diagnostic'):
-        assert re.search(STAR_COMMENT_COPYRIGHT_REGEX, ' * Copyright 2011, Pandora Media, Inc.')
+    verbose = options.get("verbose")
+    if options.get("diagnostic"):
+        assert re.search(
+            STAR_COMMENT_COPYRIGHT_REGEX, " * Copyright 2011, Pandora Media, Inc."
+        )
 
-        assert re.search(STAR_COMMENT_COPYRIGHT_REGEX, ' * Copyright 2007 Pandora Media, Inc.')
+        assert re.search(
+            STAR_COMMENT_COPYRIGHT_REGEX, " * Copyright 2007 Pandora Media, Inc."
+        )
         comment = """\n\n/**\n * Copyright 2007 Pandora Media, Inc.\n */\npublic class VendorSku"""
         assert re.search(STAR_COMMENT_COPYRIGHT_REGEX, comment)
 

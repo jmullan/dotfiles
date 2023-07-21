@@ -8,15 +8,20 @@ def main():
     """Strip extra newlines from end of files, add one if there is none."""
     changed = False
     parser = OptionParser()
-    parser.add_option('-v', '--verbose', dest='verbose',
-                      action='store_true', default=False,
-                      help='verbose is more verbose')
+    parser.add_option(
+        "-v",
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        default=False,
+        help="verbose is more verbose",
+    )
     (options, args) = parser.parse_args()
     options = options.__dict__
-    verbose = options.get('verbose')
+    verbose = options.get("verbose")
 
     for filename in args:
-        contents = ''
+        contents = ""
         filesize = os.path.getsize(filename)
         with open(filename) as f:
             contents = f.read(filesize)
@@ -31,8 +36,8 @@ def main():
             changed = True
         if changed:
             if verbose:
-                sys.stdout.write('updated file %s' % filename)
-            with open(filename, 'w') as f:
+                sys.stdout.write("updated file %s" % filename)
+            with open(filename, "w") as f:
                 f.write(contents)
 
 
