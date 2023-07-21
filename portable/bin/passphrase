@@ -7,15 +7,40 @@ import sys
 
 logger = logging.getLogger(__name__)
 
-FILENAME = '/usr/share/dict/words'
-DEFAULT_SPECIAL = '-_!@#$%^&*()+=,./|'
+FILENAME = "/usr/share/dict/words"
+DEFAULT_SPECIAL = "-_!@#$%^&*()+=,./|"
 
-PAPER_SPECIAL = '!#%+:=?@'
-PAPER_NUMERIC = '23456789'
-PAPER_UPPER = 'ABCDEFGHJKLMNPRSTUVWXYZ'
-PAPER_LOWER = 'abcdefghijkmnopqrstuvwxyz'
+PAPER_SPECIAL = "!#%+:=?@"
+PAPER_NUMERIC = "23456789"
+PAPER_UPPER = "ABCDEFGHJKLMNPRSTUVWXYZ"
+PAPER_LOWER = "abcdefghijkmnopqrstuvwxyz"
 
 PAPER_ALL = PAPER_UPPER + PAPER_LOWER + PAPER_NUMERIC + PAPER_SPECIAL
+
+
+class CharacterClass:
+    def __init__(self, characters, minimum, maximum):
+        if minimum is not None and maximum is not None and minimum > maximum:
+            raise ValueError(f"minimum {minimum} cannot be more than maximum {maximum}")
+        if characters is None or not len(characters):
+            if self.minimum > 0:
+                raise ValueError("Cannot generate from no characters")
+        logger.debug("Characters %s", characters)
+        self.characters = list(characters)
+        self.minimum = minimum
+        self.maximum = maximum
+        self.used = 0
+
+    def random(self):
+        self.used += 1
+        sample = random.sample(self.characters, 1)[0]
+        return sample
+
+    def hit_min(self):
+        return self.minimum is None or self.used >= self.minimum
+
+    def hit_max(self):
+        return self.maximum is not None and self.used >= self.maximum
 
 
 class Generator(object):
@@ -25,36 +50,33 @@ class Generator(object):
         self.passphrase = None
 
     def fails(self):
-        logger.debug('trying %r', self.password)
+        logger.debug("trying %r", self.password)
         if self.password is None:
             return True
         password_length = len(self.password)
-        minimum_length = self.options.get('minimum_password_length')
-        maximum_length = self.options.get('maximum_password_length')
-        if (
-                password_length < minimum_length and
-                password_length > maximum_length
-        ):
-            logger.debug('Password wrong length')
+        minimum_length = self.options.get("minimum_password_length")
+        maximum_length = self.options.get("maximum_password_length")
+        if password_length < minimum_length and password_length > maximum_length:
+            logger.debug("Password wrong length")
             return True
         lowercase = sum(1 for c in self.password if c.islower())
-        if lowercase < self.options.get('minimum_lowercase'):
-            logger.debug('Not enough regular characters.')
+        if lowercase < self.options.get("minimum_lowercase"):
+            logger.debug("Not enough regular characters.")
             return True
         uppercase = sum(1 for c in self.password if c.isupper())
-        if uppercase < self.options.get('minimum_uppercase'):
-            logger.debug('Not enough uppercase characters.')
+        if uppercase < self.options.get("minimum_uppercase"):
+            logger.debug("Not enough uppercase characters.")
             return True
         numeric = sum(1 for c in self.password if c.isdigit())
-        if numeric < self.options.get('minimum_numeric'):
-            logger.debug('Not enough numbers.')
+        if numeric < self.options.get("minimum_numeric"):
+            logger.debug("Not enough numbers.")
             return True
         special = password_length - lowercase - uppercase - numeric
-        if special < self.options.get('minimum_special'):
-            logger.debug('Not enough special characters.')
+        if special < self.options.get("minimum_special"):
+            logger.debug("Not enough special characters.")
             return True
-        if special > self.options.get('maximum_special'):
-            logger.debug('Too many special characters.')
+        if special > self.options.get("maximum_special"):
+            logger.debug("Too many special characters.")
             return True
         return False
 
@@ -64,49 +86,158 @@ class Generator(object):
         while len(output) < 3:
             key = random.randint(0, len(words) - 1)
             word = words[key]
-            if re.search('^[A-Za-z]+$', word):
+            if re.search("^[A-Za-z]+$", word):
                 output.append(word.strip())
 
         chosen_words = output[0:3]
-        passphrase = ' '.join(chosen_words)
-        if self.options.get('paper'):
-            character_classes = [PAPER_UPPER, PAPER_LOWER, PAPER_NUMERIC]
-        else:
-            character_classes = [
-                ''.join(chr(x) for x in range(97, 123)), # a-z
-                ''.join(chr(x) for x in range(65, 91)), # A-Z
-                ''.join(chr(x) for x in range(48, 58)) # 0-9
-            ]
+        passphrase = " ".join(chosen_words)
+        character_classes = {}
 
-        if self.options.get('minimum_special'):
-            special = self.options.get('special')
-            if special is not None and len(special):
-                character_classes.append(''.join(special))
-            elif self.options.get('paper'):
-                character_classes.append(PAPER_SPECIAL)
-            else:
-                character_classes.append(DEFAULT_SPECIAL)
-                logger.debug('Adding special characters: %r', special)
-        characters = ''.join(character_classes)
-        if (
-                self.options.get('minimum_password_length') ==
-                self.options.get('maximum_password_length')
-        ):
-            password_length = self.options.get('minimum_password_length')
+        if self.options.get("paper"):
+            character_classes["lower"] = CharacterClass(
+                PAPER_LOWER,
+                self.options.get("minimum_lowercase"),
+                self.options.get("maximum_lowercase"),
+            )
+            character_classes["upper"] = CharacterClass(
+                PAPER_UPPER,
+                self.options.get("minimum_uppercase"),
+                self.options.get("maximum_uppercase"),
+            )
+            character_classes["numeric"] = CharacterClass(
+                PAPER_NUMERIC,
+                self.options.get("minimum_numeric"),
+                self.options.get("maximum_numeric"),
+            )
         else:
-            password_length = random.randint(
-                self.options.get('minimum_password_length'),
-                self.options.get('maximum_password_length'))
+            ASCII_LOWER = "".join(chr(x) for x in range(97, 123))  # a-z
+            character_classes["lower"] = CharacterClass(
+                ASCII_LOWER,
+                self.options.get("minimum_lowercase"),
+                self.options.get("maximum_lowercase"),
+            )
+            ASCII_UPPER = "".join(chr(x) for x in range(65, 91))  # A-Z
+            character_classes["upper"] = CharacterClass(
+                ASCII_UPPER,
+                self.options.get("minimum_uppercase"),
+                self.options.get("maximum_uppercase"),
+            )
+            ASCII_NUMERIC = "".join(chr(x) for x in range(48, 58))  # 0-9
+            character_classes["numeric"] = CharacterClass(
+                ASCII_NUMERIC,
+                self.options.get("minimum_numeric"),
+                self.options.get("maximum_numeric"),
+            )
+
+        if self.options.get("minimum_special"):
+            special = self.options.get("special")
+            if special is None or not len(special):
+                if self.options.get("paper"):
+                    special = PAPER_SPECIAL
+                else:
+                    special = DEFAULT_SPECIAL
+                logger.debug("Adding special characters: %r", special)
+            character_classes["special"] = CharacterClass(
+                special,
+                self.options.get("minimum_special"),
+                self.options.get("maximum_special"),
+            )
+        minimum_password_length = self.options.get("minimum_password_length")
+        maximum_password_length = self.options.get("maximum_password_length")
+        total_minimums = 0
+        total_maximums = 0
+        for character_class in character_classes.values():
+            if character_class.minimum is not None:
+                total_minimums += character_class.minimum
+            if character_class.maximum is not None:
+                total_maximums += character_class.maximum
+            else:
+                # we can use this character class to fill in any remainders
+                total_maximums += minimum_password_length
+        if total_maximums < minimum_password_length:
+            raise ValueError(
+                "Not enough characters are available to make your password from parts"
+            )
+        if total_minimums > maximum_password_length:
+            raise ValueError(
+                "Not enough characters are available to make your password"
+            )
+        if minimum_password_length == maximum_password_length:
+            password_length = minimum_password_length
+        else:
+            password_length = random.randint(minimum_password_length, maximum_password_length)
 
         self.password = None
-        while self.fails():
-            self.password = ''
-            for _ in range(0, password_length):
-                self.password += characters[
-                    random.randint(0, len(characters) - 1)]
+        while self.password is None or self.fails():
+            self.password = ""
+            for name, character_class in character_classes.items():
+                logger.debug("Filling minimum %s for %s", character_class.minimum, name)
+                character_class.used = 0
+                while not character_class.hit_min():
+                    char = character_class.random()
+                    logger.debug("%s + %s", self.password, char)
+                    self.password += char
+            while len(self.password) < password_length:
+                for name, character_class in character_classes.items():
+                    if len(self.password) >= password_length:
+                        logger.debug("Filled password")
+                        break
+                    if not character_class.hit_max():
+                        logger.debug(
+                            "Have not hit maximum %s for %s",
+                            character_class.maximum,
+                            name,
+                        )
+                        char = character_class.random()
+                        logger.debug("%s + %s", self.password, char)
+                        self.password += char
+                    else:
+                        logger.debug(
+                            "Hit maximum %s for %s", character_class.maximum, name
+                        )
+            logger.debug(self.password)
+            password = list(self.password)
+            random.shuffle(password)
+            self.password = "".join(password)
 
         assert len(self.password) == password_length
         return self.password, passphrase
+
+
+class Default:
+    def __init__(self, value):
+        self.value = value
+
+
+def is_default(value):
+    if value is None:
+        return True
+    return isinstance(value, Default)
+
+
+def is_not_default(value):
+    return not isinstance(value, Default)
+
+
+def prefer_non_default(options, *keys):
+    if options is None or not options:
+        raise ValueError("Cannot get options from None options")
+    if not keys:
+        raise ValueError("Cannot get options with no keys")
+    values = [options.get(key) for key in keys]
+    if values is None or not values:
+        return None
+    filtered = [value for value in values if is_not_default(value)]
+    if filtered:
+        return filtered[0]
+    else:
+        return values[0]
+
+
+def undefault(value):
+    if is_default(value):
+        return value.value
+    return value
 
 
 def main():
@@ -115,142 +246,186 @@ def main():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--length',
-        dest='length',
-        help='force this password length',
+        "--length",
+        dest="length",
+        help="force this password length",
         type=int,
-        default=None
+        default=Default(None),
     )
     parser.add_argument(
-        '--minimum-length',
-        dest='minimum_password_length',
-        help='minimum length of pass phrase to generate',
+        "--minimum-length",
+        dest="minimum_password_length",
+        help="minimum length of pass phrase to generate",
         type=int,
-        default=10
+        default=Default(10),
     )
     parser.add_argument(
-        '--maximum-length',
-        dest='maximum_password_length',
-        help='maximum length of pass phrase to generate',
+        "--maximum-length",
+        dest="maximum_password_length",
+        help="maximum length of pass phrase to generate",
         type=int,
-        default=None
+        default=Default(None),
     )
     parser.add_argument(
-        '--minimum-lowercase',
-        dest='minimum_lowercase',
-        help='generate at least this many lowercase characters',
+        "--minimum-lowercase",
+        dest="minimum_lowercase",
+        help="generate at least this many lowercase characters",
         type=int,
-        default=1
+        default=Default(1),
     )
     parser.add_argument(
-        '--minimum-uppercase',
-        dest='minimum_uppercase',
-        help='generate at least this many uppercase characters',
+        "--minimum-uppercase",
+        dest="minimum_uppercase",
+        help="generate at least this many uppercase characters",
         type=int,
-        default=1
+        default=Default(1),
     )
     parser.add_argument(
-        '--minimum-numeric',
-        dest='minimum_numeric',
-        help='generate at least this many uppercase characters',
+        "--minimum-numeric",
+        dest="minimum_numeric",
+        help="generate at least this many uppercase characters",
         type=int,
-        default=1
+        default=Default(1),
     )
     parser.add_argument(
-        '--minimum-special',
-        dest='minimum_special',
-        help='generate at least this many special characters',
+        "--minimum-special",
+        dest="minimum_special",
+        help="generate at least this many special characters",
         type=int,
-        default=1
+        default=Default(1),
     )
     parser.add_argument(
-        '--maximum-special',
-        dest='maximum_special',
-        help='generate at most this many special characters',
+        "--maximum-special",
+        dest="maximum_special",
+        help="generate at most this many special characters",
         type=int,
-        default=1
+        default=Default(1),
     )
     parser.add_argument(
-        '--special',
-        dest='special',
-        help='what characters are used for special characters',
+        "--special",
+        dest="special",
+        help="what characters are used for special characters",
         type=str,
-        default=None
+        default=Default(None),
     )
     parser.add_argument(
-        '--word',
-        dest='word',
-        help='only make a word',
-        action='store_true',
-        default=False
+        "--word",
+        dest="word",
+        help="only make a word",
+        action="store_true",
+        default=False,
     )
     parser.add_argument(
-        '--phrase',
-        dest='phrase',
-        action='store_true',
-        help='only make a phrase',
-        default=False
+        "--phrase",
+        dest="phrase",
+        action="store_true",
+        help="only make a phrase",
+        default=False,
     )
     parser.add_argument(
-        '-v', '--verbose', dest='verbose',
-        action='store_true', default=False,
-        help='verbose is more verbose'
+        "-v",
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        default=Default(False),
+        help="verbose is more verbose",
     )
     parser.add_argument(
-        '--paper', dest='paper',
-        action='store_true', default=False,
-        help='Use "' + PAPER_ALL.replace('%', '%%') + '"'
+        "--paper",
+        dest="paper",
+        action="store_true",
+        default=Default(False),
+        help='Use "' + PAPER_ALL.replace("%", "%%") + '"',
     )
     options = vars(parser.parse_args())
-    if options.get('verbose'):
+    minimum_password_length, maximum_password_length = resolve_min_max_fixed(
+        options, "minimum_password_length", "maximum_password_length", "length"
+    )
+
+    (
+        options["minimum_password_length"],
+        options["maximum_password_length"]
+    ) = minimum_password_length, maximum_password_length
+    minimum_special, maximum_special = resolve_min_max(
+        options, "minimum_special", "maximum_special"
+    )
+    (
+        options["minimum_special"],
+        options["maximum_special"]
+    ) = minimum_special, maximum_special
+    options = {x: undefault(y) for x, y in options.items()}
+    if options.get("verbose"):
         logging.basicConfig(level=logging.DEBUG)
-    if (
-            options.get('minimum_password_length') is None and
-            options.get('length') is not None
-    ):
-        options['minimum_password_length'] = options.get('length')
-    if (
-            options.get('maximum_password_length') is None and
-            options.get('length') is not None
-    ):
-        options['maximum_password_length'] = options.get('length')
 
-    if (
-            options.get('maximum_password_length') is None and
-            options.get('minimum_password_length') is not None
-    ):
-        options['maximum_password_length'] = options.get(
-            'minimum_password_length')
-
-    if (
-            options.get('minimum_password_length') >
-            options.get('maximum_password_length')
-    ):
+    if minimum_password_length > maximum_password_length:
         raise ValueError(
-            'Minimum password length must be'
-            ' less than or equal to the maximum')
+            f"Minimum password length {minimum_password_length} must be less than or equal to the maximum {maximum_password_length}"
+        )
     if (
-            options.get('minimum_password_length') < 1 or
-            options.get('maximum_password_length') < 1
+        minimum_password_length < 1
+        or maximum_password_length < 1
     ):
+        raise ValueError(f"Password length ({minimum_password_length}-{maximum_password_length}) must be 1 or more")
+    if minimum_special > maximum_special:
         raise ValueError(
-            'Password length must be 1 or more')
-    if (
-            options.get('minimum_special') >
-            options.get('maximum_special')
-    ):
-        raise ValueError(
-            'Minimum special requirement must be'
-            ' less than or equal to the maximum')
+            f"Minimum special {minimum_special} must be less than or equal to the maximum {maximum_special}"
+        )
     generator = Generator(options)
     password, passphrase = generator.generate()
-    if not options['phrase']:
+    if not options["phrase"]:
         sys.stdout.write("%s\n" % password)
-    if not options['word']:
+    if not options["word"]:
         sys.stdout.write("%s\n" % passphrase)
-    if options['phrase'] and options['word']:
+    if options["phrase"] and options["word"]:
         sys.stdout.write("%s\n" % password)
         sys.stdout.write("%s\n" % passphrase)
+
+
+def resolve_min_max_fixed(options, minimum_key, maximum_key, fixed_key):
+    minimum = prefer_non_default(options, minimum_key, fixed_key)
+    maximum = prefer_non_default(options, maximum_key, fixed_key)
+    fixed = prefer_non_default(options, fixed_key)
+
+    unminimum = undefault(minimum)
+    unmaximum = undefault(maximum)
+    unfixed = fixed
+    if not is_default(fixed):
+        if not is_default(maximum) and unmaximum != unfixed:
+            raise ValueError(f"Cannot set a maximum and {fixed_key} value")
+        if not is_default(minimum) and unminimum != unfixed:
+            raise ValueError(f"Cannot set a minimum and {fixed_key} value")
+        return unfixed, unfixed
+    if is_default(minimum) and not is_default(maximum):
+        if unminimum > unmaximum:
+            return min(unmaximum, 1), unmaximum
+        else:
+            return unminimum, unmaximum
+    if is_default(maximum) and not is_default(minimum):
+        if unminimum > unmaximum:
+            return unminimum, None
+        else:
+            return unminimum, unmaximum
+    return unminimum, unmaximum
+
+
+def resolve_min_max(options, minimum_key, maximum_key):
+    minimum = prefer_non_default(options, minimum_key)
+    maximum = prefer_non_default(options, maximum_key)
+
+    unminimum = undefault(minimum)
+    unmaximum = undefault(maximum)
+    if is_default(minimum) and not is_default(maximum):
+        if unminimum > unmaximum:
+            return min(unmaximum, 1), unmaximum
+        else:
+            return unminimum, unmaximum
+    if is_default(maximum) and not is_default(minimum):
+        if unminimum > unmaximum:
+            return unminimum, None
+        else:
+            return unminimum, unmaximum
+    return unminimum, unmaximum
+
 
 if __name__ == "__main__":
     main()
