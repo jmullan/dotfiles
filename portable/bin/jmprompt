@@ -13,6 +13,7 @@ PS1=""
 PS1+="\$(git sanity)"
 PS1+="\$(date '+[%-m/%-d %H:%M:%S]')"
 PS1+=" \[\e[36m\u@$(tput bold)$(tput setaf "$HOST_COLOR")\]\h\[$(tput sgr0)\]"
+PS1+="\$(ssh-agent-prompt)"
 if [ -n "$SC_REGION" ]; then
   PS1+=" ($CLOUDY  $SC_REGION"
   if [ -n "$SC_PROJECT" ]; then

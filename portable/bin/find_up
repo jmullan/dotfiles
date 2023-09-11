@@ -10,6 +10,10 @@ else
     path=$(pwd)
     target="${1}"
 fi
+if [ ! -e "$path" ] ; then
+    exit 1
+fi
+path="$(cd "$(dirname "$path")" && pwd)/$(basename "$path")"
 while [[ "$path" != "" && ! -e "$path/$target" ]]; do
     path=${path%/*}
 done

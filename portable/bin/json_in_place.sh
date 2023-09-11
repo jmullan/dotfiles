@@ -10,4 +10,4 @@ if [ ! -f "${FILENAME}" ] ; then
 fi
 TMPFILE=$(mktemp --suffix=.json)
 echo "${FILENAME}"
-cat "${FILENAME}" | json_pp -json_opt pretty,canonical,utf8 > "${TMPFILE}" && cp "${FILENAME}" "${FILENAME}.bak" && mv "${TMPFILE}" "${FILENAME}"
+cat "${FILENAME}" | json_pretty > "${TMPFILE}" && cp "${FILENAME}" "${FILENAME}.bak" && mv "${TMPFILE}" "${FILENAME}"

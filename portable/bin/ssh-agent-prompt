@@ -1,0 +1,46 @@
+#!/bin/bash
+# STY is current screen
+# TERM=screen
+if [ "${DEBUG_PROMPT}" == "true" ] ; then
+   set -x
+fi
+
+_SOCK_EMOJI=$(echo -e "\xf0\x9f\xa7\xa6")
+SOCK_EMOJI="${SOCK_EMOJI:-$_SOCK_EMOJI}"
+_X_EMOJI=$(echo -e "\xe2\x9d\x8c")
+X_EMOJI="${X_EMOJI:-$_X_EMOJI}"
+_PID_EMOJI=$(echo -e "\xf0\x9f\x94\x91")
+PID_EMOJI="${PID_EMOJI:-$_PID_EMOJI}"
+echo -n "$(tput sgr0)"
+echo -n " ("
+LEGIT_SOCK=$(echo "${SSH_AUTH_SOCK}" | egrep "ssh.*agent")
+LEGIT_PID=$([ -n "${SSH_AGENT_PID}" ] && [ "${SSH_AGENT_PID}" != "1" ] && echo "${SSH_AGENT_PID}")
+if [ -z "${LEGIT_SOCK}" ] || [ -z "${LEGIT_PID}" ] ; then
+    echo -n "$(tput setaf 1)"
+    echo -n "ssh "
+    echo -n "$(tput sgr0)"
+fi
+if [ -n "${LEGIT_SOCK}" ] ; then
+    echo -n "$(tput setaf 2)"
+    echo -n "${SOCK_EMOJI}"
+    echo -n "$(tput sgr0)"
+else
+    echo -n "$(tput setaf 1)"
+    echo -n "${X_EMOJI}"
+    echo -n "$(tput sgr0)"
+fi
+if [ -n "${LEGIT_PID}" ] ; then
+    echo -n "$(tput setaf 2)"
+    echo -n "${PID_EMOJI}"
+    echo -n "$(tput sgr0)"
+else
+    echo -n "$(tput setaf 1)"
+    echo -n "${X_EMOJI}"
+    echo -n "$(tput sgr0)"
+fi
+echo -n "$(tput sgr0)"
+echo -n ")"
+
+if [ "${DEBUG_PROMPT}" == "true"  ] ; then
+   set +x
+fi

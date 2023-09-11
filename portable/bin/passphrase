@@ -235,6 +235,8 @@ def prefer_non_default(options, *keys):
 
 
 def undefault(value):
+    if value is None:
+        return value
     if is_default(value):
         return value.value
     return value
@@ -264,7 +266,7 @@ def main():
         dest="maximum_password_length",
         help="maximum length of pass phrase to generate",
         type=int,
-        default=Default(None),
+        default=Default(16),
     )
     parser.add_argument(
         "--minimum-lowercase",
@@ -402,7 +404,7 @@ def resolve_min_max_fixed(options, minimum_key, maximum_key, fixed_key):
             return unminimum, unmaximum
     if is_default(maximum) and not is_default(minimum):
         if unminimum > unmaximum:
-            return unminimum, None
+            return unminimum, 64
         else:
             return unminimum, unmaximum
     return unminimum, unmaximum

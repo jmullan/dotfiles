@@ -2,6 +2,10 @@
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples
 
+if [ -f ~/.bashrc_local ]; then
+    source ~/.bashrc_local
+fi
+
 # quit early if there is no prompt?
 [ -z "$PS1" ] && return
 
