@@ -1,9 +1,7 @@
 #!/usr/bin/env python
-import os
 import re
 import sys
 
-from collections import defaultdict
 from optparse import OptionParser
 
 # remoting/__init__.py                 6      0   100%
@@ -39,7 +37,6 @@ def dump(filename, ranges):
 
 def main():
     """Reindent a python file."""
-    changed = False
     parser = OptionParser()
     parser.add_option(
         "-v",
@@ -50,9 +47,6 @@ def main():
         help="verbose is more verbose",
     )
     (options, args) = parser.parse_args()
-    options = options.__dict__
-    verbose = options.get("verbose")
-
     lines = [line.strip() for line in sys.stdin]
 
     if not lines:

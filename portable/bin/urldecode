@@ -1,5 +1,26 @@
-#!/usr/bin/env php
-<?php
-while ($foo = fgets(STDIN)) {
-      echo trim(strtolower(urldecode(trim($foo)))) . "\n";
-}
+#!/usr/bin/env python3.10
+import argparse
+import re
+import sys
+import urllib.parse
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog="urlencode", description="URL Decodes files or stdin"
+    )
+    parser.add_argument("files", nargs="*", type=argparse.FileType("r"))
+
+    args = parser.parse_args()
+    if args.files:
+        files = args.files
+    else:
+        files = [sys.stdin]
+
+    for file in files:
+        for line in file:
+            print(urllib.parse.unquote_plus(re.sub(r"\n$", "", line)))
+
+
+if __name__ == "__main__":
+    main()

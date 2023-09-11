@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3.10
 import re
 import sys
 from argparse import ArgumentParser
@@ -7,6 +7,7 @@ from argparse import ArgumentParser
 _ignores = [
     "* commit",
     "[Gradle Release Plugin] - new version commit:",
+    "[Gradle Release Plugin] - pre tag commit",
     "Merge pull request #",
     "git-p4",
     "integrating changelist",

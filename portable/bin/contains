@@ -7,9 +7,9 @@ import sys
 
 
 def _contains(filename, text, should_contain):
-    utf = text.encode('utf-8')
+    utf = text.encode("utf-8")
     try:
-        with open(filename, 'rb', 0) as file_handle:
+        with open(filename, "rb", 0) as file_handle:
             with mmap.mmap(file_handle.fileno(), 0, access=mmap.ACCESS_READ) as s:
                 if should_contain:
                     return s.find(utf) != -1
@@ -18,31 +18,29 @@ def _contains(filename, text, should_contain):
     except Exception as e:
         print(e)
         return False
-    return False
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        'contains',
+        "contains",
         nargs=1,
-        help="Filter out lines that are not files or do not contain the string"
+        help="Filter out lines that are not files or do not contain the string",
     )
     parser.add_argument(
-        '--not',
-        dest='not_contains',
-        action='store_true',
-        default=False
+        "--not", dest="not_contains", action="store_true", default=False
     )
     args = parser.parse_args()
     contains = args.contains[0]
     should_contain = not args.not_contains
     for line in sys.stdin:
-        filename = line.strip('\n\r')
-        okay = os.path.isfile(filename) and _contains(filename, contains, should_contain)
+        filename = line.strip("\n\r")
+        okay = os.path.isfile(filename) and _contains(
+            filename, contains, should_contain
+        )
         if okay:
             print(filename)
 
 
-if __name__ == '__main__':
-   main()
+if __name__ == "__main__":
+    main()
