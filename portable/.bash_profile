@@ -129,7 +129,7 @@ export NODE_EXTRA_CA_CERTS='/usr/local/etc/openssl/cert.pem'
 
 if [ -e "${HOME}/dotfiles/submodules/ssh-find-agent/ssh-find-agent.sh" ] ; then
     source "${HOME}/dotfiles/submodules/ssh-find-agent/ssh-find-agent.sh"
-    sfa_set_ssh_agent_socket
+    ssh-add -l >&/dev/null || ssh-find-agent -a || eval $(ssh-agent) > /dev/null
 fi
 
 if [ -e "${HOME}/.sdkman" ] ; then

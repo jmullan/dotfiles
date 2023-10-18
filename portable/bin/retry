@@ -1,0 +1,38 @@
+#!/bin/bash
+trap exit SIGHUP SIGINT SIGTERM
+if [[ $# -eq 0 ]]; then
+  exit 0
+fi
+
+
+ATTEMPTS=0
+SLEEP=0
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -n|--number)
+      ATTEMPTS="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -s|--sleep)
+      SLEEP="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+COUNTER=0
+until "$@" ; do
+  if [[ $ATTEMPTS -gt 0 ]]; then
+    let COUNTER=COUNTER+1
+    if [[ $COUNTER -ge $ATTEMPTS ]] ; then
+      echo "Permanently failed running after ${COUNTER} attempts" 1>&2
+      exit 1
+    fi
+  fi
+  sleep "${SLEEP}"
+done
