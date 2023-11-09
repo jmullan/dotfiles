@@ -1,7 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python-venv dotfiles
 import os
 import re
-import sys
 from optparse import OptionParser
 
 DESIRED = "// Copyright {date_stuff} {who}"

@@ -1,0 +1,6 @@
+#!/bin/bash
+while read CANDIDATE; do
+    if [ ! -e "${CANDIDATE}" ] ; then
+        echo "${CANDIDATE}"
+    fi
+done

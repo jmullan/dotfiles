@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python-venv dotfiles
 import os
 import re
 from argparse import ArgumentParser

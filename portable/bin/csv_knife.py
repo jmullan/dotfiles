@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.10
+#!/usr/bin/env python-venv dotfiles
 import csv
 import json
 import sys
@@ -131,6 +131,9 @@ def process(csvfile, dialect_name, has_header: bool, template=None):
                 print(d)
             elif template == "json":
                 print(json.dumps(d))
+            elif template == "csv":
+                writer = csv.writer(sys.stdout)
+                writer.writerow(csv_row)
             else:
                 print(compiled_template.substitute(d))
 

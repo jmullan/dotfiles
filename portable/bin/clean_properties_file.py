@@ -1,6 +1,5 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python-venv dotfiles
 import os
-import re
 
 from optparse import OptionParser
 
@@ -12,7 +11,6 @@ def k_v(line: str):
 
 def main():
     """Sort a properties file"""
-    changed = False
     parser = OptionParser()
     parser.add_option(
         "-v",
