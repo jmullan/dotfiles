@@ -1,0 +1,343 @@
+#!/usr/bin/env python-venv dotfiles
+import argparse
+import os
+import re
+import sys
+import urllib.parse
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Dict, List, Set, Type, TypeVar
+
+import requests
+
+T = TypeVar("T", bound="MappableClass")
+
+
+class MappableClass(ABC):
+    _mappings: Dict[str, str]
+
+    @classmethod
+    @abstractmethod
+    def from_sonatype_dict(cls: Type[T], data) -> Type[T]:
+        pass
+
+
+def map_dict(mappings: Dict[str, str], data: Dict) -> Dict:
+    if not data:
+        return {}
+    return {
+        to_key: data[from_key]
+        for from_key, to_key in mappings.items()
+        if from_key in data
+    }
+
+
+@dataclass
+class ArtifactLink(MappableClass):
+    extension: str | None
+
+    _mappings = {"extension": "extension"}
+
+    @classmethod
+    def from_sonatype_dict(cls, data: dict) -> "ArtifactLink":
+        mapped = map_dict(cls._mappings, data)
+        return ArtifactLink(**mapped)
+
+
+@dataclass
+class ArtifactHit(MappableClass):
+    repository_id: str | None
+    artifact_links: List[ArtifactLink] | None
+
+    _mappings = {"repositoryId": "repository_id", "artifactLinks": "artifact_links"}
+
+    @classmethod
+    def from_sonatype_dict(cls, data: dict) -> "ArtifactHit":
+        mapped = map_dict(cls._mappings, data)
+        mapped["artifact_links"] = [
+            ArtifactLink.from_sonatype_dict(x) for x in mapped["artifact_links"]
+        ]
+        return ArtifactHit(**mapped)
+
+
+@dataclass
+class Artifact(MappableClass):
+    group_id: str | None
+    artifact_id: str | None
+    version: str | None
+    artifact_hits: List[ArtifactHit] | None
+    latest_snapshot: str | None = None
+    latest_snapshot_repository_id: str = None
+    latest_release: str | None = None
+    latest_release_repository_id: str | None = None
+
+    _mappings = {
+        "groupId": "group_id",
+        "artifactId": "artifact_id",
+        "version": "version",
+        "latestSnapshot": "latest_snapshot",
+        "latestSnapshotRepositoryId": "latest_snapshot_repository_id",
+        "latestRelease": "latest_release",
+        "latestReleaseRepositoryId": "latest_release_repository_id",
+        "artifactHits": "artifact_hits",
+    }
+
+    @classmethod
+    def from_sonatype_dict(cls, data: dict) -> "Artifact":
+        mapped = map_dict(cls._mappings, data)
+        if "artifact_hits" in mapped:
+            mapped["artifact_hits"] = [
+                ArtifactHit.from_sonatype_dict(x) for x in mapped["artifact_hits"]
+            ]
+        return Artifact(**mapped)
+
+
+@dataclass
+class RepoDetail(MappableClass):
+    repository_id: str | None = None
+    name: str | None = None
+    content_class: str | None = None
+    kind: str | None = None
+    policy: str | None = None
+    url: str | None = None
+
+    _mappings = {
+        "repositoryId": "repository_id",
+        "repositoryName": "name",
+        "repositoryContentClass": "content_class",
+        "repositoryKind": "kind",
+        "repositoryPolicy": "policy",
+        "repositoryURL": "url",
+    }
+
+    @classmethod
+    def from_sonatype_dict(cls, data: dict) -> "RepoDetail":
+        mapped = map_dict(cls._mappings, data)
+        return RepoDetail(**mapped)
+
+
+@dataclass
+class SonaTypeBody(MappableClass):
+    total_count: int | None = None
+    from_index: int | None = None
+    count: int | None = None
+    tooManyResults: bool | None = None
+    collapsed: bool | None = None
+    repo_details: List[RepoDetail] | None = None
+    artifacts: List[Artifact] | None = None
+
+    _mappings = {
+        "totalCount": "total_count",
+        "from": "from_index",
+        "count": "count",
+        "tooManyResults": "count",
+        "collapsed": "collapsed",
+        "repoDetails": "repo_details",
+        "data": "artifacts",
+    }
+
+    @classmethod
+    def from_sonatype_dict(cls, data: dict) -> "SonaTypeBody":
+        mapped = map_dict(cls._mappings, data)
+        if "repo_details" in mapped:
+            mapped["repo_details"] = [
+                RepoDetail.from_sonatype_dict(x) for x in mapped["repo_details"]
+            ]
+        if "artifacts" in mapped:
+            mapped["artifacts"] = [
+                Artifact.from_sonatype_dict(x) for x in mapped["artifacts"]
+            ]
+        return SonaTypeBody(**mapped)
+
+
+def print_error(*errors):
+    for error in errors:
+        print(error, file=sys.stderr)
+
+
+def environ_or_required(key):
+    return (
+        {"default": os.environ.get(key)} if os.environ.get(key) else {"required": True}
+    )
+
+
+def remove_empties(d: dict):
+    return {k: v for k, v in d.items() if v is not None and len(str(v)) > 0}
+
+
+def only_keys(d: dict, only_keys: Set[str]):
+    return {k: v for k, v in d.items() if k in only_keys}
+
+
+def remove_keys(d: dict, ignore_keys: Set[str]):
+    return {k: v for k, v in d.items() if k not in ignore_keys}
+
+
+def lucene_search(
+    sonatype_base_url: str,
+    query: str | None = None,
+    group_id: str | None = None,
+    artifact_id: str | None = None,
+    version: str | None = None,
+    packaging: str | None = None,
+    classifier: str | None = None,
+    class_name: str | None = None,
+    sha: str | None = None,
+    from_index: str | int | None = None,
+    count: str | int | None = None,
+    repository_id: str | None = None,
+) -> SonaTypeBody:
+    params = {
+        "q": query,
+        "g": group_id,
+        "a": artifact_id,
+        "v": version,
+        "p": packaging,
+        "c": classifier,
+        "cn": class_name,
+        "sha1": sha,
+        "from": from_index,
+        "count": count,
+        "repositoryId": repository_id,
+    }
+    params = remove_empties(params)
+    if "q" in params:
+        params = remove_keys(params, {"g", "a", "v", "p", "c", "cn", "sha1"})
+    if "cn" in params:
+        params = remove_keys(params, {"g", "a", "v", "p", "c"})
+    if "sha1" in params:
+        params = remove_keys(params, {"g", "a", "v", "p", "c", "cn"})
+    if not params:
+        print_error("Nothing to search for?")
+        exit(1)
+    # curl -s -H "Accept: application/json" \
+    # 'https://sonatype.savagebeast.com/nexus/service/local/lucene/search?g=com.pandora.eds&a=importer' \
+    #   | json_pp \
+    #   | more
+    url = f"{sonatype_base_url}/nexus/service/local/lucene/search"
+
+    headers = {"Accept": "application/json"}
+    response = requests.get(url, params=params, headers=headers)
+    print(response.url)
+    try:
+        sonatype_body = SonaTypeBody.from_sonatype_dict(response.json())
+    except Exception:
+        print_error("Could not process response body", response.json())
+        raise
+    return sonatype_body
+
+
+def process_results(
+    sonatype_body: SonaTypeBody,
+    packaging: str | None = None,
+    latest_only: bool = False,
+    version_regex: str | None = None,
+):
+    if not sonatype_body.total_count:
+        print_error("No results")
+        exit(1)
+    # print(json.dumps(sonatype_body.data, indent=4))
+    print(f"Total Count: {sonatype_body.total_count}")
+    repos = {
+        repo.repository_id: repo for repo in sonatype_body.repo_details or []
+    }  # type: Dict[str, RepoDetail]
+    latests = {}
+    artifacts = sonatype_body.artifacts or []
+    for artifact in artifacts:
+        full_id = f"{artifact.group_id}.{artifact.artifact_id}"
+        latests[full_id] = {
+            "group_id": artifact.group_id,
+            "artifact_id": artifact.artifact_id,
+            "latest_release": artifact.latest_release,
+            "latest_release_repository_id": artifact.latest_release_repository_id,
+            "latest_snapshot": artifact.latest_snapshot,
+            "latest_snapshot_repository_id": artifact.latest_snapshot_repository_id,
+        }
+        for artifact_hit in artifact.artifact_hits:
+            for artifact_link in artifact_hit.artifact_links:
+                if packaging and artifact_link.extension != packaging:
+                    continue
+                if version_regex:
+                    if re.search(version_regex, artifact.version) is None:
+                        continue
+                if latest_only:
+                    if artifact.version not in {
+                        artifact.latest_release,
+                        artifact.latest_snapshot,
+                    }:
+                        continue
+                print(
+                    f"{artifact_hit.repository_id} {artifact.group_id} {artifact.artifact_id} {artifact.version} {artifact_link.extension}"
+                )
+                repo = repos.get(artifact_hit.repository_id)
+                if repo:
+                    path = "/nexus/service/local/artifact/maven/redirect"
+                    query = urllib.parse.urlencode(
+                        {
+                            "r": repo.repository_id,
+                            "g": artifact.group_id,
+                            "a": artifact.artifact_id,
+                            "p": artifact_link.extension,
+                            "v": artifact.version,
+                        }
+                    )
+                    print(f"{repo.url}{path}?{query}")
+    # if latests:
+    #     for full_id, latest in latests.items():
+    #         print(f"{latest}")
+
+
+def main():
+    """
+    Dispatch the checker from the command line.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--sonatype-base-url",
+        help="The server url for sonatype",
+        **environ_or_required("SONATYPE_BASE_URL"),
+    )
+    parser.add_argument("-q", "--query", dest="query", help="query for this string")
+    parser.add_argument(
+        "-g", "--group-id", dest="group_id", help="group id, like com.pandora.eds"
+    )
+    parser.add_argument("-a", "--artifact-id", dest="artifact_id")
+    parser.add_argument("--version", dest="version")
+    parser.add_argument("--packaging", dest="packaging")
+    parser.add_argument("--classifier", dest="classifier")
+    parser.add_argument("--class-name", dest="class_name")
+    parser.add_argument("--sha1", dest="sha")
+    parser.add_argument("--from", dest="from_index")
+    parser.add_argument("--count", dest="count")
+    parser.add_argument("--repository-id", dest="repository_id")
+    parser.add_argument("--latest-only", dest="latest_only", action="store_true")
+    parser.add_argument("--version-regex", dest="version_regex")
+    args = parser.parse_args()
+    if not args.sonatype_base_url:
+        print_error("SONATYPE_BASE_URL must be set and not empty")
+        exit(1)
+    lucene_keys = {
+        "query",
+        "group_id",
+        "artifact_id",
+        "version",
+        "packaging",
+        "classifier",
+        "class_name",
+        "sha",
+        "from_index",
+        "count",
+        "repository_id",
+    }
+    lucene_params = only_keys(vars(args), lucene_keys)
+    sonatype_body = lucene_search(args.sonatype_base_url, **lucene_params)
+    process_results(
+        sonatype_body,
+        lucene_params.get("packaging") or None,
+        args.latest_only,
+        args.version_regex,
+    )
+
+
+if __name__ == "__main__":
+    main()
