@@ -1,4 +1,4 @@
-#!/usr/bin/env python-venv dotfiles
+#!python-venv dotfiles
 """Back up a file or files."""
 import argparse
 import logging

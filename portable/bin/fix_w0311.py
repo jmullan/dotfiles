@@ -1,4 +1,4 @@
-#!/usr/bin/env python-venv dotfiles
+#!python-venv dotfiles
 import os
 import re
 
