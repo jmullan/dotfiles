@@ -6,7 +6,7 @@ import sys
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="urlencode", description="URL Decodes files or stdin"
+        prog="json_pretty", description="Like json_pp"
     )
     parser.add_argument("files", nargs="*", type=argparse.FileType("r"))
 
@@ -18,7 +18,7 @@ def main():
 
     for file in files:
         data = json.load(file)
-        print(json.dumps(data, indent=4))
+        print(json.dumps(data, indent=4, sort_keys=True))
 
 
 if __name__ == "__main__":

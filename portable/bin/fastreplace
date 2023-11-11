@@ -30,6 +30,9 @@ def main():
     parser.add_argument("filenames", nargs="*")
 
     args = parser.parse_args()
+    find = args.find
+    regex = args.regex
+    replacement = args.replacement
     verbose = args.verbose
 
     filenames = args.filenames
@@ -37,7 +40,7 @@ def main():
         filenames = ["."]
 
     for filename in filenames:
-        check_filename(args.find, args.regex, args.replacement, filename, args.verbose)
+        check_filename(find, regex, replacement, filename, verbose)
 
 
 def check_filename(find, regex, replacement, filename, verbose):
