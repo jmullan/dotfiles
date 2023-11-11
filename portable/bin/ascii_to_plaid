@@ -1,27 +1,27 @@
 #!/usr/bin/env python-venv
 import re
 import sys
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 
 def main():
     """Text to plaid converter"""
-    parser = OptionParser()
-    parser.add_option(
+    parser = ArgumentParser()
+    parser.add_argument(
         "--plaid",
         dest="plaid",
         help="what string is used for 1s",
         type=str,
         default=":plaid:",
     )
-    parser.add_option(
+    parser.add_argument(
         "--imaginaryvegandog",
         dest="imaginaryvegandog",
         help="what string is used for blanks",
         type=str,
         default=":imaginaryvegandog:",
     )
-    (options, args) = parser.parse_args()
+    args = parser.parse_args()
 
     for line in sys.stdin:
         output = line.rstrip()

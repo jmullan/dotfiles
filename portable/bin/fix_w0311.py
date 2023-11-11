@@ -2,14 +2,13 @@
 import os
 import re
 
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 
 def main():
     """Reindent a python file."""
-    changed = False
-    parser = OptionParser()
-    parser.add_option(
+    parser = ArgumentParser()
+    parser.add_argument(
         "-v",
         "--verbose",
         dest="verbose",
@@ -17,16 +16,15 @@ def main():
         default=False,
         help="verbose is more verbose",
     )
-    parser.add_option(
+    parser.add_argument(
         "-w", "--width", dest="width", default=4, type=int, help="Indent by this much"
     )
-    (options, args) = parser.parse_args()
-    options = options.__dict__
-    verbose = options.get("verbose")
-    width = options.get("width")
+    parser.add_argument('filenames', nargs='+')
+    args = parser.parse_args()
+    verbose = args.verbose
+    width = args.width
 
-    for filename in args:
-        contents = ""
+    for filename in args.filenames:
         filesize = os.path.getsize(filename)
         with open(filename) as f:
             contents = f.read(filesize)

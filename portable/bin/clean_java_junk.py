@@ -2,13 +2,13 @@
 import os
 import re
 import sys
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 
 def main():
     """Strip $Id$ and stuff."""
-    parser = OptionParser()
-    parser.add_option(
+    parser = ArgumentParser()
+    parser.add_argument(
         "-v",
         "--verbose",
         dest="verbose",
@@ -16,9 +16,9 @@ def main():
         default=False,
         help="verbose is more verbose",
     )
-    (options, args) = parser.parse_args()
+    args = parser.parse_args()
     options = options.__dict__
-    verbose = options.get("verbose")
+    verbose = args.verbose
 
     for filename in args:
         filesize = os.path.getsize(filename)

@@ -19,11 +19,11 @@ PAPER_ALL = PAPER_UPPER + PAPER_LOWER + PAPER_NUMERIC + PAPER_SPECIAL
 
 
 class CharacterClass:
-    def __init__(self, characters, minimum, maximum):
+    def __init__(self, characters: str, minimum: int | None, maximum : int | None):
         if minimum is not None and maximum is not None and minimum > maximum:
             raise ValueError(f"minimum {minimum} cannot be more than maximum {maximum}")
         if characters is None or not len(characters):
-            if self.minimum > 0:
+            if minimum is not None and minimum > 0:
                 raise ValueError("Cannot generate from no characters")
         logger.debug("Characters %s", characters)
         self.characters = list(characters)
@@ -56,7 +56,7 @@ class Generator(object):
         password_length = len(self.password)
         minimum_length = self.options.get("minimum_password_length")
         maximum_length = self.options.get("maximum_password_length")
-        if password_length < minimum_length and password_length > maximum_length:
+        if minimum_length > password_length > maximum_length:
             logger.debug("Password wrong length")
             return True
         lowercase = sum(1 for c in self.password if c.islower())

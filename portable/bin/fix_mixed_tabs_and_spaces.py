@@ -40,11 +40,10 @@ def main():
         help="Ignore spaces, embrace tabs",
     )
     parser.add_argument("filenames", nargs="+", help="filenames to process")
-    options = parser.parse_args()
-    options = options.__dict__
-    verbose = options.get("verbose")
+    args = parser.parse_args()
+    verbose = args.verbose
 
-    for filename in options["filenames"]:
+    for filename in args.filenames:
         if verbose:
             print("checking", filename)
         filesize = os.path.getsize(filename)
@@ -64,9 +63,9 @@ def main():
         if verbose and (contents != original_contents):
             print("something changed")
 
-        if options.get("tabs"):
+        if args.tabs:
             use = "tabs"
-        elif options.get("spaces"):
+        elif args.spaces:
             use = "spaces"
         else:
             tabs = 0
@@ -121,7 +120,7 @@ def main():
                         print("+ %r" % updated)
                     else:
                         print("  %r" % original)
-            if not options.get("noop"):
+            if not args.noop:
                 with open(filename, "w") as f:
                     f.write(contents)
         else:

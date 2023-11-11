@@ -1,7 +1,7 @@
 #!/usr/bin/env python-venv
 import os
 import re
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 DESIRED = "// Copyright {date_stuff} {who}"
 STAR_COMMENT_COPYRIGHT_REGEX = r"(?:^|\n)\s*\*\s*(Copyright[^\n]*)(?:$|\n)"
@@ -58,9 +58,8 @@ def process_file(filename, verbose):
 
 def main():
     """Strip $Id$ and stuff."""
-    changed = False
-    parser = OptionParser()
-    parser.add_option(
+    parser = ArgumentParser()
+    parser.add_argument(
         "-v",
         "--verbose",
         dest="verbose",
@@ -68,7 +67,7 @@ def main():
         default=False,
         help="verbose is more verbose",
     )
-    parser.add_option(
+    parser.add_argument(
         "-d",
         "--diagnostic",
         dest="diagnostic",
@@ -76,10 +75,10 @@ def main():
         default=False,
         help="run some assertions first",
     )
-    (options, args) = parser.parse_args()
-    options = options.__dict__
-    verbose = options.get("verbose")
-    if options.get("diagnostic"):
+    parser.add_argument('filenames', nargs='+')
+    args = parser.parse_args()
+    verbose = args.verbose
+    if args.diagnostic:
         assert re.search(
             STAR_COMMENT_COPYRIGHT_REGEX, " * Copyright 2011, Pandora Media, Inc."
         )
@@ -93,7 +92,7 @@ def main():
         comment = """\n// Copyright (c) 2007 SavageBeast Technologies Inc.\n"""
         assert re.search(SLASH_COMMENT_COPYRIGHT_REGEX, comment)
 
-    for filename in args:
+    for filename in args.filenames:
         process_file(filename, verbose)
 
 

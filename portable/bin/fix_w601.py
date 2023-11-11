@@ -1,15 +1,15 @@
 #!/usr/bin/env python-venv
 import os
 import re
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 REGEX = r"([^ (]+).has_key\(([^)]+)\)"
 
 
 def main():
     """Try to turn has_key into ` in `."""
-    parser = OptionParser()
-    parser.add_option(
+    parser = ArgumentParser()
+    parser.add_argument(
         "-v",
         "--verbose",
         dest="verbose",
@@ -17,11 +17,12 @@ def main():
         default=False,
         help="verbose is more verbose",
     )
-    (options, args) = parser.parse_args()
-    options = options.__dict__
-    verbose = options.get("verbose")
+    parser.add_argument('filenames', nargs='+')
 
-    for filename in args:
+    args = parser.parse_args()
+    verbose = args.verbose
+
+    for filename in args.filenames:
         filesize = os.path.getsize(filename)
         with open(filename) as f:
             contents = f.read(filesize)

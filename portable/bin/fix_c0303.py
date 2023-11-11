@@ -2,7 +2,7 @@
 import os
 import re
 import sys
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 
 def blank(line):
@@ -14,8 +14,8 @@ def blank(line):
 
 def main():
     """Remove trailing whitespace"""
-    parser = OptionParser()
-    parser.add_option(
+    parser = ArgumentParser()
+    parser.add_argument(
         "-v",
         "--verbose",
         dest="verbose",
@@ -23,22 +23,22 @@ def main():
         default=False,
         help="verbose is more verbose",
     )
-    parser.add_option(
+    parser.add_argument(
         "--only-blank-lines",
         dest="only_blank_lines",
         action="store_true",
         default=False,
         help="Only trim blank lines",
     )
-    (options, args) = parser.parse_args()
-    options = options.__dict__
-    verbose = options.get("verbose")
-    only_blank_lines = options.get("only_blank_lines")
+    parser.add_argument('filenames', nargs='+')
+    args = parser.parse_args()
+    verbose = args.verbose
+    only_blank_lines = args.only_blank_lines
 
-    for filename in args:
-        filesize = os.path.getsize(filename)
+    for filename in args.filenames:
+        file_size = os.path.getsize(filename)
         with open(filename) as f:
-            contents = f.read(filesize)
+            contents = f.read(file_size)
         if only_blank_lines:
             new_contents = "\n".join(blank(x) for x in contents.split("\n"))
         else:

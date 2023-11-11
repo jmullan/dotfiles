@@ -74,7 +74,6 @@ def main():
     )
     parser.add_argument("version", default="Unknown")
     args = parser.parse_args()
-    options = args.__dict__
     changes = []
 
     lines = [line.rstrip() for line in sys.stdin]
@@ -87,8 +86,8 @@ def main():
         (re.search(r"pre tag commit.*'(.*)'", line) for line in lines)
     )
     if not has_build_version:
-        if options.get("version"):
-            release_version = options["version"]
+        if args.version:
+            release_version = args.version
         else:
             release_version = "Unknown"
         release_commits[release_version] = []

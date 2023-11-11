@@ -1,11 +1,57 @@
-#!/bin/bash
-if [ -z "$1" ] ; then
-    echo "No first argument";
-    exit 1;
-fi
-if [ -z "$2" ] ; then
-    echo "No second argument";
-    exit 1;
-fi
-FILES="$(ag -lQ "$1")"
-rpl -F "$1" "$2" $FILES
+#!/usr/bin/env python-venv
+import os
+import re
+import sys
+from argparse import ArgumentParser
+
+
+def main():
+    """Strip $Id$ and stuff."""
+    parser = ArgumentParser()
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        default=False,
+        help="verbose is more verbose",
+    )
+    parser.add_argument(
+        "-r",
+        "--regex",
+        dest="regex",
+        action="store_true",
+        default=False,
+        help="treat the find string as a regex",
+    )
+    parser.add_argument(
+        'find'
+    )
+    parser.add_argument(
+        'replacement'
+    )
+    parser.add_argument('filenames', nargs='+')
+
+    args = parser.parse_args()
+    verbose = args.verbose
+
+    for filename in args.filenames:
+        file_size = os.path.getsize(filename)
+        with open(filename) as f:
+            original_contents = f.read(file_size)
+            contents = original_contents
+
+        if args.regex:
+            contents = re.sub(args.find, args.replacement, contents)
+        else:
+            contents = contents.replace(args.find, args.replacement)
+        changed = contents != original_contents
+        if changed:
+            if verbose:
+                sys.stdout.write("updated file %s" % filename)
+            with open(filename, "w") as f:
+                f.write(contents)
+
+
+if __name__ == "__main__":
+    main()

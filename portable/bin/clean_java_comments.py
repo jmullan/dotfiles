@@ -17,9 +17,9 @@ def main():
         help="verbose is more verbose",
     )
     parser.add_argument("filenames", nargs="+", help="filenames to process")
-    options = parser.parse_args()
+    args = parser.parse_args()
     options = options.__dict__
-    verbose = options.get("verbose")
+    verbose = args.verbose
 
     for filename in options["filenames"]:
         filesize = os.path.getsize(filename)

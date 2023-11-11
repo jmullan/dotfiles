@@ -1,14 +1,14 @@
 #!/usr/bin/env python-venv
 import os
 import sys
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 
 def main():
     """Strip extra newlines from end of files, add one if there is none."""
     changed = False
-    parser = OptionParser()
-    parser.add_option(
+    parser = ArgumentParser()
+    parser.add_argument(
         "-v",
         "--verbose",
         dest="verbose",
@@ -16,12 +16,12 @@ def main():
         default=False,
         help="verbose is more verbose",
     )
-    (options, args) = parser.parse_args()
-    options = options.__dict__
-    verbose = options.get("verbose")
+    parser.add_argument('filenames', nargs='+')
 
-    for filename in args:
-        contents = ""
+    args = parser.parse_args()
+    verbose = args.verbose
+
+    for filename in args.filenames:
         filesize = os.path.getsize(filename)
         with open(filename) as f:
             contents = f.read(filesize)

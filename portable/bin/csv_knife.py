@@ -178,7 +178,7 @@ def main():
         default=None,
         help="A filename to process (default stdin)",
     )
-    options = parser.parse_args()
+    args = parser.parse_args()
 
     dialect = options.dialect
     if options.sniff:

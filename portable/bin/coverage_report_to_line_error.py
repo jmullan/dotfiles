@@ -2,7 +2,7 @@
 import re
 import sys
 
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 # remoting/__init__.py                 6      0   100%
 # remoting/jsonrpc.py                 59     33    44%   7-10, 14, 30, 38, 41, 46, 51, 54-59, 67, 74-111
@@ -37,8 +37,8 @@ def dump(filename, ranges):
 
 def main():
     """Reindent a python file."""
-    parser = OptionParser()
-    parser.add_option(
+    parser = ArgumentParser()
+    parser.add_argument(
         "-v",
         "--verbose",
         dest="verbose",
@@ -46,7 +46,8 @@ def main():
         default=False,
         help="verbose is more verbose",
     )
-    (options, args) = parser.parse_args()
+    parser.add_argument('filenames', nargs='+')
+    args = parser.parse_args()
     lines = [line.strip() for line in sys.stdin]
 
     if not lines:
@@ -68,13 +69,12 @@ def main():
         ranges = match.group("ranges").split(", ")
         results[filename] = ranges
 
-    if args:
-        for filename in args:
-            flymake_name = filename.replace(".py", "_flymake.py")
-            if filename in results:
-                dump(filename, results[filename])
-            elif flymake_name in results:
-                dump(flymake_name, results[filename])
+    for filename in args.filenames:
+        flymake_name = filename.replace(".py", "_flymake.py")
+        if filename in results:
+            dump(filename, results[filename])
+        elif flymake_name in results:
+            dump(flymake_name, results[filename])
 
 
 if __name__ == "__main__":

@@ -2,14 +2,13 @@
 import os
 import re
 import sys
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 
 def main():
     """Strip $Id$ and stuff."""
-    changed = False
-    parser = OptionParser()
-    parser.add_option(
+    parser = ArgumentParser()
+    parser.add_argument(
         "-v",
         "--verbose",
         dest="verbose",
@@ -17,14 +16,16 @@ def main():
         default=False,
         help="verbose is more verbose",
     )
-    (options, args) = parser.parse_args()
-    options = options.__dict__
-    verbose = options.get("verbose")
+    parser.add_argument('filenames', nargs='+')
 
-    for filename in args:
-        filesize = os.path.getsize(filename)
+    args = parser.parse_args()
+    verbose = args.verbose
+
+    for filename in args.filenames:
+        print(filename)
+        file_size = os.path.getsize(filename)
         with open(filename) as f:
-            original_contents = f.read(filesize)
+            original_contents = f.read(file_size)
             contents = original_contents
 
         pattern = r"private final ([A-Za-z]+) ([a-zA-Z_]+) ="

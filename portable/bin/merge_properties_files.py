@@ -2,14 +2,14 @@
 import os
 import re
 
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 
 def main():
     """Merge properties files"""
     changed = False
-    parser = OptionParser()
-    parser.add_option(
+    parser = ArgumentParser()
+    parser.add_argument(
         "-v",
         "--verbose",
         dest="verbose",
@@ -17,7 +17,7 @@ def main():
         default=False,
         help="verbose is more verbose",
     )
-    parser.add_option(
+    parser.add_argument(
         "-c",
         "--crush",
         dest="crush",
@@ -25,20 +25,20 @@ def main():
         default=False,
         help="Crush into application.properties",
     )
-    parser.add_option(
+    parser.add_argument(
         "--target", dest="target", default=None, help="crush into this file"
     )
-    (options, args) = parser.parse_args()
-    options = options.__dict__
-    verbose = options.get("verbose")
-    crush = options.get("crush")
-    target = options.get("target")
+    parser.add_argument('filenames', nargs='+')
+
+    args = parser.parse_args()
+    crush = args.crush
+    target = args.target
+    verbose = args.verbose
 
     values_by_file = {}
     defaults = {}
-    for filename in args:
+    for filename in args.filenames:
         values_by_file[filename] = {}
-        contents = ""
         filesize = os.path.getsize(filename)
         with open(filename) as f:
             contents = f.read(filesize)
@@ -96,7 +96,7 @@ def crush_files(verbose, filenames, defaults, target):
     application_filename = list(application_filenames)[0]
     print("Writing to ", application_filename)
     new_contents = get_new_contents(verbose, defaults)
-    with open(filename, "w") as f:
+    with open(application_filename, "w") as f:
         f.write(new_contents)
     for filename in filenames:
         if filename != application_filename:
