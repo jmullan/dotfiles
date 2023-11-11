@@ -1,4 +1,4 @@
-#!python-venv dotfiles
+#!/usr/bin/env python-venv
 import os
 import sys
 from optparse import OptionParser
