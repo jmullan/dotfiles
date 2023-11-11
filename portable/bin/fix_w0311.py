@@ -19,7 +19,7 @@ def main():
     parser.add_argument(
         "-w", "--width", dest="width", default=4, type=int, help="Indent by this much"
     )
-    parser.add_argument('filenames', nargs='+')
+    parser.add_argument("filenames", nargs="+")
     args = parser.parse_args()
     verbose = args.verbose
     width = args.width

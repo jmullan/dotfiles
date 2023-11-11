@@ -1,5 +1,6 @@
 #!/usr/bin/env python-venv
 import os
+import os.path
 import re
 import sys
 from argparse import ArgumentParser
@@ -24,33 +25,51 @@ def main():
         default=False,
         help="treat the find string as a regex",
     )
-    parser.add_argument(
-        'find'
-    )
-    parser.add_argument(
-        'replacement'
-    )
-    parser.add_argument('filenames', nargs='+')
+    parser.add_argument("find")
+    parser.add_argument("replacement")
+    parser.add_argument("filenames", nargs="*")
 
     args = parser.parse_args()
     verbose = args.verbose
 
-    for filename in args.filenames:
-        file_size = os.path.getsize(filename)
-        with open(filename) as f:
-            original_contents = f.read(file_size)
-            contents = original_contents
+    filenames = args.filenames
+    if not filenames:
+        filenames = ["."]
 
-        if args.regex:
-            contents = re.sub(args.find, args.replacement, contents)
-        else:
-            contents = contents.replace(args.find, args.replacement)
-        changed = contents != original_contents
-        if changed:
-            if verbose:
-                sys.stdout.write("updated file %s" % filename)
-            with open(filename, "w") as f:
-                f.write(contents)
+    for filename in filenames:
+        check_filename(args.find, args.regex, args.replacement, filename, args.verbose)
+
+
+def check_filename(find, regex, replacement, filename, verbose):
+    if os.path.isdir(filename):
+        check_dir(find, regex, replacement, filename, verbose)
+    if os.path.isfile(filename):
+        clean_file(find, regex, replacement, filename, verbose)
+
+
+def check_dir(find, regex, replacement, path, verbose):
+    for root, dirs, files in os.walk(path, topdown=True):
+        for subfilename in files:
+            path = os.path.join(path, subfilename)
+            clean_file(find, regex, replacement, path, verbose)
+
+
+def clean_file(find, regex, replacement, filename, verbose):
+    file_size = os.path.getsize(filename)
+    with open(filename) as f:
+        original_contents = f.read(file_size)
+        contents = original_contents
+
+    if regex:
+        contents = re.sub(find, replacement, contents)
+    else:
+        contents = contents.replace(find, replacement)
+    changed = contents != original_contents
+    if changed:
+        if verbose:
+            sys.stdout.write("updated file %s" % filename)
+        with open(filename, "w") as f:
+            f.write(contents)
 
 
 if __name__ == "__main__":

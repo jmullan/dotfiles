@@ -28,7 +28,7 @@ def main():
     parser.add_argument(
         "--target", dest="target", default=None, help="crush into this file"
     )
-    parser.add_argument('filenames', nargs='+')
+    parser.add_argument("filenames", nargs="+")
 
     args = parser.parse_args()
     crush = args.crush

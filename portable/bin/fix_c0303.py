@@ -30,7 +30,7 @@ def main():
         default=False,
         help="Only trim blank lines",
     )
-    parser.add_argument('filenames', nargs='+')
+    parser.add_argument("filenames", nargs="+")
     args = parser.parse_args()
     verbose = args.verbose
     only_blank_lines = args.only_blank_lines

@@ -19,7 +19,7 @@ PAPER_ALL = PAPER_UPPER + PAPER_LOWER + PAPER_NUMERIC + PAPER_SPECIAL
 
 
 class CharacterClass:
-    def __init__(self, characters: str, minimum: int | None, maximum : int | None):
+    def __init__(self, characters: str, minimum: int | None, maximum: int | None):
         if minimum is not None and maximum is not None and minimum > maximum:
             raise ValueError(f"minimum {minimum} cannot be more than maximum {maximum}")
         if characters is None or not len(characters):
@@ -165,7 +165,9 @@ class Generator(object):
         if minimum_password_length == maximum_password_length:
             password_length = minimum_password_length
         else:
-            password_length = random.randint(minimum_password_length, maximum_password_length)
+            password_length = random.randint(
+                minimum_password_length, maximum_password_length
+            )
 
         self.password = None
         while self.password is None or self.fails():
@@ -344,17 +346,17 @@ def main():
         options, "minimum_password_length", "maximum_password_length", "length"
     )
 
-    (
-        options["minimum_password_length"],
-        options["maximum_password_length"]
-    ) = minimum_password_length, maximum_password_length
+    (options["minimum_password_length"], options["maximum_password_length"]) = (
+        minimum_password_length,
+        maximum_password_length,
+    )
     minimum_special, maximum_special = resolve_min_max(
         options, "minimum_special", "maximum_special"
     )
-    (
-        options["minimum_special"],
-        options["maximum_special"]
-    ) = minimum_special, maximum_special
+    (options["minimum_special"], options["maximum_special"]) = (
+        minimum_special,
+        maximum_special,
+    )
     options = {x: undefault(y) for x, y in options.items()}
     if options.get("verbose"):
         logging.basicConfig(level=logging.DEBUG)
@@ -363,11 +365,10 @@ def main():
         raise ValueError(
             f"Minimum password length {minimum_password_length} must be less than or equal to the maximum {maximum_password_length}"
         )
-    if (
-        minimum_password_length < 1
-        or maximum_password_length < 1
-    ):
-        raise ValueError(f"Password length ({minimum_password_length}-{maximum_password_length}) must be 1 or more")
+    if minimum_password_length < 1 or maximum_password_length < 1:
+        raise ValueError(
+            f"Password length ({minimum_password_length}-{maximum_password_length}) must be 1 or more"
+        )
     if minimum_special > maximum_special:
         raise ValueError(
             f"Minimum special {minimum_special} must be less than or equal to the maximum {maximum_special}"
