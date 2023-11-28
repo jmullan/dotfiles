@@ -1,0 +1,176 @@
+#!/usr/bin/env python-venv
+import json
+import sys
+from argparse import ArgumentParser
+from typing import TextIO
+
+L = "{"
+R = "}"
+
+
+def to_camel(value: str):
+    return "".join(v[0].upper() + v[1:] for v in value.split("_"))
+
+
+class TypeCollector:
+    def __init__(self):
+        self.index = 0
+        self.keyses = set()
+        self.values = {}
+        self.names = {}
+        self.fieldnames = {}
+
+    def next_name(self):
+        name = f"Something{self.index}"
+        self.index = self.index + 1
+        return name
+
+    def get_keys(self, value: dict):
+        return ",".join(sorted(value.keys()))
+
+    def best_name(self, data: dict):
+        keys = self.get_keys(data)
+        fieldnames = self.fieldnames.get(keys) or []
+        if len(fieldnames) == 1:
+            return to_camel(list(fieldnames)[0])
+        return self.next_name()
+
+    def to_tstype(self, data: dict):
+        name = self.best_name(data)
+        header = ["/**", f" * @typedef {L}Object{R} {name}"]
+        footer = [" */"]
+
+        type_data = []
+        for key, value in data.items():
+            type_hint = self.type_name(value)
+            if isinstance(value, bool):
+                dumped = str(value).lower()
+            else:
+                try:
+                    dumped = json.dumps(value)
+                    if len(dumped) > 60:
+                        dumped = dumped[0:60] + "..."
+                except Exception:
+                    dumped = repr(value)
+            if dumped is not None and dumped.startswith("[") or dumped.startswith("{"):
+                dumped = f"# {dumped}"
+            type_datum = f" * @property {L}{type_hint}{R} {key} {dumped}"
+            type_data.append(type_datum)
+
+        type_data = header + type_data + footer
+        return "\n".join(type_data)
+
+    def type_name(self, value) -> str:
+        if isinstance(value, dict) and value:
+            return self.best_name(value)
+
+        if isinstance(value, bool):
+            return "boolean"
+        if isinstance(value, str):
+            return "string"
+        if isinstance(value, int):
+            return "number"
+        if isinstance(value, list):
+            types = list(set(self.type_name(x) for x in value))
+            if not types or len(types) > 1:
+                return "Any[]"
+            # there is only one type
+            return f"{types[0]}[]"
+        return "Object"
+
+    def extract_dicts(self, data: dict, name=None):
+        if not data:
+            return
+        if isinstance(data, dict):
+            keys = self.get_keys(data)
+            self.keyses.add(keys)
+            if name is not None:
+                if keys not in self.fieldnames:
+                    self.fieldnames[keys] = set()
+                self.fieldnames[keys].add(name)
+            self.values[keys] = data
+            for key, value in data.items():
+                if value:
+                    if isinstance(value, dict):
+                        self.extract_dicts(value, key)
+                    if isinstance(value, list):
+                        for x in value:
+                            if len(key) > 1 and key.endswith("s"):
+                                key = key[:-1]
+                            self.extract_dicts(x, key)
+
+
+def json_to_tstype(data: dict, name: str | None = None) -> str:
+    type_collector = TypeCollector()
+
+    if data is None:
+        return "/** null */"
+    if not data:
+        if isinstance(data, list):
+            return "/** [] */"
+        if isinstance(data, dict):
+            return "/** {} */"
+        return f"/** {repr(data).lower()} */"
+
+    if isinstance(data, dict):
+        type_collector.extract_dicts(data, name)
+
+    definitions = []
+    for keys in type_collector.keyses:
+        value = type_collector.values.get(keys)
+        definition = type_collector.to_tstype(value)
+        definitions.append(definition)
+
+    return "\n".join(definitions)
+
+
+def file_to_tstype(filename, name=None):
+    try:
+        with open_file_or_stdin(filename) as handle:
+            return json_to_tstype(json.load(handle), name)
+    except Exception as ex:
+        print(f"{ex}", file=sys.stderr)
+
+
+def open_file_or_stdin(filename: str) -> TextIO:
+    if filename == "-":
+        return sys.stdin
+    else:
+        return open(filename, "r")
+
+
+def main():
+    """Strip $Id$ and stuff."""
+    parser = ArgumentParser()
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        default=False,
+        help="verbose is more verbose",
+    )
+    parser.add_argument(
+        "--name",
+        dest="name",
+        default=None,
+        required=False,
+        help="what to call a top-level item",
+    )
+    parser.add_argument("filenames", nargs="*")
+
+    args = parser.parse_args()
+    verbose = args.verbose
+
+    filenames = args.filenames or []
+    if not filenames:
+        filenames.append("-")
+
+    for filename in filenames:
+        tstype = file_to_tstype(filename, args.name)
+        if tstype:
+            print(tstype)
+
+
+if __name__ == "__main__":
+    main()

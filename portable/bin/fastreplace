@@ -2,8 +2,32 @@
 import os
 import os.path
 import re
+import signal
 import sys
+import pathlib
 from argparse import ArgumentParser
+
+
+class Stop:
+    stopped = False
+
+
+def interrupt_handler(signum, frame):
+    Stop.stopped = True
+    sys.exit(0)
+
+
+def process_gitignore(path: str):
+    excludes = set()
+    if os.path.isfile(path):
+        with open(path, "r") as gitignore:
+            for line in gitignore.readlines():
+                if Stop.stopped:
+                    return
+                line = re.sub("#.*", "", line).strip()
+                if len(line):
+                    excludes.add(line)
+    return excludes
 
 
 def main():
@@ -39,30 +63,46 @@ def main():
     if not filenames:
         filenames = ["."]
 
+    excludes = process_gitignore(".gitignore")
+    excludes.update(process_gitignore("~/.gitignore"))
+
     for filename in filenames:
-        check_filename(find, regex, replacement, filename, verbose)
+        check_filename(find, regex, replacement, filename, verbose, excludes)
 
 
-def check_filename(find, regex, replacement, filename, verbose):
+def check_filename(find, regex, replacement, filename, verbose, excludes):
     if os.path.isdir(filename):
-        check_dir(find, regex, replacement, filename, verbose)
+        check_dir(find, regex, replacement, filename, verbose, excludes)
     if os.path.isfile(filename):
         clean_file(find, regex, replacement, filename, verbose)
 
 
-def check_dir(find, regex, replacement, path, verbose):
+def check_dir(find, regex, replacement, path, verbose, excludes):
     for root, dirs, files in os.walk(path, topdown=True):
         for subfilename in files:
-            path = os.path.join(path, subfilename)
-            clean_file(find, regex, replacement, path, verbose)
+            if Stop.stopped:
+                return
+            if subfilename.startswith("."):
+                continue
+            subpath = os.path.join(root, subfilename)
+            process = True
+            for exclude in excludes:
+                if pathlib.PurePath(subpath).match(exclude):
+                    # print(f"skipping {subpath} because it matches {exclude}")
+                    process = False
+                    break
+            if process:
+                clean_file(find, regex, replacement, subpath, verbose)
 
 
 def clean_file(find, regex, replacement, filename, verbose):
     file_size = os.path.getsize(filename)
-    with open(filename) as f:
-        original_contents = f.read(file_size)
-        contents = original_contents
-
+    try:
+        with open(filename) as f:
+            original_contents = f.read(file_size)
+            contents = original_contents
+    except:
+        return
     if regex:
         contents = re.sub(find, replacement, contents)
     else:
@@ -76,4 +116,5 @@ def clean_file(find, regex, replacement, filename, verbose):
 
 
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, interrupt_handler)
     main()

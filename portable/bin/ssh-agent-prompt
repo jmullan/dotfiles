@@ -9,8 +9,10 @@ _SOCK_EMOJI=$(echo -e "\xf0\x9f\xa7\xa6")
 SOCK_EMOJI="${SOCK_EMOJI:-$_SOCK_EMOJI}"
 _X_EMOJI=$(echo -e "\xe2\x9d\x8c")
 X_EMOJI="${X_EMOJI:-$_X_EMOJI}"
-_PID_EMOJI=$(echo -e "\xf0\x9f\x94\x91")
+_PID_EMOJI=$(echo -e "\xF0\x9F\xA5\x94")
 PID_EMOJI="${PID_EMOJI:-$_PID_EMOJI}"
+_KEY_EMOJI=$(echo -e "\xf0\x9f\x94\x91")
+KEY_EMOJI="${KEY_EMOJI:-$_KEY_EMOJI}"
 echo -n "$(tput sgr0)"
 echo -n " ("
 LEGIT_SOCK=$(echo "${SSH_AUTH_SOCK}" | egrep "ssh.*agent")
@@ -38,6 +40,22 @@ else
     echo -n "${X_EMOJI}"
     echo -n "$(tput sgr0)"
 fi
+if [ -n "${EXPECTED_KEY}" ] ; then
+    # if there's a particular key that we need, look for it
+    LEGIT_KEY=$(ssh-add -l | grep "${EXPECTED_KEY}")
+
+    if [ -n "${LEGIT_KEY}" ] ; then
+        echo -n "$(tput setaf 2)"
+        echo -n "${KEY_EMOJI}"
+        echo -n "$(tput sgr0)"
+    else
+        echo -n "$(tput setaf 1)"
+        echo -n "${X_EMOJI}"
+        echo -n "$(tput sgr0)"
+    fi
+
+fi
+
 echo -n "$(tput sgr0)"
 echo -n ")"
 

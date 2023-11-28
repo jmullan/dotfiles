@@ -1,0 +1,101 @@
+#!/usr/bin/env python-venv
+from argparse import ArgumentParser
+import re
+import sys
+
+from signal import signal, SIGPIPE, SIG_DFL
+from typing import TextIO
+
+
+def open_file_or_stdin(filename: str) -> TextIO:
+    if filename == "-":
+        return sys.stdin
+    else:
+        return open(filename, "r")
+
+
+def search(pattern: re.Pattern, filename: str, inclusive: bool):
+    with open_file_or_stdin(filename) as handle:
+        for line in handle:
+            if pattern.search(line) is not None:
+                if inclusive:
+                    print(line, end="")
+                break
+            else:
+                print(line, end="")
+
+
+def main():
+    """Try to turn has_key into ` in `."""
+    signal(SIGPIPE, SIG_DFL)
+    parser = ArgumentParser()
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        default=False,
+        help="verbose is more verbose",
+    )
+    parser.add_argument(
+        "--inclusive",
+        dest="inclusive",
+        action="store_true",
+        default=False,
+        help="include the string we are seeking",
+    )
+    parser.add_argument(
+        "-i",
+        "--insensitive",
+        "--case-insensitive",
+        dest="insensitive",
+        action="store_true",
+        default=False,
+        help="search for the string ignoring case",
+    )
+    parser.add_argument(
+        "-r",
+        "--regex",
+        dest="regex",
+        action="store_true",
+        default=False,
+        help="treat the search string as a regex",
+    )
+    parser.add_argument("search", help="what to search for")
+    parser.add_argument(
+        "filenames",
+        nargs="*",
+        help=(
+            "a list of files; - for stdin; separate arguments from"
+            " files with an optional -- ; specifying no files means stdin"
+        ),
+    )
+
+    args = parser.parse_args()
+    if args.search is None or args.search == "":
+        raise ValueError("You must search for a non-empty string")
+
+    filenames = args.filenames or []
+
+    if not filenames:
+        filenames.append("-")
+
+    if not args.regex:
+        regex = re.escape(args.search)
+    else:
+        regex = args.search
+    if args.insensitive:
+        pattern = re.compile(regex, re.IGNORECASE)
+    else:
+        pattern = re.compile(regex)
+
+    try:
+        for filename in filenames:
+            search(pattern, filename, args.inclusive)
+    except BrokenPipeError:
+        sys.stderr.close()
+        return
+
+
+if __name__ == "__main__":
+    main()
