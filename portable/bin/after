@@ -2,15 +2,12 @@
 import re
 import sys
 from argparse import ArgumentParser
-from signal import signal, SIGPIPE, SIG_DFL
-from typing import TextIO
 
-
-def open_file_or_stdin(filename: str) -> TextIO:
-    if filename == "-":
-        return sys.stdin
-    else:
-        return open(filename, "r")
+from jmullanpy.command_helpers import (
+    stop_on_broken_pipe_error,
+    get_filenames,
+    open_file_or_stdin,
+)
 
 
 def search(pattern: re.Pattern, filename: str, inclusive: bool):
@@ -29,7 +26,7 @@ def search(pattern: re.Pattern, filename: str, inclusive: bool):
 
 def main():
     """Try to turn has_key into ` in `."""
-    signal(SIGPIPE, SIG_DFL)
+    stop_on_broken_pipe_error()
     parser = ArgumentParser()
     parser.add_argument(
         "-v",
@@ -77,10 +74,7 @@ def main():
     if args.search is None or args.search == "":
         raise ValueError("You must search for a non-empty string")
 
-    filenames = args.filenames or []
-
-    if not filenames:
-        filenames.append("-")
+    filenames = get_filenames(args)
 
     if not args.regex:
         regex = re.escape(args.search)
@@ -91,12 +85,8 @@ def main():
     else:
         pattern = re.compile(regex)
 
-    try:
-        for filename in filenames:
-            search(pattern, filename, args.inclusive)
-    except BrokenPipeError:
-        sys.stderr.close()
-        return
+    for filename in filenames:
+        search(pattern, filename, args.inclusive)
 
 
 if __name__ == "__main__":

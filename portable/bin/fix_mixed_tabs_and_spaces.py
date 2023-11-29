@@ -1,11 +1,63 @@
 #!/usr/bin/env python-venv
-import os
 import re
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
+
+from jmullanpy.command_helpers import (
+    stop_on_broken_pipe_error,
+    get_filenames,
+    add_filenames_arguments,
+    update_in_place,
+)
+
+
+def munge(contents: str, args: Namespace) -> str:
+    lines = contents.split("\n")
+    stripped_lines = [line.rstrip() for line in lines]
+    contents = "\n".join(stripped_lines)
+    if not contents.endswith("\n"):
+        contents = contents + "\n"
+
+    if args.tabs:
+        use = "tabs"
+    elif args.spaces:
+        use = "spaces"
+    else:
+        tabs = 0
+        spaces = 0
+        use = "spaces"
+        for line in stripped_lines:
+            if line.startswith("\t"):
+                tabs += 1
+            if line.startswith(" "):
+                spaces += 1
+        if tabs > spaces:
+            use = "tabs"
+
+    lines = contents.split("\n")
+    new_lines = []
+    for line in lines:
+        matches = re.match(r"^([ \t]+)(.*)", line)
+
+        if matches:
+            leading_whitespace = matches.group(1)
+            rest_of_line = matches.group(2)
+            if use == "spaces" and "\t" in leading_whitespace:
+                leading_whitespace = leading_whitespace.replace(
+                    "\t", " " * args.tab_width
+                )
+            elif use == "tabs" and " " in leading_whitespace:
+                leading_whitespace = leading_whitespace.replace(
+                    " " * args.tab_width, "\t"
+                )
+            line = f"{leading_whitespace}{rest_of_line}"
+        new_lines.append(line)
+
+    return "\n".join(lines)
 
 
 def main():
     """Strip $Id$ and stuff."""
+    stop_on_broken_pipe_error()
     parser = ArgumentParser()
     parser.add_argument(
         "-v",
@@ -39,93 +91,22 @@ def main():
         default=False,
         help="Ignore spaces, embrace tabs",
     )
-    parser.add_argument("filenames", nargs="+", help="filenames to process")
+    parser.add_argument(
+        "-t",
+        "--tab-width",
+        dest="tab_width",
+        type=int,
+        default=4,
+        help="How many spaces equal a tab",
+    )
+    add_filenames_arguments(parser)
     args = parser.parse_args()
-    verbose = args.verbose
 
-    for filename in args.filenames:
-        if verbose:
-            print("checking", filename)
-        filesize = os.path.getsize(filename)
-        with open(filename, "rb") as f:
-            original_contents = f.read(filesize)
-        if verbose and (0xD in original_contents):
-            print("Found \r in contents")
-        original_contents = original_contents.decode("UTF8")
-        contents = original_contents
-        lines = contents.split("\n")
-        stripped_lines = [line.rstrip() for line in lines]
-        if verbose and (lines != stripped_lines):
-            print("Trimmed line endings")
-        contents = "\n".join(stripped_lines)
-        if not contents.endswith("\n"):
-            contents = contents + "\n"
-        if verbose and (contents != original_contents):
-            print("something changed")
+    def munge_closure(contents: str) -> str:
+        return munge(contents, args)
 
-        if args.tabs:
-            use = "tabs"
-        elif args.spaces:
-            use = "spaces"
-        else:
-            tabs = 0
-            spaces = 0
-            use = "spaces"
-            for line in stripped_lines:
-                if line.startswith("\t"):
-                    tabs += 1
-                if line.startswith(" "):
-                    spaces += 1
-            if tabs > spaces:
-                if verbose:
-                    print("using tabs")
-                use = "tabs"
-            if spaces == tabs and verbose:
-                print("Same number of tabs and spaces: %s" % spaces)
-
-        lines = contents.split("\n")
-        new_lines = []
-        for line in lines:
-            matches = re.match(r"^([ \t]+)(.*)", line)
-
-            if matches:
-                leading_whitespace = matches.group(1)
-                rest_of_line = matches.group(2)
-                if use == "spaces" and "\t" in leading_whitespace:
-                    leading_whitespace = leading_whitespace.replace("\t", " " * 4)
-                elif use == "tabs" and " " in leading_whitespace:
-                    leading_whitespace = leading_whitespace.replace(" " * 4, "\t")
-                line = f"{leading_whitespace}{rest_of_line}"
-            new_lines.append(line)
-        contents = "\n".join(lines)
-
-        changed = contents != original_contents
-        if changed:
-            if verbose:
-                print("updated file %s" % filename)
-                original_lines = {
-                    i: x for i, x in enumerate(original_contents.split("\n"))
-                }
-                updated_lines = {i: x for i, x in enumerate(contents.split("\n"))}
-                limit = max(len(original_lines), len(updated_lines))
-                for i in range(0, limit):
-                    original = original_lines.get(i)
-                    updated = updated_lines.get(i)
-                    if original is None:
-                        print("+ %r" % updated)
-                    elif updated is None:
-                        print("- %r" % original)
-                    elif original != updated:
-                        print("- %r" % original)
-                        print("+ %r" % updated)
-                    else:
-                        print("  %r" % original)
-            if not args.noop:
-                with open(filename, "w") as f:
-                    f.write(contents)
-        else:
-            if verbose:
-                print("did not update file %s" % filename)
+    for filename in get_filenames(args):
+        update_in_place(filename, munge_closure)
 
 
 if __name__ == "__main__":

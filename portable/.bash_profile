@@ -140,3 +140,4 @@ if [ -e "${HOME}/.sdkman" ] ; then
     export SDKMAN_OFFLINE_MODE=true
 fi
 export BASH_SILENCE_DEPRECATION_WARNING=1
+export DEFAULT_COPYRIGHT="Jesse Mullan"

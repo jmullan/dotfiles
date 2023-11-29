@@ -3,22 +3,32 @@ import argparse
 import json
 import sys
 
+from jmullanpy.command_helpers import (
+    add_filenames_arguments,
+    stop_on_broken_pipe_error,
+    get_filenames,
+    open_file_or_stdin,
+)
+
+
+def json_pretty(filename):
+    try:
+        with open_file_or_stdin(filename) as handle:
+            data = json.load(handle)
+            print(json.dumps(data, indent=4, sort_keys=True))
+    except Exception as ex:
+        print(f"{ex}", file=sys.stderr)
+
 
 def main():
-    parser = argparse.ArgumentParser(
-        prog="json_pretty", description="Like json_pp"
-    )
-    parser.add_argument("files", nargs="*", type=argparse.FileType("r"))
+    stop_on_broken_pipe_error()
+    parser = argparse.ArgumentParser(prog="json_pretty", description="Like json_pp")
+    add_filenames_arguments(parser)
 
     args = parser.parse_args()
-    if args.files:
-        files = args.files
-    else:
-        files = [sys.stdin]
 
-    for file in files:
-        data = json.load(file)
-        print(json.dumps(data, indent=4, sort_keys=True))
+    for filename in get_filenames(args):
+        json_pretty(filename)
 
 
 if __name__ == "__main__":

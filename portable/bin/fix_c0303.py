@@ -1,28 +1,36 @@
 #!/usr/bin/env python-venv
-import os
 import re
-import sys
 from argparse import ArgumentParser
 
+from jmullanpy.command_helpers import (
+    stop_on_broken_pipe_error,
+    get_filenames,
+    add_filenames_arguments,
+    update_in_place,
+)
 
-def blank(line):
+
+def blank(line: str | None) -> str | None:
+    if line is None:
+        return None
     if re.match(r"^ +$", line):
         return ""
     else:
         return line
 
 
+def trim_blank_lines(contents: str) -> str:
+    return "\n".join(blank(x) for x in contents.split("\n"))
+
+
+def remove_trailing_whitespace(contents: str) -> str:
+    return "\n".join(x.rstrip() for x in contents.split("\n"))
+
+
 def main():
     """Remove trailing whitespace"""
-    parser = ArgumentParser()
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        dest="verbose",
-        action="store_true",
-        default=False,
-        help="verbose is more verbose",
-    )
+    stop_on_broken_pipe_error()
+    parser = ArgumentParser(description="Remove Trailing Whitespace")
     parser.add_argument(
         "--only-blank-lines",
         dest="only_blank_lines",
@@ -30,25 +38,15 @@ def main():
         default=False,
         help="Only trim blank lines",
     )
-    parser.add_argument("filenames", nargs="+")
+    add_filenames_arguments(parser)
     args = parser.parse_args()
-    verbose = args.verbose
     only_blank_lines = args.only_blank_lines
 
-    for filename in args.filenames:
-        file_size = os.path.getsize(filename)
-        with open(filename) as f:
-            contents = f.read(file_size)
+    for filename in get_filenames(args):
         if only_blank_lines:
-            new_contents = "\n".join(blank(x) for x in contents.split("\n"))
+            update_in_place(filename, trim_blank_lines)
         else:
-            new_contents = "\n".join(x.rstrip() for x in contents.split("\n"))
-        changed = new_contents != contents
-        if changed:
-            if verbose:
-                sys.stdout.write("updated file %s\n" % filename)
-            with open(filename, "w") as f:
-                f.write(new_contents)
+            update_in_place(filename, remove_trailing_whitespace)
 
 
 if __name__ == "__main__":

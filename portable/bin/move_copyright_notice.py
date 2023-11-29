@@ -1,4 +1,5 @@
 #!/usr/bin/env python-venv
+import datetime
 import os
 import re
 from argparse import ArgumentParser
@@ -6,10 +7,15 @@ from argparse import ArgumentParser
 DESIRED = "// Copyright {date_stuff} {who}"
 STAR_COMMENT_COPYRIGHT_REGEX = r"(?:^|\n)\s*\*\s*(Copyright[^\n]*)(?:$|\n)"
 SLASH_COMMENT_COPYRIGHT_REGEX = r"(?:^|\n)\s*//\s*(Copyright[^\n]*)(?:$|\n)"
+WHO = os.environ.get("DEFAULT_COPYRIGHT", "Jesse Mullan")
 
 
 def update_contents(contents, verbose):
-    copyright_dict = {"date_stuff": "2020", "who": "Pandora Media Inc."}
+    copyright_line = ""
+    copyright_dict = {
+        "date_stuff": datetime.datetime.now().strftime("%Y"),
+        "who": WHO,
+    }
     first_line, new_line, remainder = contents.partition("\n")
     if first_line.startswith("//") and "copyright" in first_line.lower():
         if verbose:
@@ -80,16 +86,16 @@ def main():
     verbose = args.verbose
     if args.diagnostic:
         assert re.search(
-            STAR_COMMENT_COPYRIGHT_REGEX, " * Copyright 2011, Pandora Media, Inc."
+            STAR_COMMENT_COPYRIGHT_REGEX, " * Copyright 2011, Some Company"
         )
 
         assert re.search(
-            STAR_COMMENT_COPYRIGHT_REGEX, " * Copyright 2007 Pandora Media, Inc."
+            STAR_COMMENT_COPYRIGHT_REGEX, " * Copyright 2007 Some other company"
         )
-        comment = """\n\n/**\n * Copyright 2007 Pandora Media, Inc.\n */\npublic class VendorSku"""
+        comment = """\n\n/**\n * Copyright 2007 Company Company, Inc.\n */\npublic class VendorSku"""
         assert re.search(STAR_COMMENT_COPYRIGHT_REGEX, comment)
 
-        comment = """\n// Copyright (c) 2007 SavageBeast Technologies Inc.\n"""
+        comment = """\n// Copyright (c) 2007 Any Technologies Inc.\n"""
         assert re.search(SLASH_COMMENT_COPYRIGHT_REGEX, comment)
 
     for filename in args.filenames:

@@ -18,7 +18,7 @@ def main():
     )
     parser.add_argument("filenames", nargs="+", help="filenames to process")
     args = parser.parse_args()
-    options = options.__dict__
+    options = args.__dict__
     verbose = args.verbose
 
     for filename in options["filenames"]:

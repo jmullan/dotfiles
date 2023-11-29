@@ -2,7 +2,12 @@
 import json
 import sys
 from argparse import ArgumentParser
-from typing import TextIO
+
+from jmullanpy.command_helpers import (
+    stop_on_broken_pipe_error,
+    get_filenames,
+    open_file_or_stdin,
+)
 
 L = "{"
 R = "}"
@@ -132,15 +137,9 @@ def file_to_tstype(filename, name=None):
         print(f"{ex}", file=sys.stderr)
 
 
-def open_file_or_stdin(filename: str) -> TextIO:
-    if filename == "-":
-        return sys.stdin
-    else:
-        return open(filename, "r")
-
-
 def main():
     """Strip $Id$ and stuff."""
+    stop_on_broken_pipe_error()
     parser = ArgumentParser()
     parser.add_argument(
         "-v",
@@ -160,11 +159,8 @@ def main():
     parser.add_argument("filenames", nargs="*")
 
     args = parser.parse_args()
-    verbose = args.verbose
 
-    filenames = args.filenames or []
-    if not filenames:
-        filenames.append("-")
+    filenames = get_filenames(args)
 
     for filename in filenames:
         tstype = file_to_tstype(filename, args.name)

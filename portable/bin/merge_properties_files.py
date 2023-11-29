@@ -1,13 +1,11 @@
 #!/usr/bin/env python-venv
 import os
-import re
 
 from argparse import ArgumentParser
 
 
 def main():
     """Merge properties files"""
-    changed = False
     parser = ArgumentParser()
     parser.add_argument(
         "-v",

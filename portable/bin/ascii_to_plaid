@@ -25,10 +25,10 @@ def main():
 
     for line in sys.stdin:
         output = line.rstrip()
-        if len(options.plaid):
-            output = re.sub("[^ ]", options.plaid, output)
-        if len(options.imaginaryvegandog):
-            output = re.sub(" ", options.imaginaryvegandog, output)
+        if len(args.plaid):
+            output = re.sub("[^ ]", args.plaid, output)
+        if len(args.imaginaryvegandog):
+            output = re.sub(" ", args.imaginaryvegandog, output)
         output = output + "\n"
         sys.stdout.write(output)
 
