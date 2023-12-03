@@ -1,43 +1,51 @@
 #!/usr/bin/env python-venv
-import os
 import re
-import sys
-from argparse import ArgumentParser
+
+from jmullanpy import cmd
 
 
-def main():
-    """Snug up final curly braces"""
-    changed = False
-    parser = ArgumentParser()
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        dest="verbose",
-        action="store_true",
-        default=False,
-        help="verbose is more verbose",
-    )
-    args = parser.parse_args()
-    options = options.__dict__
-    verbose = args.verbose
+class Main(cmd.InPlaceFileProcessor):
+    def __init__(self):
+        super().__init__()
+        self.parser.add_argument(
+            "-n",
+            "--noop",
+            dest="noop",
+            action="store_true",
+            default=False,
+            help="Dry run only",
+        )
+        self.parser.add_argument(
+            "-s",
+            "--spaces",
+            dest="spaces",
+            action="store_true",
+            default=False,
+            help="Ignore tabs, embrace spaces",
+        )
+        self.parser.add_argument(
+            "-t",
+            "--tabs",
+            dest="tabs",
+            action="store_true",
+            default=False,
+            help="Ignore spaces, embrace tabs",
+        )
+        self.parser.add_argument(
+            "-t",
+            "--tab-width",
+            dest="tab_width",
+            type=int,
+            default=4,
+            help="How many spaces equal a tab",
+        )
 
-    for filename in args:
-        filesize = os.path.getsize(filename)
-        with open(filename) as f:
-            original_contents = f.read(filesize)
-            contents = original_contents
-
-        replace_patterns = [(r"\n\n+package", r"\npackage"), (r"\n\n\n\n+", r"\n\n\n")]
+    def process_contents(self, contents: str) -> str:
+        replace_patterns = [(r"\n\n+package", r"\npackage"), (r"\n\n\n+", r"\n\n")]
         for pattern, replacement in replace_patterns:
             contents = re.sub(pattern, replacement, contents)
-
-        changed = contents != original_contents
-        if changed:
-            if verbose:
-                sys.stdout.write("updated file %s" % filename)
-            with open(filename, "w") as f:
-                f.write(contents)
+        return contents
 
 
 if __name__ == "__main__":
-    main()
+    Main().main()

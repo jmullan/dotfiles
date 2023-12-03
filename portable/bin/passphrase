@@ -15,6 +15,10 @@ PAPER_NUMERIC = "23456789"
 PAPER_UPPER = "ABCDEFGHJKLMNPRSTUVWXYZ"
 PAPER_LOWER = "abcdefghijkmnopqrstuvwxyz"
 
+ASCII_LOWER = "".join(chr(x) for x in range(97, 123))  # a-z
+ASCII_UPPER = "".join(chr(x) for x in range(65, 91))  # A-Z
+ASCII_NUMERIC = "".join(chr(x) for x in range(48, 58))  # 0-9
+
 PAPER_ALL = PAPER_UPPER + PAPER_LOWER + PAPER_NUMERIC + PAPER_SPECIAL
 
 
@@ -110,19 +114,16 @@ class Generator(object):
                 self.options.get("maximum_numeric"),
             )
         else:
-            ASCII_LOWER = "".join(chr(x) for x in range(97, 123))  # a-z
             character_classes["lower"] = CharacterClass(
                 ASCII_LOWER,
                 self.options.get("minimum_lowercase"),
                 self.options.get("maximum_lowercase"),
             )
-            ASCII_UPPER = "".join(chr(x) for x in range(65, 91))  # A-Z
             character_classes["upper"] = CharacterClass(
                 ASCII_UPPER,
                 self.options.get("minimum_uppercase"),
                 self.options.get("maximum_uppercase"),
             )
-            ASCII_NUMERIC = "".join(chr(x) for x in range(48, 58))  # 0-9
             character_classes["numeric"] = CharacterClass(
                 ASCII_NUMERIC,
                 self.options.get("minimum_numeric"),

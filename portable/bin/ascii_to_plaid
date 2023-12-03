@@ -1,37 +1,36 @@
 #!/usr/bin/env python-venv
 import re
-import sys
-from argparse import ArgumentParser
+
+from jmullanpy import cmd
 
 
-def main():
-    """Text to plaid converter"""
-    parser = ArgumentParser()
-    parser.add_argument(
-        "--plaid",
-        dest="plaid",
-        help="what string is used for 1s",
-        type=str,
-        default=":plaid:",
-    )
-    parser.add_argument(
-        "--imaginaryvegandog",
-        dest="imaginaryvegandog",
-        help="what string is used for blanks",
-        type=str,
-        default=":imaginaryvegandog:",
-    )
-    args = parser.parse_args()
-
-    for line in sys.stdin:
+class Main(cmd.TextIoLineProcessor):
+    def process_line(self, filename: str, line: str) -> str:
         output = line.rstrip()
-        if len(args.plaid):
-            output = re.sub("[^ ]", args.plaid, output)
-        if len(args.imaginaryvegandog):
-            output = re.sub(" ", args.imaginaryvegandog, output)
-        output = output + "\n"
-        sys.stdout.write(output)
+        if len(self.args.plaid):
+            output = re.sub("[^ ]", self.args.plaid, output)
+        if len(self.args.imaginaryvegandog):
+            output = re.sub(" ", self.args.imaginaryvegandog, output)
+        return output + "\n"
+
+    def __init__(self):
+        super().__init__()
+        self.parser.add_argument(
+            "--plaid",
+            dest="plaid",
+            help="what string is used for 1s",
+            type=str,
+            default=":plaid:",
+        )
+        self.parser.add_argument(
+            "--imaginaryvegandog",
+            dest="imaginaryvegandog",
+            help="what string is used for blanks",
+            type=str,
+            default=":imaginaryvegandog:",
+        )
+        self.parser.add_argument("search", help="what to search for")
 
 
 if __name__ == "__main__":
-    main()
+    Main().main()

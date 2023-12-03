@@ -1,31 +1,23 @@
 #!/usr/bin/env python-venv
-import os
 import re
-import sys
-from argparse import ArgumentParser
+
+from jmullanpy import cmd
 
 
-def main():
-    """Strip $Id$ and stuff."""
-    parser = ArgumentParser()
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        dest="verbose",
-        action="store_true",
-        default=False,
-        help="verbose is more verbose",
-    )
-    args = parser.parse_args()
-    options = options.__dict__
-    verbose = args.verbose
+class Main(cmd.InPlaceFileProcessor):
+    """Remove trailing whitespace"""
 
-    for filename in args:
-        filesize = os.path.getsize(filename)
-        with open(filename) as f:
-            original_contents = f.read(filesize)
-            contents = original_contents
+    def __init__(self):
+        super().__init__()
+        self.parser.add_argument(
+            "--only-blank-lines",
+            dest="only_blank_lines",
+            action="store_true",
+            default=False,
+            help="Only trim blank lines",
+        )
 
+    def process_contents(self, contents: str) -> str:
         replace_patterns = [
             (r"[\n\r]+\spackage", "\npackage"),
             (r"^\spackage", "\npackage"),
@@ -96,9 +88,9 @@ def main():
 
         for find, replace in type_replacements:
             for x in ("= ", "return "):
-                xfind = "%s%s" % (x, find)
-                xreplace = "%s%s" % (x, replace)
-                contents = contents.replace(xfind, xreplace)
+                x_find = "%s%s" % (x, find)
+                x_replace = "%s%s" % (x, replace)
+                contents = contents.replace(x_find, x_replace)
 
         delete_strings = []
 
@@ -118,13 +110,8 @@ def main():
         for pattern in newline_patterns:
             contents = re.sub(pattern, "\n", contents)
 
-        changed = contents != original_contents
-        if changed:
-            if verbose:
-                sys.stdout.write("updated file %s" % filename)
-            with open(filename, "w") as f:
-                f.write(contents)
+        return contents
 
 
 if __name__ == "__main__":
-    main()
+    Main().main()

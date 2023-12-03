@@ -1,13 +1,8 @@
 #!/usr/bin/env python-venv
 import re
-from argparse import ArgumentParser, Namespace
+from argparse import Namespace
 
-from jmullanpy.command_helpers import (
-    stop_on_broken_pipe_error,
-    get_filenames,
-    add_filenames_arguments,
-    update_in_place,
-)
+from jmullanpy import cmd
 
 
 def munge(contents: str, args: Namespace) -> str:
@@ -55,59 +50,45 @@ def munge(contents: str, args: Namespace) -> str:
     return "\n".join(lines)
 
 
-def main():
-    """Strip $Id$ and stuff."""
-    stop_on_broken_pipe_error()
-    parser = ArgumentParser()
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        dest="verbose",
-        action="store_true",
-        default=False,
-        help="verbose is more verbose",
-    )
-    parser.add_argument(
-        "-n",
-        "--noop",
-        dest="noop",
-        action="store_true",
-        default=False,
-        help="Dry run only",
-    )
-    parser.add_argument(
-        "-s",
-        "--spaces",
-        dest="spaces",
-        action="store_true",
-        default=False,
-        help="Ignore tabs, embrace spaces",
-    )
-    parser.add_argument(
-        "-t",
-        "--tabs",
-        dest="tabs",
-        action="store_true",
-        default=False,
-        help="Ignore spaces, embrace tabs",
-    )
-    parser.add_argument(
-        "-t",
-        "--tab-width",
-        dest="tab_width",
-        type=int,
-        default=4,
-        help="How many spaces equal a tab",
-    )
-    add_filenames_arguments(parser)
-    args = parser.parse_args()
+class Main(cmd.InPlaceFileProcessor):
+    def __init__(self):
+        super().__init__()
+        self.parser.add_argument(
+            "-n",
+            "--noop",
+            dest="noop",
+            action="store_true",
+            default=False,
+            help="Dry run only",
+        )
+        self.parser.add_argument(
+            "-s",
+            "--spaces",
+            dest="spaces",
+            action="store_true",
+            default=False,
+            help="Ignore tabs, embrace spaces",
+        )
+        self.parser.add_argument(
+            "-t",
+            "--tabs",
+            dest="tabs",
+            action="store_true",
+            default=False,
+            help="Ignore spaces, embrace tabs",
+        )
+        self.parser.add_argument(
+            "-t",
+            "--tab-width",
+            dest="tab_width",
+            type=int,
+            default=4,
+            help="How many spaces equal a tab",
+        )
 
-    def munge_closure(contents: str) -> str:
-        return munge(contents, args)
-
-    for filename in get_filenames(args):
-        update_in_place(filename, munge_closure)
+    def process_contents(self, contents: str) -> str:
+        return munge(contents, self.args)
 
 
 if __name__ == "__main__":
-    main()
+    Main().main()

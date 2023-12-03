@@ -1,25 +1,54 @@
 #!/usr/bin/env python-venv
 
-import argparse
+import re
 import sys
 
+from jmullanpy import cmd
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "excludes", nargs="+", help="Filter out lines with any of these strings"
-    )
-    args = parser.parse_args()
-    excludes = args.excludes
-    for line in sys.stdin:
-        okay = True
-        for exclude in excludes:
-            if exclude in line:
-                okay = False
-                break
-        if okay:
-            print(line.rstrip("\n\r"))
+
+class Main(cmd.Main):
+    def __init__(self):
+        super().__init__()
+        self.parser.add_argument(
+            "-i",
+            "--insensitive",
+            "--case-insensitive",
+            dest="insensitive",
+            action="store_true",
+            default=False,
+            help="search for the string ignoring case",
+        )
+        self.parser.add_argument(
+            "-r",
+            "--regex",
+            dest="regex",
+            action="store_true",
+            default=False,
+            help="treat the search string as a regex",
+        )
+        self.parser.add_argument(
+            "excludes",
+            nargs="+",
+            help="Filter out lines with any of these strings",
+        )
+
+    def main(self):
+        super().main()
+        if self.args.excludes is None or self.args.excludes == "":
+            raise ValueError("You must search for a non-empty string")
+
+        if not self.args.regex:
+            regex = "|".join(re.escape(x) for x in self.args.excludes)
+        else:
+            regex = "|".join(self.args.search)
+        if self.args.insensitive:
+            pattern = re.compile(regex, re.IGNORECASE)
+        else:
+            pattern = re.compile(regex)
+        for line in sys.stdin:
+            if pattern.search(line) is None:
+                print(line, end="")
 
 
 if __name__ == "__main__":
-    main()
+    Main().main()

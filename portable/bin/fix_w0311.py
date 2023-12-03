@@ -1,33 +1,26 @@
 #!/usr/bin/env python-venv
-import os
 import re
 
-from argparse import ArgumentParser
+from jmullanpy import cmd
 
 
-def main():
-    """Reindent a python file."""
-    parser = ArgumentParser()
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        dest="verbose",
-        action="store_true",
-        default=False,
-        help="verbose is more verbose",
-    )
-    parser.add_argument(
-        "-w", "--width", dest="width", default=4, type=int, help="Indent by this much"
-    )
-    parser.add_argument("filenames", nargs="+")
-    args = parser.parse_args()
-    verbose = args.verbose
-    width = args.width
+class Main(cmd.InPlaceFileProcessor):
+    """Fix bad indentation"""
 
-    for filename in args.filenames:
-        filesize = os.path.getsize(filename)
-        with open(filename) as f:
-            contents = f.read(filesize)
+    def __init__(self):
+        super().__init__()
+        self.parser.add_argument(
+            "-w",
+            "--width",
+            dest="width",
+            default=4,
+            type=int,
+            help="Indent by this much",
+        )
+
+    def process_contents(self, contents: str) -> str:
+        width = self.args.width
+
         new_contents = []
         indentation_level = []
         prior_indentation = ""
@@ -39,27 +32,24 @@ def main():
                 remainder = matches.group(2)
                 this_indentation = indentation
                 if len(indentation) > len(prior_indentation):
-                    print(">" * width, line)
+                    if self.args.verbose:
+                        print(">" * width, line)
                     diff = len(indentation) - len(prior_indentation)
                     indentation_level.append(" " * diff)
                 elif len(indentation) < len(prior_indentation):
-                    print("<" * width, line)
+                    if self.args.verbose:
+                        print("<" * width, line)
                     while len("".join(indentation_level)) > len(indentation):
                         indentation_level.pop()
                 else:
-                    print(" " * width, line)
+                    if self.args.verbose:
+                        print(" " * width, line)
                 indentation = len(indentation_level) * width * " "
                 prior_indentation = this_indentation
                 line = "%s%s" % (indentation, remainder)
             new_contents.append(line)
-        new_contents = "\n".join(new_contents)
-        changed = new_contents != contents
-        if changed:
-            if verbose:
-                print("updated file %s" % filename)
-            with open(filename, "w") as f:
-                f.write(new_contents)
+        return "\n".join(new_contents)
 
 
 if __name__ == "__main__":
-    main()
+    Main().main()

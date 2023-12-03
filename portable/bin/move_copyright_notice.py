@@ -3,6 +3,7 @@ import datetime
 import os
 import re
 from argparse import ArgumentParser
+from jmullanpy import cmd
 
 DESIRED = "// Copyright {date_stuff} {who}"
 STAR_COMMENT_COPYRIGHT_REGEX = r"(?:^|\n)\s*\*\s*(Copyright[^\n]*)(?:$|\n)"
@@ -10,7 +11,7 @@ SLASH_COMMENT_COPYRIGHT_REGEX = r"(?:^|\n)\s*//\s*(Copyright[^\n]*)(?:$|\n)"
 WHO = os.environ.get("DEFAULT_COPYRIGHT", "Jesse Mullan")
 
 
-def update_contents(contents, verbose):
+def update_contents(contents: str, verbose) -> str:
     copyright_line = ""
     copyright_dict = {
         "date_stuff": datetime.datetime.now().strftime("%Y"),
@@ -24,46 +25,30 @@ def update_contents(contents, verbose):
     updated = False
     matches = re.search(STAR_COMMENT_COPYRIGHT_REGEX, contents)
     if matches:
-        copyright = matches.group(0)
+        copyright_text = matches.group(0)
         if verbose:
-            print("Moving star copyright to first line: %r" % copyright)
+            print("Moving star copyright to first line: %r" % copyright_text)
         copyright_line = "// " + matches.group(1).strip()
-        contents = contents.replace(copyright.strip("\\n"), "\n")
-        updated = True
+        contents = contents.replace(copyright_text.strip("\\n"), "\n")
 
     matches = re.search(SLASH_COMMENT_COPYRIGHT_REGEX, contents)
     if matches:
-        copyright = "%s" % matches.group(0)
+        copyright_text = "%s" % matches.group(0)
         if verbose:
-            print("Moving slash copyright to first line: %r" % copyright)
+            print("Moving slash copyright to first line: %r" % copyright_text)
         copyright_line = "// " + matches.group(1).strip()
-        contents = contents.replace(copyright.strip("\n"), "\n")
-        updated = True
+        contents = contents.replace(copyright_text.strip("\n"), "\n")
 
     if not updated:
         copyright_line = DESIRED.format(**copyright_dict)
         if verbose:
             print("Making a brand new copyright line: %r" % copyright_line)
-        exit(1)
     return copyright_line + new_line + contents
-
-
-def process_file(filename, verbose):
-    filesize = os.path.getsize(filename)
-    with open(filename) as f:
-        original_contents = f.read(filesize)
-        contents = original_contents
-    contents = update_contents(contents, verbose)
-    changed = contents != original_contents
-    if changed:
-        if verbose:
-            print("updated file %s" % filename)
-        with open(filename, "w") as f:
-            f.write(contents)
 
 
 def main():
     """Strip $Id$ and stuff."""
+    cmd.stop_on_broken_pipe_error()
     parser = ArgumentParser()
     parser.add_argument(
         "-v",
@@ -81,9 +66,8 @@ def main():
         default=False,
         help="run some assertions first",
     )
-    parser.add_argument("filenames", nargs="+")
+    cmd.add_filenames_arguments(parser)
     args = parser.parse_args()
-    verbose = args.verbose
     if args.diagnostic:
         assert re.search(
             STAR_COMMENT_COPYRIGHT_REGEX, " * Copyright 2011, Some Company"
@@ -98,8 +82,11 @@ def main():
         comment = """\n// Copyright (c) 2007 Any Technologies Inc.\n"""
         assert re.search(SLASH_COMMENT_COPYRIGHT_REGEX, comment)
 
-    for filename in args.filenames:
-        process_file(filename, verbose)
+    def process(a_filename):
+        return update_contents(a_filename, args.verbose)
+
+    for filename in cmd.get_filenames(args):
+        cmd.update_in_place(filename, process)
 
 
 if __name__ == "__main__":

@@ -1,13 +1,8 @@
 #!/usr/bin/env python-venv
 import json
-import sys
-from argparse import ArgumentParser
+from typing import TextIO
 
-from jmullanpy.command_helpers import (
-    stop_on_broken_pipe_error,
-    get_filenames,
-    open_file_or_stdin,
-)
+from jmullanpy import cmd
 
 L = "{"
 R = "}"
@@ -15,6 +10,10 @@ R = "}"
 
 def to_camel(value: str):
     return "".join(v[0].upper() + v[1:] for v in value.split("_"))
+
+
+def get_keys(value: dict):
+    return ",".join(sorted(value.keys()))
 
 
 class TypeCollector:
@@ -30,11 +29,8 @@ class TypeCollector:
         self.index = self.index + 1
         return name
 
-    def get_keys(self, value: dict):
-        return ",".join(sorted(value.keys()))
-
     def best_name(self, data: dict):
-        keys = self.get_keys(data)
+        keys = get_keys(data)
         fieldnames = self.fieldnames.get(keys) or []
         if len(fieldnames) == 1:
             return to_camel(list(fieldnames)[0])
@@ -87,7 +83,7 @@ class TypeCollector:
         if not data:
             return
         if isinstance(data, dict):
-            keys = self.get_keys(data)
+            keys = get_keys(data)
             self.keyses.add(keys)
             if name is not None:
                 if keys not in self.fieldnames:
@@ -129,44 +125,22 @@ def json_to_tstype(data: dict, name: str | None = None) -> str:
     return "\n".join(definitions)
 
 
-def file_to_tstype(filename, name=None):
-    try:
-        with open_file_or_stdin(filename) as handle:
-            return json_to_tstype(json.load(handle), name)
-    except Exception as ex:
-        print(f"{ex}", file=sys.stderr)
+class Main(cmd.TextIoProcessor):
+    def __init__(self):
+        super().__init__()
+        self.parser.add_argument(
+            "--name",
+            dest="name",
+            default=None,
+            required=False,
+            help="what to call a top-level item",
+        )
 
-
-def main():
-    """Strip $Id$ and stuff."""
-    stop_on_broken_pipe_error()
-    parser = ArgumentParser()
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        dest="verbose",
-        action="store_true",
-        default=False,
-        help="verbose is more verbose",
-    )
-    parser.add_argument(
-        "--name",
-        dest="name",
-        default=None,
-        required=False,
-        help="what to call a top-level item",
-    )
-    parser.add_argument("filenames", nargs="*")
-
-    args = parser.parse_args()
-
-    filenames = get_filenames(args)
-
-    for filename in filenames:
-        tstype = file_to_tstype(filename, args.name)
-        if tstype:
-            print(tstype)
+    def process_file_handle(self, filename: str, file_handle: TextIO):
+        ts_type = json_to_tstype(json.load(file_handle), self.args.name)
+        if ts_type:
+            print(ts_type)
 
 
 if __name__ == "__main__":
-    main()
+    Main().main()

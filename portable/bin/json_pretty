@@ -3,17 +3,13 @@ import argparse
 import json
 import sys
 
-from jmullanpy.command_helpers import (
-    add_filenames_arguments,
-    stop_on_broken_pipe_error,
-    get_filenames,
-    open_file_or_stdin,
-)
+
+from jmullanpy import cmd
 
 
 def json_pretty(filename):
     try:
-        with open_file_or_stdin(filename) as handle:
+        with cmd.open_file_or_stdin(filename) as handle:
             data = json.load(handle)
             print(json.dumps(data, indent=4, sort_keys=True))
     except Exception as ex:
@@ -21,13 +17,13 @@ def json_pretty(filename):
 
 
 def main():
-    stop_on_broken_pipe_error()
+    cmd.stop_on_broken_pipe_error()
     parser = argparse.ArgumentParser(prog="json_pretty", description="Like json_pp")
-    add_filenames_arguments(parser)
+    cmd.add_filenames_arguments(parser)
 
     args = parser.parse_args()
 
-    for filename in get_filenames(args):
+    for filename in cmd.get_filenames(args):
         json_pretty(filename)
 
 

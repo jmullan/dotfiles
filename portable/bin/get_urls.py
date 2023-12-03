@@ -1,5 +1,4 @@
 #!/usr/bin/env python-venv
-"""Back up a file or files."""
 import argparse
 import logging
 import os

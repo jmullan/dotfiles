@@ -1,7 +1,6 @@
 #!/usr/bin/env python-venv
-import os
 
-from argparse import ArgumentParser
+from jmullanpy import cmd
 
 
 def k_v(line: str):
@@ -9,25 +8,10 @@ def k_v(line: str):
     return k, v
 
 
-def main():
-    """Sort a properties file"""
-    parser = ArgumentParser()
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        dest="verbose",
-        action="store_true",
-        default=False,
-        help="verbose is more verbose",
-    )
-    parser.add_argument("filenames", nargs="+")
-    args = parser.parse_args()
-    verbose = args.verbose
+class Main(cmd.InPlaceFileProcessor):
+    """Remove trailing whitespace"""
 
-    for filename in args.filenames:
-        filesize = os.path.getsize(filename)
-        with open(filename) as f:
-            contents = f.read(filesize)
+    def process_contents(self, contents: str) -> str:
         new_contents = [
             x.strip()
             for x in contents.split("\n")
@@ -40,13 +24,8 @@ def main():
         new_contents = "\n".join(sorted(new_contents))
         if len(new_contents) > 0:
             new_contents = new_contents + "\n"
-        changed = new_contents != contents
-        if changed:
-            if verbose:
-                print("updated file %s" % filename)
-            with open(filename, "w") as f:
-                f.write(new_contents)
+        return new_contents
 
 
 if __name__ == "__main__":
-    main()
+    Main().main()

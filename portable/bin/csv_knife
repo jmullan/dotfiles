@@ -2,8 +2,10 @@
 import csv
 import json
 import sys
-from argparse import ArgumentParser
 from string import Template
+from typing import TextIO
+
+from jmullanpy import cmd
 
 DIALECT_OPTIONS = ["excel", "excel-tab", "unix", "sniff", "presto", "rovi"]
 
@@ -122,84 +124,67 @@ def process(csvfile, dialect_name, has_header: bool, template=None):
         header = next(reader)
     else:
         header = []
-    try:
-        for csv_row in reader:
-            if csv_row is None:
-                break
-            d = zip_header(header, csv_row)
-            if template is None:
-                print(d)
-            elif template == "json":
-                print(json.dumps(d))
-            elif template == "csv":
-                writer = csv.writer(sys.stdout)
-                writer.writerow(csv_row)
-            else:
-                print(compiled_template.substitute(d))
 
-    except BrokenPipeError:
-        sys.stderr.close()
-        exit(0)
+    for csv_row in reader:
+        if csv_row is None:
+            break
+        d = zip_header(header, csv_row)
+        if template is None:
+            print(d)
+        elif template == "json":
+            print(json.dumps(d))
+        elif template == "csv":
+            writer = csv.writer(sys.stdout)
+            writer.writerow(csv_row)
+        else:
+            print(compiled_template.substitute(d))
 
 
-def main():
-    parser = ArgumentParser()
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        dest="verbose",
-        action="store_true",
-        default=False,
-        help="verbose is more verbose",
-    )
-    parser.add_argument(
-        "--has-header",
-        dest="has_header",
-        action="store_true",
-        default=False,
-        help="The csv has a header",
-    )
-    parser.add_argument(
-        "--dialect", dest="dialect", default=None, choices=DIALECT_OPTIONS
-    )
-    parser.add_argument(
-        "--encoding", dest="encoding", default="utf-8-sig", choices=DIALECT_OPTIONS
-    )
-    parser.add_argument(
-        "--sniff-only", dest="sniff", action="store_true", default=False
-    )
-    parser.add_argument(
-        "-t", "--template", dest="template", default=None, help="The commands to run"
-    )
-    parser.add_argument(
-        "-f",
-        "--filename",
-        dest="filename",
-        default=None,
-        help="A filename to process (default stdin)",
-    )
-    args = parser.parse_args()
+class Main(cmd.TextIoProcessor):
+    def __init__(self):
+        super().__init__()
+        self.parser.add_argument(
+            "--has-header",
+            dest="has_header",
+            action="store_true",
+            default=False,
+            help="The csv has a header",
+        )
+        self.parser.add_argument(
+            "--dialect", dest="dialect", default=None, choices=DIALECT_OPTIONS
+        )
+        self.parser.add_argument(
+            "--encoding", dest="encoding", default="utf-8-sig", choices=DIALECT_OPTIONS
+        )
+        self.parser.add_argument(
+            "--sniff-only", dest="sniff", action="store_true", default=False
+        )
+        self.parser.add_argument(
+            "-t",
+            "--template",
+            dest="template",
+            default=None,
+            help="The commands to run",
+        )
 
-    dialect = options.dialect
-    if options.sniff:
-        template = "sniff"
-    elif dialect is None:
-        dialect = "unix"
+    def process_file_handle(self, filename: str, file_handle: TextIO):
+        dialect = self.args.dialect
+        if self.args.sniff:
+            dialect = "sniff"
+        elif dialect is None:
+            dialect = "unix"
 
-    template = options.template
-    if (template is None or not len(template)) and dialect == "sniff":
-        template = "sniff"
+        template = self.args.template
+        if (template is None or not len(template)) and dialect == "sniff":
+            template = "sniff"
 
-    if options.filename:
-        with open(options.filename, "r", encoding=options.encoding) as file_handle:
-            process(file_handle, dialect, options.has_header, template=template)
-    else:
-        if dialect == "sniff" and template != "sniff":
-            raise Exception(
-                "Cannot sniff stdin and perform other actions besides sniff"
-            )
-        process(sys.stdin, dialect, options.has_header, template=template)
+        if filename == "-":
+            if dialect == "sniff" and template != "sniff":
+                raise Exception(
+                    "Cannot sniff stdin and perform other actions besides sniff"
+                )
+        process(file_handle, dialect, self.args.has_header, template=template)
 
 
 if __name__ == "__main__":
-    main()
+    Main().main()
