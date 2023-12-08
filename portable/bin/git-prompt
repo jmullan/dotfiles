@@ -27,9 +27,9 @@ fi
 GROSS="$(expr "${ADDED}" + "${DELETED}")"
 NET="$(expr "${ADDED}" - "${DELETED}")"
 ORIGIN_DIFF_STATS=$(echo -n "+$ADDED -$DELETED =$NET ($GROSS)")
-if [[ "$GIT_STATUS" =~ nothing\ to\ commit ]]; then
+if [[ "${GIT_STATUS}" =~ nothing\ to\ commit ]]; then
     ansi=2
-elif [[ "$GIT_STATUS" =~ nothing\ added\ to\ commit\ but\ untracked\ files\ present ]]; then
+elif [[ "${GIT_STATUS}" =~ nothing\ added\ to\ commit\ but\ untracked\ files\ present ]]; then
     ansi=6
 else
     ansi=5
@@ -47,16 +47,16 @@ fi
 if [ -n "$MERGE_HEAD" ]; then
     echo -n " $MERGE_HEAD";
 fi
-BRANCHNAME="$(git rev-parse --abbrev-ref HEAD)"
-if [ -n "$BRANCHNAME" ]; then
-    echo -n " $(tput setaf $ansi)$BRANCHNAME$(tput sgr0)"
-    if [[ "$GIT_STATUS" =~ Changes\ to\ be\ committed ]] ; then
+HEADNAME="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
+if [ -n "${HEADNAME}" ]; then
+    echo -n " $(tput setaf $ansi)${HEADNAME}$(tput sgr0)"
+    if [[ "${GIT_STATUS}" =~ Changes\ to\ be\ committed ]] ; then
         echo -n " $(tput setaf 7)staged$(tput sgr0)"
     fi
-    if [[ "$GIT_STATUS" =~ not\ staged ]] ; then
+    if [[ "${GIT_STATUS}" =~ not\ staged ]] ; then
         echo -n " $(tput setaf 3)unstaged$(tput sgr0)"
     fi
-    if [[ "$GIT_STATUS" =~ ntracked ]] ; then
+    if [[ "${GIT_STATUS}" =~ ntracked ]] ; then
         echo -n " $(tput setaf 1)untracked$(tput sgr0)"
     fi
 fi
@@ -72,7 +72,7 @@ BEHIND="$(git behind || echo 0)"
 if [ "${BEHIND}" -gt 0 ] ; then
     echo -n " $(tput setaf 1)BEHIND $BEHIND$(tput sgr0)";
 fi
-FEATURE=$(git rev-parse --abbrev-ref HEAD | grep ^feature/)
+FEATURE=$(echo "${HEADNAME}" | grep ^feature/)
 REMOTE=$(git remote)
 MAIN_NAME=$(git config --get gitflow.branch.main)
 if [ -z "${MAIN_NAME}" ] ; then

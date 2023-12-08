@@ -141,6 +141,8 @@ def process(csvfile, dialect_name, has_header: bool, template=None):
 
 
 class Main(cmd.TextIoProcessor):
+    """Stream csv files in different ways."""
+
     def __init__(self):
         super().__init__()
         self.parser.add_argument(

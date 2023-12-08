@@ -1,12 +1,11 @@
 #!/usr/bin/env python-venv
+"""Fix bad indentation"""
 import re
 
 from jmullanpy import cmd
 
 
 class Main(cmd.InPlaceFileProcessor):
-    """Fix bad indentation"""
-
     def __init__(self):
         super().__init__()
         self.parser.add_argument(

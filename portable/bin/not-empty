@@ -1,0 +1,23 @@
+#!/usr/bin/env python-venv
+import re
+from typing import Tuple
+
+from jmullanpy import cmd
+
+
+class Main(cmd.TextIoLineProcessor):
+    def transform(self, line: str):
+        if line is None:
+            return ""
+        line = f"{line}".rstrip()
+        if len(line) < 1:
+            return ""
+        return line + "\n"
+
+    def process_line(self, filename: str, line: str) -> Tuple[bool, str]:
+        line = self.transform(line)
+        return len(line) > 0, line
+
+
+if __name__ == "__main__":
+    Main().main()

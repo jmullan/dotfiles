@@ -13,7 +13,7 @@ if [ ! -e "${script_name}" ] ; then
     echo "File not found ${script_name}" 1>&2
     exit 1
 fi
-virtualenv_name=$(cat "${script_name}" | grep '# *venv' | sed 's/^[ #]*venv //' | head -n 1)
+virtualenv_name=$(cat "${script_name}" | egrep '# python-venv [-_a-zA-Z]+' | sed 's/.*python-venv //' | head -n 1)
 if [ -z "${virtualenv_name}" ] ; then
     script_dir=$(dirname "${script_name}")
     venv_config="${script_dir}/.venv"

@@ -1,4 +1,5 @@
 #!/usr/bin/env python-venv
+"""Remove trailing whitespace"""
 import re
 
 from jmullanpy import cmd
@@ -22,8 +23,6 @@ def remove_trailing_whitespace(contents: str) -> str:
 
 
 class Main(cmd.InPlaceFileProcessor):
-    """Remove trailing whitespace"""
-
     def __init__(self):
         super().__init__()
         self.parser.add_argument(

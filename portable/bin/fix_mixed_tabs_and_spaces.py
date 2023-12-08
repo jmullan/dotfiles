@@ -1,4 +1,5 @@
 #!/usr/bin/env python-venv
+"""Fix mixed tabs and spaces"""
 import re
 from argparse import Namespace
 
@@ -78,7 +79,6 @@ class Main(cmd.InPlaceFileProcessor):
             help="Ignore spaces, embrace tabs",
         )
         self.parser.add_argument(
-            "-t",
             "--tab-width",
             dest="tab_width",
             type=int,

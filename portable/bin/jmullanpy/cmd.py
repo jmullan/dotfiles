@@ -6,7 +6,7 @@ import abc
 from argparse import ArgumentParser, Namespace
 from signal import signal, SIGPIPE, SIG_DFL
 from collections.abc import Callable
-from typing import TextIO
+from typing import TextIO, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -103,9 +103,17 @@ def update_and_print(filename: str, changer: Callable[[str], str]):
         print(new_contents)
 
 
+def get_module_docstring(module_name: str):
+    module = sys.modules.get(module_name)
+    if module is not None:
+        return module.__doc__
+
+
 class Main(abc.ABC):
     def __init__(self):
-        self.parser = ArgumentParser()
+        description = self.__doc__ or get_module_docstring(self.__module__)
+
+        self.parser = ArgumentParser(description=description)
         self.parser.add_argument(
             "-v",
             "--verbose",
@@ -164,9 +172,11 @@ class TextIoProcessor(FileNameProcessor, abc.ABC):
 
 class TextIoLineProcessor(TextIoProcessor, abc.ABC):
     @abc.abstractmethod
-    def process_line(self, filename: str, line: str) -> str:
+    def process_line(self, filename: str, line: str) -> Tuple[bool, str]:
         pass
 
     def process_file_handle(self, filename: str, file_handle: TextIO):
         for line in file_handle:
-            sys.stdout.write(self.process_line(filename, line))
+            should_print, line = self.process_line(filename, line)
+            if should_print:
+                sys.stdout.write(line)

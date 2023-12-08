@@ -228,6 +228,7 @@ def lucene_search(
 
 
 def process_results(
+    sonatype_base_url: str,
     sonatype_body: SonaTypeBody,
     packaging: str | None = None,
     latest_only: bool = False,
@@ -282,9 +283,31 @@ def process_results(
                         }
                     )
                     print(f"{repo.url}{path}?{query}")
-    # if latests:
-    #     for full_id, latest in latests.items():
-    #         print(f"{latest}")
+
+                    path = "/nexus/content/repositories/"
+                    group_path = artifact.group_id.replace(".", "/")
+
+                    print(f"repo {repo}")
+                    print(f"path {path}")
+                    print(f"repo.repository_id {repo.repository_id}")
+                    print(f"group_path {group_path}")
+                    print(f"artifact.artifact_id {artifact.artifact_id}")
+                    print(f"artifact.version {artifact.version}")
+
+                    # repo RepoDetail(r
+                    #   epository_id='snapshots',
+                    #   name='snapshots',
+                    #   content_class='maven2',
+                    #   kind='proxy',
+                    #   policy='SNAPSHOT',
+                    #   url='https://sonatype.savagebeast.com/nexus/service/local/repositories/snapshots'
+                    #   )
+                    # https://sonatype.savagebeast.com/nexus/content/repositories/snapshots/com/pandora/musicops/musicops-rest-api/1.9.89-SNAPSHOT/maven-metadata.xml
+
+                    artifact_path = f"{sonatype_base_url}{path}/{repo.repository_id}/{group_path}/{artifact.artifact_id}/{artifact.version}"
+
+                    print(f"{artifact_path}/maven-metadata.xml.sha1")
+                    print(f"{artifact_path}/maven-metadata.xml")
 
 
 def main():
@@ -332,6 +355,7 @@ def main():
     lucene_params = only_keys(vars(args), lucene_keys)
     sonatype_body = lucene_search(args.sonatype_base_url, **lucene_params)
     process_results(
+        args.sonatype_base_url,
         sonatype_body,
         lucene_params.get("packaging") or None,
         args.latest_only,
