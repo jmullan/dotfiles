@@ -46,6 +46,7 @@ if [ -f /etc/bash_completion ]; then
 fi
 
 if [ -e ~/.virtualenvs ]; then
+    export POETRY_VIRTUALENVS_PATH=~/.virtualenvs
     export WORKON_HOME=~/.virtualenvs
     VEW=`which virtualenvwrapper.sh`
     if [ -n "${VEW}" ] ; then

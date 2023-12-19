@@ -1,0 +1,196 @@
+#!/usr/bin/env python-venv
+"""Remove trailing whitespace"""
+import ast
+import json
+import os
+import jproperties
+import re
+import requests
+from xml.etree import ElementTree
+
+from jmullanpy import cmd
+
+
+def find_properties():
+    for root, dirs, files in os.walk("./", topdown=True):
+        for filename in files:
+            if filename in ["gradle.properties", "release.properties"]:
+                yield os.path.join(root, filename)
+
+
+def parse_gradle_settings(data: str) -> dict:
+    parsed = {"includes": []}
+    if data is None:
+        return parsed
+    lines = data.split("\n")
+    for line in lines:
+        line = re.sub("#.*", "", line)
+        line = line.strip()
+        if len(line) == 0:
+            continue
+        if line.startswith("rootProject.name"):
+            split = line.split("=", 1)
+            if len(split) > 1:
+                value = split[1].strip()
+                try:
+                    value = json.loads(value)
+                except Exception:
+                    try:
+                        value = ast.literal_eval(value)
+                    except Exception:
+                        pass
+                parsed["root_project_name"] = value
+        if line.startswith("include "):
+            # include 'signon-service-dto', 'signon-service'
+            parts = line.split(" ", 1)
+            if len(parts) > 1:
+                value = parts[1:][0]
+                try:
+                    value = json.loads(value)
+                except Exception:
+                    try:
+                        value = ast.literal_eval(value)
+                    except Exception:
+                        pass
+                if isinstance(value, tuple):
+                    value = list(value)
+                if isinstance(value, str):
+                    value = [value]
+                value = [x.strip(":") for x in value]
+                parsed["includes"].extend(value)
+
+    return parsed
+
+
+def read_gradle_settings() -> dict:
+    filename = "./settings.gradle"
+    if os.path.exists(filename):
+        with open(filename, encoding="utf-8") as f:
+            return parse_gradle_settings(f.read())
+    return dict()
+
+
+class Main(cmd.Main):
+    def __init__(self):
+        super().__init__()
+        self.parser.add_argument(
+            "--version",
+            dest="version",
+            default=None,
+            help="Force this version",
+        )
+        self.parser.add_argument(
+            "--sonatype-base-url",
+            dest="sonatype_base_url",
+            default=os.environ.get("SONATYPE_BASE_URL"),
+        )
+        self.parser.add_argument(
+            "--thorough", dest="thorough", action="store_true", default=False
+        )
+        self.parser.add_argument(
+            "--nexus-repo",
+            dest="nexus_repo",
+            choices=["snapshots", "releases"],
+            default=None,
+        )
+        self.configs = dict()
+        self.gets = dict()
+
+    def get(self, url) -> requests.Response:
+        if url not in self.gets:
+            print(url)
+            self.gets[url] = requests.get(url)
+        return self.gets[url]
+
+    def load_properties(self, filename):
+        try:
+            with open(filename, "rb") as config_file:
+                config = jproperties.Properties()
+                config.load(config_file)
+                self.configs[filename] = dict()
+                for item in config.items():
+                    self.configs[filename][item[0]] = item[1].data
+
+        except Exception as ex:
+            print(["Oopies", ex])
+
+    def main(self):
+        super().main()
+        sonatype_path = f"{self.args.sonatype_base_url}/nexus/content/repositories"
+
+        for path in find_properties():
+            self.load_properties(path)
+        gradle_settings = read_gradle_settings()
+
+        version_urls = set()
+
+        includes = gradle_settings.get("includes") or []
+        if includes:
+            for include in includes:
+                properties = {}
+                properties.update(self.configs.get("./gradle.properties") or {})
+                properties.update(
+                    self.configs.get(f"./{include}/gradle.properties") or {}
+                )
+                artifact_id = properties.get("artifactId")
+                if artifact_id is None:
+                    continue
+                if self.args.version:
+                    version = self.args.version
+                else:
+                    version = properties.get("version") or ""
+                group_id = properties.get("groupId") or ""
+                group_path = group_id.replace(".", "/")
+
+                if self.args.nexus_repo is not None:
+                    nexus_repo = self.args.nexus_repo
+                else:
+                    is_snapshot = "SNAPSHOT" in version.upper()
+                    if is_snapshot:
+                        nexus_repo = "snapshots"
+                    else:
+                        nexus_repo = "releases"
+                base_url = f"{sonatype_path}/{nexus_repo}/{group_path}/{artifact_id}"
+                artifact_metadata_url = f"{base_url}/maven-metadata.xml"
+                artifact_metadata_sha_url = f"{artifact_metadata_url}.sha1"
+                self.get(artifact_metadata_sha_url)
+                artifact_response = self.get(artifact_metadata_url)
+                artifact_content = artifact_response.content
+                tree = ElementTree.fromstring(artifact_content)
+                versioning = tree.find("versioning")
+
+                version_base_url = f"{base_url}/{version}"
+                version_urls.add(version_base_url)
+
+                for version_tag in versioning.iter("version"):
+                    version_tag_value = version_tag.text.strip()
+                    if self.args.thorough or (version_tag_value == version):
+                        version_base_url = f"{base_url}/{version_tag_value}"
+                        version_urls.add(version_base_url)
+
+        for version_base_url in version_urls:
+            metadata_url = f"{version_base_url}/maven-metadata.xml"
+            metadata_sha_url = f"{metadata_url}.sha1"
+            self.get(metadata_sha_url)
+            artifact_version_response = self.get(metadata_url)
+            artifact_version_content = artifact_version_response.content
+            try:
+                tree = ElementTree.fromstring(artifact_version_content)
+            except Exception:
+                continue
+            artifact_id = tree.find("artifactId").text
+            versioning = tree.find("versioning")
+            if not versioning:
+                continue
+            snapshot_versions = versioning.find("snapshotVersions")
+            if snapshot_versions:
+                for snapshot_version in snapshot_versions.iter("snapshotVersion"):
+                    extension = snapshot_version.find("extension").text
+                    artifact_version = snapshot_version.find("value").text
+                    artifact_version_url = f"{version_base_url}/{artifact_id}-{artifact_version}.{extension}"
+                    artifact_version_sha_url = f"{artifact_version_url}.sha1"
+                    self.get(artifact_version_sha_url)
+
+
+if __name__ == "__main__":
+    Main().main()

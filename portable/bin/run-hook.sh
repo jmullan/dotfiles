@@ -16,7 +16,17 @@ if [ -z "${HOOK}" ] ; then
     echo "Could not figure out hook name from script" 1>&2
     exit 1
 fi
-git timecard "${HOOK}"
+case "${HOOK}" in
+    "pre-commit-msg" | "commit-msg" | "pre-commit")
+        MESSAGE_FILE="${1}"
+        if [ -n "${MESSAGE_FILE}" ] ; then
+            if [ -e "${MESSAGE_FILE}" ] ; then
+                MESSAGE=$(head -n 1 "${MESSAGE_FILE}")
+            fi
+        fi
+        ;;
+esac
+git timecard "${HOOK}" "${MESSAGE}"
 
 GIT_DIR=$(git rev-parse --absolute-git-dir 2>/dev/null)
 if [ -z "${GIT_DIR}" ] ; then

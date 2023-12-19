@@ -9,12 +9,12 @@ fi
 EXPECTED_SDKENV=
 SDK_MISSING_ENVS=
 FOUND_EXPECTED=
-SDKENV_FILE=$(find_up .sdkenv)
+SDKENV_FILE=$(find_up .sdkmanrc)
 if [ -n "${SDKENV_FILE}" ] ; then
-    EXPECTED_SDKENV="$(cat "${SDKENV_FILE}" | awk '/./ {print}')"
-    SDK_MISSING_ENVS="$(cat "${SDKENV_FILE}" | awk '/./ {print}')"
+    EXPECTED_SDKENV="$(cat "${SDKENV_FILE}" | sed 's/#.*//' | not-empty | awk '/./ {print}')"
+    SDK_MISSING_ENVS="$(cat "${SDKENV_FILE}" | sed 's/#.*//' | not-empty| awk '/./ {print}')"
 fi
-SDK_CURRENTS="$(sdk current | grep -v 'Using:' | grep ':' | sed 's/ :/:/' | awk '/./ {print}')"
+SDK_CURRENTS="$(sdk current | grep -v 'Using:' | grep ':' | sed 's/ *: */=/' | awk '/./ {print}')"
 SDK_FOUND_ENVS=
 if [ -n "${EXPECTED_SDKENV}" ] ; then
     while read -r x ; do

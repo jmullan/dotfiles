@@ -4,3 +4,4 @@ pip
 pyyaml
 requests
 python-dateutil
+jproperties
