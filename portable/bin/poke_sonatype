@@ -1,5 +1,5 @@
 #!/usr/bin/env python-venv
-"""Remove trailing whitespace"""
+"""Yell at sonatype sometimes"""
 import ast
 import json
 import os
