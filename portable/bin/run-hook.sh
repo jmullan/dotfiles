@@ -26,7 +26,10 @@ case "${HOOK}" in
         fi
         ;;
 esac
-git timecard "${HOOK}" "${MESSAGE}"
+allowtimecard=$(git config --bool hooks.allowtimecard)
+if [ "$allowtimecard" == "true" ]; then
+    git timecard "${HOOK}" "${MESSAGE}"
+fi
 
 GIT_DIR=$(git rev-parse --absolute-git-dir 2>/dev/null)
 if [ -z "${GIT_DIR}" ] ; then

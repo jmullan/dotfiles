@@ -34,16 +34,14 @@
     uncommit = reset --soft HEAD^
 [rerere]
     enabled = true
-[commit]
-    template = ~/.arc-commit-template.txt
 [user]
     name = Jesse Mullan
 [push]
     default = simple
 [gc]
-	auto = 0
+    auto = 0
 [merge]
-    summary=true
+    summary = true
 [diff]
     renames = copies
     mnemonicprefix = true
@@ -51,12 +49,6 @@
     renameLimit = 2000
 [branch]
     autosetupmerge = true
-[difftool "sourcetree"]
-    cmd = opendiff \"$LOCAL\" \"$REMOTE\"
-    path =
-[mergetool "sourcetree"]
-    cmd = /Applications/SourceTree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
-    trustExitCode = true
 [filter "lfs"]
     clean = git-lfs clean -- %f
     smudge = git-lfs smudge -- %f
@@ -71,4 +63,12 @@
 [include]
     path = .gitconfig.local
 [init]
-	defaultBranch = main
+    defaultBranch = main
+[hooks]
+    allowunannotated = false
+    allowdeletebranch = true
+    allowcreatebranch = true
+    allowdeletetag = false
+    allowmodifytag = false
+    allownonascii = false
+    allowtimecard = true
