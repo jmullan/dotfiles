@@ -4,7 +4,7 @@ import re
 REGEX = r"([^ (]+).has_key\(([^)]+)\)"
 
 
-from jmullanpy import cmd
+from jmullan_cmd import cmd
 
 
 class Main(cmd.InPlaceFileProcessor):

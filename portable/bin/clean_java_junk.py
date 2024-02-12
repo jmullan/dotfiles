@@ -1,7 +1,7 @@
 #!/usr/bin/env python-venv
 import re
 
-from jmullanpy import cmd
+from jmullan_cmd import cmd
 
 
 class Main(cmd.InPlaceFileProcessor):

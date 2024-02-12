@@ -2,13 +2,20 @@
 """Yell at sonatype sometimes"""
 import ast
 import json
+import logging
 import os
-import jproperties
 import re
-import requests
 from xml.etree import ElementTree
 
-from jmullanpy import cmd
+import jproperties
+import requests
+
+from jmullan_cmd import cmd
+from jmullan_logging import easy_logging
+
+logger = logging.getLogger(__name__)
+
+easy_logging.easy_initialize_logging()
 
 
 def find_properties():
@@ -16,6 +23,15 @@ def find_properties():
         for filename in files:
             if filename in ["gradle.properties", "release.properties"]:
                 yield os.path.join(root, filename)
+
+
+def guess_repo(version: str):
+    if version is None:
+        return None
+    if "SNAPSHOT" in version.upper():
+        return "snapshots"
+    else:
+        return "releases"
 
 
 def parse_gradle_settings(data: str) -> dict:
@@ -80,6 +96,18 @@ class Main(cmd.Main):
             help="Force this version",
         )
         self.parser.add_argument(
+            "--artifact",
+            dest="artifact",
+            default=None,
+            help="Force this artifact",
+        )
+        self.parser.add_argument(
+            "--extension",
+            dest="extension",
+            default=None,
+            help="Force this artifact",
+        )
+        self.parser.add_argument(
             "--sonatype-base-url",
             dest="sonatype_base_url",
             default=os.environ.get("SONATYPE_BASE_URL"),
@@ -98,9 +126,15 @@ class Main(cmd.Main):
 
     def get(self, url) -> requests.Response:
         if url not in self.gets:
-            print(url)
-            self.gets[url] = requests.get(url)
-        return self.gets[url]
+            try:
+                self.gets[url] = requests.get(url)
+                if self.gets[url].status_code >= 400:
+                    logger.warning("GET %s %s", self.gets[url].status_code, url)
+                else:
+                    logger.info("GET %s %s", self.gets[url].status_code, url)
+            except Exception:
+                logger.exception("Error fetching %s", url)
+        return self.gets.get(url)
 
     def load_properties(self, filename):
         try:
@@ -116,7 +150,6 @@ class Main(cmd.Main):
 
     def main(self):
         super().main()
-        sonatype_path = f"{self.args.sonatype_base_url}/nexus/content/repositories"
 
         for path in find_properties():
             self.load_properties(path)
@@ -132,51 +165,47 @@ class Main(cmd.Main):
                 properties.update(
                     self.configs.get(f"./{include}/gradle.properties") or {}
                 )
-                artifact_id = properties.get("artifactId")
-                if artifact_id is None:
-                    continue
-                if self.args.version:
-                    version = self.args.version
-                else:
-                    version = properties.get("version") or ""
-                group_id = properties.get("groupId") or ""
-                group_path = group_id.replace(".", "/")
+                release_properties = {}
+                release_properties.update(properties)
+                release_properties.update(
+                    self.configs.get("./release.properties") or {}
+                )
+                release_properties.update(
+                    self.configs.get(f"./{include}/release.properties") or {}
+                )
+                version_urls.update(
+                    self.get_version_urls_from_properties(
+                        properties, release_properties
+                    )
+                )
+        properties = {}
+        properties.update(self.configs.get("./gradle.properties") or {})
+        release_properties = {}
+        release_properties.update(properties)
+        release_properties.update(self.configs.get("./release.properties") or {})
+        version_urls.update(
+            self.get_version_urls_from_properties(properties, release_properties)
+        )
 
-                if self.args.nexus_repo is not None:
-                    nexus_repo = self.args.nexus_repo
-                else:
-                    is_snapshot = "SNAPSHOT" in version.upper()
-                    if is_snapshot:
-                        nexus_repo = "snapshots"
-                    else:
-                        nexus_repo = "releases"
-                base_url = f"{sonatype_path}/{nexus_repo}/{group_path}/{artifact_id}"
-                artifact_metadata_url = f"{base_url}/maven-metadata.xml"
-                artifact_metadata_sha_url = f"{artifact_metadata_url}.sha1"
-                self.get(artifact_metadata_sha_url)
-                artifact_response = self.get(artifact_metadata_url)
-                artifact_content = artifact_response.content
-                tree = ElementTree.fromstring(artifact_content)
-                versioning = tree.find("versioning")
+        for version_base_url, artifact_id, version in sorted(version_urls):
 
-                version_base_url = f"{base_url}/{version}"
-                version_urls.add(version_base_url)
+            if self.args.extension is not None:
+                artifact_version_url = (
+                    f"{version_base_url}/{artifact_id}-{version}.{self.args.extension}"
+                )
+                artifact_version_sha_url = f"{artifact_version_url}.sha1"
+                self.get(artifact_version_sha_url)
 
-                for version_tag in versioning.iter("version"):
-                    version_tag_value = version_tag.text.strip()
-                    if self.args.thorough or (version_tag_value == version):
-                        version_base_url = f"{base_url}/{version_tag_value}"
-                        version_urls.add(version_base_url)
-
-        for version_base_url in version_urls:
             metadata_url = f"{version_base_url}/maven-metadata.xml"
             metadata_sha_url = f"{metadata_url}.sha1"
             self.get(metadata_sha_url)
             artifact_version_response = self.get(metadata_url)
+
             artifact_version_content = artifact_version_response.content
             try:
                 tree = ElementTree.fromstring(artifact_version_content)
             except Exception:
+                logger.warning("Could not load %s", metadata_url)
                 continue
             artifact_id = tree.find("artifactId").text
             versioning = tree.find("versioning")
@@ -186,10 +215,112 @@ class Main(cmd.Main):
             if snapshot_versions:
                 for snapshot_version in snapshot_versions.iter("snapshotVersion"):
                     extension = snapshot_version.find("extension").text
-                    artifact_version = snapshot_version.find("value").text
-                    artifact_version_url = f"{version_base_url}/{artifact_id}-{artifact_version}.{extension}"
-                    artifact_version_sha_url = f"{artifact_version_url}.sha1"
-                    self.get(artifact_version_sha_url)
+                    if (
+                        self.args.thorough
+                        or self.args.extension is None
+                        or self.args.extension == extension
+                    ):
+                        artifact_version = snapshot_version.find("value").text
+                        artifact_version_url = f"{version_base_url}/{artifact_id}-{artifact_version}.{extension}"
+                        artifact_version_sha_url = f"{artifact_version_url}.sha1"
+                        self.get(artifact_version_sha_url)
+
+    def get_version_urls_from_properties(self, properties, release_properties):
+        sonatype_path = f"{self.args.sonatype_base_url}/nexus/content/repositories"
+        args_artifact_id = self.args.artifact
+        properties_artifact_id = properties.get("artifactId")
+        if args_artifact_id is not None:
+            if properties_artifact_id is not None:
+                if args_artifact_id != properties_artifact_id:
+                    logger.info(f"skipping {properties_artifact_id}")
+                    return set()
+            artifact_id = args_artifact_id
+        else:
+            artifact_id = properties_artifact_id
+
+        if artifact_id is None:
+            return set()
+
+        properties_version = properties.get("version")
+        release_version = release_properties.get("version")
+
+        nexus_repo = self.args.nexus_repo
+        args_version = self.args.version
+
+        if nexus_repo is not None and args_version is not None:
+            nexus_repos = [nexus_repo]
+            version = args_version
+        if nexus_repo is not None and args_version is None:
+            nexus_repos = [nexus_repo]
+            if "SNAPSHOT" in nexus_repo.upper():
+                version = properties_version or release_version
+            else:
+                version = release_version or properties_version
+                if version is not None and "SNAPSHOT" in version:
+                    logger.warning(
+                        f"Ignoring snapshot version {version} for nexus_repo {nexus_repo}"
+                    )
+                    version = None
+        if nexus_repo is None and args_version is not None:
+            version = args_version
+            if "SNAPSHOT" in args_version.upper():
+                nexus_repos = ["snapshots"]
+            else:
+                nexus_repos = ["releases"]
+        if nexus_repo is None and args_version is None:
+            nexus_repos = ["snapshots", "releases"]
+            version = None
+
+        logger.info(
+            f"nexus_repo {nexus_repos} artifact {artifact_id} version {version}"
+        )
+        version_urls = set()
+        for nexus_repo in sorted(nexus_repos):
+            version_urls.update(
+                self.get_version_urls(
+                    properties, sonatype_path, nexus_repo, artifact_id, version
+                )
+            )
+        return version_urls
+
+    def get_version_urls(
+        self, properties, sonatype_path, nexus_repo, artifact_id, version
+    ):
+        logger.info(f"{nexus_repo} {artifact_id} {version}")
+        version_urls = set()
+        group_id = properties.get("groupId") or ""
+        group_path = group_id.replace(".", "/")
+
+        base_url = f"{sonatype_path}/{nexus_repo}/{group_path}/{artifact_id}"
+        artifact_metadata_url = f"{base_url}/maven-metadata.xml"
+        artifact_metadata_sha_url = f"{artifact_metadata_url}.sha1"
+        self.get(artifact_metadata_sha_url)
+
+        version_tags = set()
+        if version is not None:
+            version_tags.add(version)
+        if version is None or self.args.thorough:
+            artifact_response = self.get(artifact_metadata_url)
+            if artifact_response.status_code < 400:
+                artifact_content = artifact_response.content
+                try:
+                    tree = ElementTree.fromstring(artifact_content)
+                    versioning = tree.find("versioning")
+                    if version is None:
+                        version = versioning.find("latest").text.strip()
+                    if self.args.thorough:
+                        for version_tag in versioning.iter("version"):
+                            version_tag_value = version_tag.text.strip()
+                            version_tags.add(version_tag_value)
+                except Exception:
+                    logger.error("Could not parse xml")
+        if version is not None:
+            version_tags.add(version)
+
+        for version_tag in version_tags:
+            version_base_url = f"{base_url}/{version_tag}"
+            version_urls.add((version_base_url, artifact_id, version))
+        return version_urls
 
 
 if __name__ == "__main__":

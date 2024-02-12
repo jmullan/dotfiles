@@ -1,6 +1,6 @@
 #!/usr/bin/env python-venv
 
-from jmullanpy import cmd
+from jmullan_cmd import cmd
 
 
 def k_v(line: str):

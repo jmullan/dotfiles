@@ -1,0 +1,210 @@
+#!/usr/bin/env python-venv
+import logging
+import os
+import time
+from argparse import Action, ArgumentError, ArgumentParser
+from typing import Optional
+from kafka.consumer.fetcher import ConsumerRecord
+import kafka
+import msgpack
+
+from jmullan_cmd import cmd
+
+logger = logging.getLogger(__name__)
+
+
+def string_decoder(message: bytes) -> Optional[str]:
+    if message is None:
+        return message
+    return message.decode("UTF8")
+
+
+deserializer_choices = {
+    "msgpack": msgpack.unpackb,
+    "string-utf8": string_decoder,
+    "bytes": bytes,
+}
+
+
+class UnrecoverableError(Exception):
+    pass
+
+
+class ForceOffset(Action):
+    """One of these options, or an integer"""
+
+    def __call__(self, parser, namespace, value, option_string=None):
+        if value in ["latest", "earliest", "resume"]:
+            setattr(namespace, self.dest, value)
+        elif value == "beginning":
+            setattr(namespace, self.dest, "earliest")
+        else:
+            try:
+                value = int(value)
+            except Exception as ex:
+                raise ArgumentError(self, "Invalid forced offset " + value) from ex
+
+        setattr(namespace, self.dest, value)
+
+
+def add_kafka_arguments(parser: ArgumentParser):
+    parser.add_argument(
+        "--bootstrap-servers",
+        dest="bootstrap_servers",
+        default=os.environ.get("KAFKA_BOOTSTRAP_SERVERS"),
+        help="The server(s) to connect to.",
+    )
+    parser.add_argument(
+        "--fallback-offset",
+        dest="fallback_offset",
+        default="earliest",
+        choices=["latest", "earliest"],
+        help="If this consumer has not consumed from this topic, start here",
+    )
+    parser.add_argument(
+        "--force-offset",
+        dest="force_offset",
+        action=ForceOffset,
+        default="resume",
+        help="If set, force this offset",
+    )
+    parser.add_argument(
+        "--topic",
+        dest="topic",
+        default=os.environ.get("KAFKA_CONSUMER_TOPIC"),
+        help="If set, force this offset",
+    )
+    parser.add_argument(
+        "--consumer-group",
+        dest="consumer_group",
+        default=os.environ.get("KAFKA_CONSUMER_GROUP"),
+        help="If set, force this offset",
+    )
+    parser.add_argument(
+        "--client-id",
+        dest="client_id",
+        default=os.environ.get("KAFKA_CONSUMER_CLIENT_ID"),
+        help="If set, force this offset",
+    )
+    parser.add_argument(
+        "--poll-size",
+        dest="poll_size",
+        default=os.environ.get("KAFKA_CONSUMER_POLL_SIZE"),
+        help="If set, use this poll size",
+    )
+    parser.add_argument(
+        "--limit",
+        dest="limit",
+        type=int,
+        default=None,
+        help="If set, stop after this many",
+    )
+    parser.add_argument(
+        "--key-deserializer",
+        dest="key_deserializer",
+        default="string-utf8",
+        choices=list(deserializer_choices.keys()),
+        help="If set, use this deserializer",
+    )
+    parser.add_argument(
+        "--value-deserializer",
+        dest="value_deserializer",
+        default="string-utf8",
+        choices=list(deserializer_choices.keys()),
+        help="If set, use this deserializer",
+    )
+
+
+class Main(cmd.Main):
+    """Remove trailing whitespace"""
+
+    def main(self):
+        add_kafka_arguments(self.parser)
+        super().main()
+        self.processed = 0
+        self.hard_stop = False
+        for message in self.get_messages():
+            self.process_message(message)
+
+    def process_message(self, message: ConsumerRecord) -> str:
+        print(
+            f"received kafka message: {type(message.value)} topic: {message.topic}, key:{message.key}, "
+            f"offset:{message.offset}, partition:{message.partition}"
+        )
+        filename = f"{message.topic}_{message.partition}_{message.offset}_{message.key}.msgpack"
+        with open(filename, "wb") as binary_file:
+            binary_file.write(message.value)
+
+    def should_continue(self) -> bool:
+        return (not self.hard_stop) and (
+            self.args.limit is None or self.processed < self.args.limit
+        )
+
+    def init_consumer(self):
+        options = self.build_kafka_settings()
+        return kafka.KafkaConsumer(self.args.topic, **options)
+
+    def build_kafka_settings(self) -> dict:
+        # client_id: Kafka consumer client id. (Should be unique per process within the group)
+        # group_id: Kafka consumer group id. (Should be shared across all consumers in the same group)
+        key_deserializer = deserializer_choices[self.args.key_deserializer]
+        value_deserializer = deserializer_choices[self.args.value_deserializer]
+        bootstrap_servers = self.args.bootstrap_servers
+        if bootstrap_servers is None:
+            raise UnrecoverableError("No bootstrap servers are available")
+        else:
+            bootstrap_servers = bootstrap_servers.split(",")
+
+        options = {
+            "client_id": self.args.client_id,
+            "group_id": self.args.consumer_group,
+            "bootstrap_servers": bootstrap_servers,
+            "key_deserializer": key_deserializer,
+            "value_deserializer": value_deserializer,
+            "auto_offset_reset": self.args.fallback_offset,
+        }
+        if self.args.poll_size:
+            options["max_poll_records"] = self.args.poll_size
+        elif self.args.limit:
+            options["max_poll_records"] = self.args.limit
+        return options
+
+    def get_messages(self):
+        snooze = 1
+        logger.info("Initializing the fill process.")
+        while self.should_continue():
+            consumer = None
+            try:
+                logger.info("Initializing kafka")
+                consumer = self.init_consumer()
+                logger.info("Waiting for messages")
+                for message in consumer:
+                    self.processed += 1
+                    yield message
+                    snooze = (
+                        1  # default failure snooze after a success should be one second
+                    )
+                    if not self.should_continue():
+                        break
+            except UnrecoverableError:
+                self.hard_stop = True
+                raise
+            except Exception:
+                logger.exception(
+                    "Error handling message, snoozing for %s seconds", snooze
+                )
+                time.sleep(snooze)
+                # exponentially back off, with a maximum delay of 60 seconds
+                snooze = min(snooze * 2, 60)
+
+                pass  # don't let the consumer crash
+            finally:
+                if consumer:
+                    try:
+                        consumer.close()
+                    except Exception:
+                        logger.exception("Error closing consumer")
+
+
+if __name__ == "__main__":
+    Main().main()

@@ -2,7 +2,7 @@
 """Fix bad indentation"""
 import re
 
-from jmullanpy import cmd
+from jmullan_cmd import cmd
 
 
 class Main(cmd.InPlaceFileProcessor):

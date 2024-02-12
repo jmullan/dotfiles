@@ -2,7 +2,7 @@
 """Remove trailing whitespace"""
 import re
 
-from jmullanpy import cmd
+from jmullan_cmd import cmd
 
 
 def blank(line: str | None) -> str | None:

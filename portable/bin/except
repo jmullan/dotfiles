@@ -3,7 +3,7 @@
 import re
 import sys
 
-from jmullanpy import cmd
+from jmullan_cmd import cmd
 
 
 class Main(cmd.Main):

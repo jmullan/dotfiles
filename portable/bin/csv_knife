@@ -5,7 +5,7 @@ import sys
 from string import Template
 from typing import TextIO
 
-from jmullanpy import cmd
+from jmullan_cmd import cmd
 
 DIALECT_OPTIONS = ["excel", "excel-tab", "unix", "sniff", "presto", "rovi"]
 

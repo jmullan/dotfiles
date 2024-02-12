@@ -16,7 +16,7 @@
 [color "status"]
     added = yellow
     changed = green
-     untracked = cyan
+    untracked = cyan
 [gitflow]
     fetch = 1
     showcommands = 0
@@ -60,8 +60,8 @@
     clean = "black -q - "
 [filter "black_py.indent"]
     smudge = cat
-[include]
-    path = .gitconfig.local
+[includeIf "gitdir:~/"]
+    path = .git-local.config
 [init]
     defaultBranch = main
 [hooks]

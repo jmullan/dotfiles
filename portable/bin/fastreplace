@@ -65,6 +65,7 @@ def main():
 
     excludes = process_gitignore(".gitignore")
     excludes.update(process_gitignore("~/.gitignore"))
+    excludes.add(".git")
 
     for filename in filenames:
         check_filename(find, regex, replacement, filename, verbose, excludes)
@@ -79,6 +80,8 @@ def check_filename(find, regex, replacement, filename, verbose, excludes):
 
 def check_dir(find, regex, replacement, path, verbose, excludes):
     for root, dirs, files in os.walk(path, topdown=True):
+        if Stop.stopped:
+            return
         for subfilename in files:
             if Stop.stopped:
                 return
@@ -87,6 +90,8 @@ def check_dir(find, regex, replacement, path, verbose, excludes):
             subpath = os.path.join(root, subfilename)
             process = True
             for exclude in excludes:
+                if Stop.stopped:
+                    return
                 if pathlib.PurePath(subpath).match(exclude):
                     # print(f"skipping {subpath} because it matches {exclude}")
                     process = False
@@ -96,6 +101,8 @@ def check_dir(find, regex, replacement, path, verbose, excludes):
 
 
 def clean_file(find, regex, replacement, filename, verbose):
+    if Stop.stopped:
+        return
     file_size = os.path.getsize(filename)
     try:
         with open(filename) as f:

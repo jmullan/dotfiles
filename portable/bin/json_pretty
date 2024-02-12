@@ -4,7 +4,7 @@ import json
 import sys
 
 
-from jmullanpy import cmd
+from jmullan_cmd import cmd
 
 
 def json_pretty(filename):

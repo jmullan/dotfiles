@@ -1,5 +1,5 @@
 #!/usr/bin/env python-venv
-from jmullanpy import cmd
+from jmullan_cmd import cmd
 import re
 
 

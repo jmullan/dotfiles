@@ -1,6 +1,6 @@
 #!/usr/bin/env python-venv
 """Strip extra newlines from end of files, add one if there is none."""
-from jmullanpy import cmd
+from jmullan_cmd import cmd
 
 
 class Main(cmd.InPlaceFileProcessor):
