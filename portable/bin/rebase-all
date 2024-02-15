@@ -9,7 +9,11 @@ fi
 
 export GC_AUTO=$(git config gc.auto)
 export GC_AUTODETACH=$(git config gc.autodetach)
-
+export REMOTE=$(git remote | head -n 1)
+if [ -z "${REMOTE}" ] ; then
+  echo "No remote available" >&2
+  exit 1
+fi
 restore_settings() {
     git gc
     git prune
@@ -20,59 +24,18 @@ restore_settings() {
 }
 
 git fetch --all --tags || ( echo "Could not git fetch" >&2 && restore_settings && exit 1 )
+git pull --ff-only
+git main --refresh
 git config gc.auto 0
 git config gc.autodetach 0
-git remote prune origin
+git remote prune "${REMOTE}"
 
-BRANCHNAME="$(git rev-parse --abbrev-ref HEAD)"
-if [ -z "${BRANCHNAME}" ] ; then
-  echo "Could not determine current branch" >&2
-  restore_settings
-  exit 1
-fi
-GIT_STATUS="$(git status -unormal 2>&1)"
-if [[ "${GIT_STATUS}" =~ Changes\ to\ be\ committed ]] ; then
-    echo 'Changes to be committed' >&2
-    restore_settings
-    exit 1
-fi
-if [[ "${GIT_STATUS}" =~ not\ staged ]] ; then
-    echo 'Unstaged files present' >&2
-    restore_settings
-    exit 1
-fi
-if [[ "${GIT_STATUS}" =~ ntracked ]] ; then
-    echo 'Untracked files present' >&2
-    restore_settings
-    exit 1
-fi
-
-MERGE="$(git config branch."$BRANCHNAME".merge)"
-ARGCOUNT=$#
-if [ $ARGCOUNT -eq 1 ] ; then
-    MERGE="$1"
-fi
-if [ -n "$MERGE" ] ; then
-    # git merge -q --ff || git merge --abort
-    git rebase --keep-empty --rebase-merges "$MERGE" || git rebase --abort
-fi
 for branch in $(git branch | awk '"*" != $1 {print $1}'); do
-    MERGE="$(git config branch."$branch".merge)"
-    if [ $ARGCOUNT -eq 1 ] ; then
-        MERGE="$1"
-    fi
-    if [ -n "$MERGE" ] ; then
-        git rev-parse --abbrev-ref "${MERGE}"
-        git checkout "$branch"
-        TRACKING=$(git track)
-        if [ -z "${TRACKING}" ] ; then
-            echo "Missing upstream" >&2
-        else
-            # git merge -q --ff || git merge --abort
-            git rebase --keep-empty --rebase-merges "$MERGE" || git rebase --abort
-        fi
+    if [ -n "${MAIN}" ] ; then
+        git fetch "${REMOTE}" "${branch}:${branch}" && git fetch "${MAIN}:${REMOTE}"
+    else
+        git fetch "${REMOTE}" "${branch}:${branch}"
     fi
 done
-git checkout "${BRANCHNAME}"
 
 restore_settings
