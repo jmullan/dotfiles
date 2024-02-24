@@ -72,3 +72,5 @@
     allowmodifytag = false
     allownonascii = false
     allowtimecard = true
+[log]
+	mailmap = true

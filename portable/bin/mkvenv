@@ -1,0 +1,57 @@
+#!/bin/bash
+if [ "${DEBUG_PROMPT}" == "true" ] ; then
+   set -x
+fi
+
+VENV_FILE=$(find_up .venv)
+EXPECTED_VENV=
+PYTHONV=""
+if [ -n "$VENV_FILE" ] ; then
+    EXPECTED_VENV=$(head -n 1 "$VENV_FILE")
+    PYTHONV=$(tail -n +2 "$VENV_FILE" | head -n 1)
+fi
+if [ -n "${1}" ] ; then
+    EXPECTED_VENV="${1}"
+fi
+if [ -n "${2}" ] ; then
+    PYTHONV="${2}"
+fi
+echo "${EXPECTED_VENV}=${PYTHONV}"
+if [ -z "${EXPECTED_VENV}" ] ; then
+    echo "No venv name specified"
+    exit 1
+fi
+
+if [ -n "${WORKON_HOME}" ] ; then
+    if [ -e "${WORKON_HOME}/${EXPECTED_VENV}/bin/python" ] ; then
+        echo "${EXPECTED_VENV} already exists"
+        exit 0
+    fi
+fi
+
+if [ -n "${PYTHONV}" ] ; then
+    if [ -e "${HOME}/.pyenv/versions/${PYTHONV}/bin/python" ] ; then
+        VERSION="${HOME}/.pyenv/versions/${PYTHONV}/bin/python"
+    else
+        VERSION=$(glob "${HOME}/.pyenv/versions/${PYTHONV}*/bin/python" | sort -Vr | head -n 1)
+    fi
+fi
+
+"${VERSION}" -m venv -h >/dev/null 2>/dev/null
+if [ $? -eq 0 ]; then
+    RUN_VERSION="${VERSION}"
+    "${VERSION}" -m venv ~/.virtualenvs/"${EXPECTED_VENV}"
+else
+    RUN_VERSION=$(glob "${HOME}/.pyenv/versions/${PYTHONV}*/bin/python" | sort -Vr | head -n 1)
+    "${RUN_VERSION}" -m venv -h >/dev/null 2>/dev/null
+    if [ $? -eq 0 ]; then
+        "${RUN_VERSION}" -m venv ~/.virtualenvs/"${EXPECTED_VENV}" --python "${VERSION}"
+    else
+        echo "Could not find a version of python to use to make a virtualenv"
+        exit 1
+    fi
+fi
+
+if [ "${DEBUG_PROMPT}" == "true"  ] ; then
+   set +x
+fi

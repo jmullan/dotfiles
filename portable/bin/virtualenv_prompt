@@ -27,7 +27,7 @@ fi
 
 
 if [ -n "${WORKON_HOME}" ] ; then
-    AVAILABLE_VENV=$(glob "${WORKON_HOME}/*" | sed 's#.*/##' | grep "${EXPECTED_VENV}")
+    AVAILABLE_VENV=$(glob "${WORKON_HOME}/${EXPECTED_VENV}")
 fi
 if [ -n "$VIRTUAL_ENV" ]; then
     # Strip out the path and just leave the env name
