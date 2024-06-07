@@ -125,10 +125,10 @@ export LESS="-XFRK"
 alias bwd='pwd | sed -e "s:/:🥖:g"'
 GZIP=-9
 XZ_OPT=-9
-
-export REQUESTS_CA_BUNDLE='/usr/local/etc/openssl/cert.pem'
-export NODE_EXTRA_CA_CERTS='/usr/local/etc/openssl/cert.pem'
-
+if [ -e "/usr/local/etc/openssl/cert.pem" ] ; then
+    export REQUESTS_CA_BUNDLE='/usr/local/etc/openssl/cert.pem'
+    export NODE_EXTRA_CA_CERTS='/usr/local/etc/openssl/cert.pem'
+fi
 if [ -e "${HOME}/dotfiles/submodules/ssh-find-agent/ssh-find-agent.sh" ] ; then
     source "${HOME}/dotfiles/submodules/ssh-find-agent/ssh-find-agent.sh"
     ssh-add -l >&/dev/null || ssh-find-agent -a || eval $(ssh-agent) > /dev/null
