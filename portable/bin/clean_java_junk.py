@@ -5,7 +5,7 @@ from jmullan_cmd import cmd
 
 
 class Main(cmd.InPlaceFileProcessor):
-    """Remove trailing whitespace"""
+    """Clean a bunch of different java weirdness"""
 
     def __init__(self):
         super().__init__()
