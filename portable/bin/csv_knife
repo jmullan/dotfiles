@@ -6,6 +6,10 @@ from string import Template
 from typing import TextIO
 
 from jmullan_cmd import cmd
+from jmullan_logging.easy_logging import easy_initialize_logging
+import logging
+
+logger = logging.getLogger(__name__)
 
 DIALECT_OPTIONS = ["excel", "excel-tab", "unix", "sniff", "presto", "rovi"]
 
@@ -27,7 +31,7 @@ csv.register_dialect(
     escapechar=None,
     doublequote=True,
     skipinitialspace=True,
-    lineterminator="\2",
+    lineterminator="\n",
     quoting=csv.QUOTE_ALL,
     strict=False,
 )
@@ -109,6 +113,7 @@ def chunker(file_handle, newline: str, chunk_size: int = 4096):
 
 
 def process(csvfile, dialect_name, has_header: bool, template=None):
+    logger.debug(f"Processing {csvfile=} {dialect_name=} {has_header=}")
     compiled_template = Template(template)
 
     if dialect_name == "sniff":
@@ -140,7 +145,14 @@ def process(csvfile, dialect_name, has_header: bool, template=None):
             print(compiled_template.substitute(d))
 
 
-class Main(cmd.TextIoProcessor):
+def open_file_or_stdin(filename: str, encoding="utf-8-sig") -> TextIO:
+    if filename == "-":
+        return sys.stdin
+    else:
+        return open(filename, "r", encoding=encoding)
+
+
+class Main(cmd.Main):
     """Stream csv files in different ways."""
 
     def __init__(self):
@@ -155,9 +167,7 @@ class Main(cmd.TextIoProcessor):
         self.parser.add_argument(
             "--dialect", dest="dialect", default=None, choices=DIALECT_OPTIONS
         )
-        self.parser.add_argument(
-            "--encoding", dest="encoding", default="utf-8-sig", choices=DIALECT_OPTIONS
-        )
+        self.parser.add_argument("--encoding", dest="encoding", default="utf-8-sig")
         self.parser.add_argument(
             "--sniff-only", dest="sniff", action="store_true", default=False
         )
@@ -168,8 +178,28 @@ class Main(cmd.TextIoProcessor):
             default=None,
             help="The commands to run",
         )
+        self.logging_configured = False
+
+    def main(self):
+        cmd.add_filenames_arguments(self.parser)
+        super().main()
+        for filename in cmd.get_filenames(self.args):
+            self.process_filename(filename)
+
+    def process_filename(self, filename: str):
+
+        self.process_file_handle(
+            filename, open_file_or_stdin(filename, self.args.encoding)
+        )
 
     def process_file_handle(self, filename: str, file_handle: TextIO):
+        if not self.logging_configured:
+            self.logging_configured = True
+            if self.args.verbose:
+                easy_initialize_logging("DEBUG", stream=sys.stderr)
+            else:
+                easy_initialize_logging("INFO", stream=sys.stderr)
+        logger.debug(f"Processing {filename} via {file_handle}")
         dialect = self.args.dialect
         if self.args.sniff:
             dialect = "sniff"

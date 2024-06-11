@@ -1,6 +1,8 @@
 #!/bin/bash
 trap exit SIGHUP SIGINT SIGTERM
 
+set -x
+
 GIT_DIR="$(git rev-parse --git-dir 2>/dev/null)"
 if [ -z "$GIT_DIR" ] ; then
     echo "No git dir available" >&2
@@ -10,6 +12,8 @@ fi
 export GC_AUTO=$(git config gc.auto)
 export GC_AUTODETACH=$(git config gc.autodetach)
 export REMOTE=$(git remote | head -n 1)
+export MAIN=$(git main)
+export HEAD=$(git rev-parse --abbrev-ref HEAD)
 if [ -z "${REMOTE}" ] ; then
   echo "No remote available" >&2
   exit 1
@@ -30,12 +34,13 @@ git config gc.auto 0
 git config gc.autodetach 0
 git remote prune "${REMOTE}"
 
-for branch in $(git branch | awk '"*" != $1 {print $1}'); do
+for branch in $(git branch --format '%(refname:short)'); do
+    git fetch "${REMOTE}" "${branch}:${branch}"
     if [ -n "${MAIN}" ] ; then
-        git fetch "${REMOTE}" "${branch}:${branch}" && git fetch "${MAIN}:${REMOTE}"
-    else
-        git fetch "${REMOTE}" "${branch}:${branch}"
+        git fetch "${REMOTE}" "${MAIN}:${branch}"
+        git rebase "${MAIN}" || git rebase --abort
     fi
+    echo
 done
 
 restore_settings

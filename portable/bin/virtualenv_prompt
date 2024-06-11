@@ -7,9 +7,9 @@ EXPECTED_VENV=
 ACTUAL_VENV=
 VENV_FILE=$(find_up .venv)
 PYTHONV=""
-if [ -n "$VENV_FILE" ] ; then
-    EXPECTED_VENV=$(head -n 1 "$VENV_FILE")
-    PYTHONV=$(tail -n +2 "$VENV_FILE" | head -n 1)
+if [ -n "${VENV_FILE}" ] ; then
+    EXPECTED_VENV=$(head -n 1 "${VENV_FILE}")
+    PYTHONV=$(tail -n +2 "${VENV_FILE}" | head -n 1)
 fi
 if [ -n "${PYTHONV}" ] ; then
     if [ -e "${HOME}/.pyenv/versions/${PYTHONV}/bin/python" ] ; then
@@ -24,14 +24,27 @@ if [ $? -eq 0 ]; then
     COMMAND="${VERSION} -m venv ~/.virtualenvs/${EXPECTED_VENV}"
     VERSION=
 fi
-
-
-if [ -n "${WORKON_HOME}" ] ; then
-    AVAILABLE_VENV=$(glob "${WORKON_HOME}/${EXPECTED_VENV}")
+if [[ ${EXPECTED_VENV:0:1} == "/" ]] ; then
+    if [ -e "${EXPECTED_VENV}/bin/activate" ] ; then
+        AVAILABLE_VENV="${EXPECTED_VENV}"
+    else
+        AVAILABLE_VENV=
+    fi
+else
+    if [ -e "${WORKON_HOME}/${EXPECTED_VENV}" ] ; then
+        AVAILABLE_VENV="${EXPECTED_VENV}"
+    else
+        AVAILABLE_VENV=
+    fi
 fi
-if [ -n "$VIRTUAL_ENV" ]; then
-    # Strip out the path and just leave the env name
-    ACTUAL_VENV="${VIRTUAL_ENV##*/}"
+
+if [ -n "${VIRTUAL_ENV}" ]; then
+    if [[ ${EXPECTED_VENV:0:1} == "/" ]] ; then
+        ACTUAL_VENV="${VIRTUAL_ENV}"
+    else
+      # Strip out the path and just leave the env name
+      ACTUAL_VENV="${VIRTUAL_ENV##*/}"
+    fi
 fi
 
 if [ -z "${ACTUAL_ENV}${EXPECTED_VENV}" ] ; then
@@ -58,38 +71,57 @@ else
     if [ -n "${EXPECTED_VENV}" ] ; then
         if [ -n "${ACTUAL_VENV}" ] ; then
             if [ "${ACTUAL_VENV}" == "${EXPECTED_VENV}" ] ; then
-                echo -n "venv:$ACTUAL_VENV"
+                echo -n "venv:${ACTUAL_VENV}"
             else
-                echo -n "$(tput setaf 1)"
-                echo -n "INCORRECT VENV $ACTUAL_VENV : workon $EXPECTED_VENV"
-                echo -n "$(tput sgr0)"
+                if [ -n "${AVAILABLE_VENV}" ] ; then
+                    if [[ ${EXPECTED_VENV:0:1} == "/" ]] ; then
+                        echo -n "$(tput setaf 1)"
+                        echo -n "INCORRECT VENV ${ACTUAL_VENV} : source ${EXPECTED_VENV}/bin/activate"
+                        echo -n "$(tput sgr0)"
+                    else
+                        echo -n "$(tput setaf 1)"
+                        echo -n "INCORRECT VENV ${ACTUAL_VENV} : workon ${EXPECTED_VENV}"
+                        echo -n "$(tput sgr0)"
+                    fi
+                else
+                    echo -n "$(tput setaf 1)"
+                    echo -n "INCORRECT VENV ${ACTUAL_VENV} : deactivate"
+                    echo -n "$(tput sgr0)"
+                fi
             fi
         else
-	    if [ -z "${AVAILABLE_VENV}" ] ; then
+            if [ -z "${AVAILABLE_VENV}" ] ; then
                 echo -n "$(tput setaf 1)"
-	        echo -n "${COMMAND}"
+                echo -n "${COMMAND}"
                 if [ -n "${VERSION}" ] ; then
-                    echo -n " --python $VERSION"
+                    echo -n " --python ${VERSION}"
                 fi
                 echo -n "$(tput sgr0)"
-	    else
-                echo -n "$(tput setaf 3)"
-                echo -n "workon $EXPECTED_VENV"
-                echo -n "$(tput sgr0)"
-	    fi
+            else
+                if [[ ${EXPECTED_VENV:0:1} == "/" ]] ; then
+                    echo -n "$(tput setaf 3)"
+                    echo -n "source ${EXPECTED_VENV}/bin/activate"
+                    echo -n "$(tput sgr0)"
+
+                else
+                    echo -n "$(tput setaf 3)"
+                    echo -n "workon ${EXPECTED_VENV}"
+                    echo -n "$(tput sgr0)"
+                fi
+            fi
         fi
     else
         if [ -n "${ACTUAL_VENV}" ] ; then
-	    if [ -z "${AVAILABLE_VENV}" ] ; then
+            if [ -z "${AVAILABLE_VENV}" ] ; then
                 echo -n "$(tput setaf 1)"
-	        echo -n "${COMMAND}"
+                echo -n "${COMMAND}"
                 if [ -n "${VERSION}" ] ; then
-                    echo -n " --python $VERSION"
+                    echo -n " --python ${VERSION}"
                 fi
                 echo -n "$(tput sgr0)"
             else
                 echo -n " venv:${ACTUAL_VENV} "
-	    fi
+            fi
         fi
     fi
 fi

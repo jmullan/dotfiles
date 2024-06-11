@@ -19,7 +19,8 @@ def trim_blank_lines(contents: str) -> str:
 
 
 def remove_trailing_whitespace(contents: str) -> str:
-    return "\n".join(x.rstrip() for x in contents.split("\n"))
+    lines = "\n".join(x.rstrip() for x in contents.split("\n")).rstrip()
+    return f"{lines}\n"
 
 
 class Main(cmd.InPlaceFileProcessor):

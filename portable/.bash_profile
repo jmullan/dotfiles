@@ -105,7 +105,9 @@ if which ruby >/dev/null && which gem >/dev/null; then
 fi
 
 # OPAM configuration
-. /home/jmullan/.opam/opam-init/init.sh > /dev/null 2> /dev/null || true
+if [ -e "${HOME}/.opam/opam-init/init.sh" ] ; then
+    . /home/jmullan/.opam/opam-init/init.sh > /dev/null 2> /dev/null || true
+fi
 
 export PIP_REQUIRE_VIRTUALENV=true
 if which pip >/dev/null; then
@@ -134,10 +136,10 @@ fi
 
 if [ -e "${HOME}/.sdkman" ] ; then
     #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+    export SDKMAN_OFFLINE_MODE=true
     export SDKMAN_DIR="${HOME}/.sdkman"
     [[ -s "${HOME}/.sdkman/bin/sdkman-init.sh" ]] && source "${HOME}/.sdkman/bin/sdkman-init.sh"
     sdk offline > /dev/null
-    export SDKMAN_OFFLINE_MODE=true
 fi
 export BASH_SILENCE_DEPRECATION_WARNING=1
 export DEFAULT_COPYRIGHT="Jesse Mullan"

@@ -38,7 +38,7 @@ class TypeCollector:
 
     def to_tstype(self, data: dict):
         name = self.best_name(data)
-        header = ["/**", f" * @typedef {L}Object{R} {name}"]
+        header = ["/**", f" * @typedef {L}object{R} {name}"]
         footer = [" */"]
 
         type_data = []
@@ -77,7 +77,7 @@ class TypeCollector:
                 return "Any[]"
             # there is only one type
             return f"{types[0]}[]"
-        return "Object"
+        return "object"
 
     def extract_dicts(self, data: dict, name=None):
         if not data:
@@ -115,6 +115,11 @@ def json_to_tstype(data: dict, name: str | None = None) -> str:
 
     if isinstance(data, dict):
         type_collector.extract_dicts(data, name)
+    elif isinstance(data, list):
+        if name is None:
+            name = "object"
+        for x in data:
+            type_collector.extract_dicts(x, name)
 
     definitions = []
     for keys in type_collector.keyses:
