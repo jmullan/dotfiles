@@ -1,0 +1,219 @@
+#!/usr/bin/env python-venv
+import csv
+import dataclasses
+import json
+import logging
+import os
+import sys
+import time
+
+import requests
+from typing import Any
+from jmullan_cmd import cmd
+
+logger = logging.getLogger(__name__)
+
+
+@dataclasses.dataclass
+class Issue:
+    id: str | None
+    expand: str | None
+    self: str | None
+    key: str | None
+    fields: dict[str, Any] | None
+
+    def get(self, field: str) -> str | None:
+        if self.fields and field in self.fields:
+            return self.fields[field]
+        return None
+
+    @property
+    def created(self) -> str | None:
+        return self.get("created")
+
+    @property
+    def updated(self) -> str | None:
+        return self.get("updated")
+
+    @property
+    def summary(self) -> str | None:
+        return self.get("summary")
+
+    @property
+    def description(self) -> str | None:
+        return self.get("description")
+
+    def simplified(self, ticket_number: str | None = None) -> dict:
+        key = ticket_number if ticket_number is not None else self.key
+        return {
+            k: v
+            for k, v in {
+                "key": key,
+                "summary": self.summary,
+                "created": self.created,
+                "updated": self.updated,
+                "description": self.description,
+            }.items()
+            if v is not None
+        }
+
+
+@dataclasses.dataclass
+class IssueResponse:
+    expand: str | None
+    startAt: float | None
+    maxResults: float | None
+    total: float | None
+    issues: list[Issue] | None
+    errorMessages: list | None
+    errors: list | None
+
+
+def get_env_or_none(key: str) -> str | None:
+    value = os.environ.get(key)
+    if value is not None:
+        value = value.strip()
+        if len(value) == 0:
+            value = None
+    return value
+
+
+class Main(cmd.Main):
+    def __init__(self):
+        super().__init__()
+        jira_url_env = get_env_or_none("JIRA_URL")
+        if jira_url_env is not None:
+            jira_url_hint = f"(JIRA_URL={jira_url_env})"
+        else:
+            jira_url_hint = f"(JIRA_URL is unset)"
+
+        self.parser.add_argument(
+            "-j",
+            "--jira-url",
+            dest="jira_url",
+            default=jira_url_env,
+            help=f"Use this url for jira {jira_url_hint}",
+        )
+
+        jira_env_token = get_env_or_none("JIRA_TOKEN")
+        if jira_env_token is not None:
+            jira_token_hint = "($JIRA_TOKEN is currently set)"
+        else:
+            jira_token_hint = "($JIRA_TOKEN is not currently set)"
+            if jira_url_env is not None:
+                jira_token_hint = f"{jira_token_hint} Try: {jira_url_env}/secure/ViewProfile.jspa?selectedTab=com.atlassian.pats.pats-plugin:jira-user-personal-access-tokens"
+            else:
+                jira_token_hint = f"{jira_token_hint} Try your JIRA instance: /secure/ViewProfile.jspa?selectedTab=com.atlassian.pats.pats-plugin:jira-user-personal-access-tokens"
+        self.parser.add_argument(
+            "--jira-token",
+            dest="jira_token",
+            default=jira_env_token,
+            help=f"Your jira personal access token {jira_token_hint}",
+        )
+        self.parser.add_argument(
+            "--project",
+            type=str,
+            default=None,
+            help="Dump everything from this project",
+        )
+        self.parser.add_argument(
+            "--max",
+            type=int,
+            default=10,
+            help="Dump zero through this id",
+        )
+        self.parser.add_argument(
+            "--ticket",
+            dest="jira_ticket",
+            type=str,
+            default=None,
+            help="Get info about this ticket",
+        )
+        self.parser.add_argument(
+            "--no-forward",
+            dest="forward",
+            action="store_false",
+            default=True,
+            help="Use the original ticket if possible",
+        )
+        self.parser.add_argument(
+            "--format", dest="format", type=str, choices=["csv", "dump"], default="dump"
+        )
+
+    def search(self, jira_url: str, headers: dict[str, str]):
+        search_url = f"{jira_url}/rest/api/2/search"
+
+        jql = "assignee = currentUser() AND (updatedDate  >= '-7d' OR status not in ('closed', 'resolved', 'done'))"
+
+        params = {"jql": jql}
+
+        response = requests.get(search_url, params=params, headers=headers)
+        if response.status_code != 200:
+            logger.error(response.status_code)
+            logger.error(response.content)
+            return
+
+        data = response.json()
+
+        issue_response = IssueResponse(**data)
+        for issue in issue_response.issues:
+            print(issue)
+
+    def fetch(
+        self, jira_url: str, headers: dict[str, str], ticket: str
+    ) -> Issue | None:
+        url = f"{jira_url}/rest/api/2/issue/{ticket}"
+        response = requests.get(url, headers=headers)
+        if response.status_code != 200:
+            logger.error(response.status_code)
+            logger.error(response.content)
+            return None
+        try:
+            data = response.json()
+        except Exception:
+            logger.exception("Could not decode json from %s", response.content)
+            return None
+        return Issue(**data)
+
+    def dump(self, jira_url: str, headers: dict[str, str], ticket: str, forward: bool):
+        issue = self.fetch(jira_url, headers, ticket)
+        if issue is not None:
+            key = None if forward else ticket
+            print(json.dumps(issue.simplified(key), indent=4, sort_keys=True))
+
+    def csv(self, jira_url: str, headers: dict[str, str], ticket: str, forward: bool):
+        issue = self.fetch(jira_url, headers, ticket)
+        if issue is not None:
+            key = issue.key if forward else ticket
+            csv.writer(sys.stdout).writerow([key, issue.summary])
+
+    def main(self):
+        super().main()
+        jira_url = self.args.jira_url
+        jira_token = self.args.jira_token
+        forward = self.args.forward
+
+        headers = {
+            "Accept": "application/json",
+            "Authorization": f"Bearer {jira_token}",
+        }
+
+        project = self.args.project
+        project_max = self.args.max
+        if project is not None:
+            for ticket_number in range(1, project_max + 1):
+                ticket = f"{project}-{ticket_number}"
+                self.csv(jira_url, headers, ticket, forward)
+                time.sleep(1)
+            exit(0)
+
+        ticket = self.args.jira_ticket
+        if ticket:
+            if self.args.format == "dump":
+                self.dump(jira_url, headers, ticket, forward)
+            else:
+                self.csv(jira_url, headers, ticket, forward)
+
+
+if __name__ == "__main__":
+    Main().main()

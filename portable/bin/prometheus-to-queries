@@ -1,7 +1,11 @@
 #!/usr/bin/env python-venv
+import logging
 import re
 from dataclasses import dataclass
 from jmullan_cmd import cmd
+
+
+logger = logging.getLogger(__name__)
 
 HELP = "# HELP"
 TYPE = "# TYPE"
@@ -141,6 +145,15 @@ def update_dict_if_not_set(from_dict: dict[str, str], into_dict: dict[str, str])
             into_dict[key] = value
 
 
+def guess_stat_type(stat_name, stat_types):
+    stat_type = stat_types.get(stat_name)
+    if stat_type is not None:
+        return stat_type
+    if stat_name.endswith("_count") or stat_name.endswith("_count"):
+        return "counter"
+    return "gauge"
+
+
 def expand_suffixes(stat_name: str, suffixes: list[str], value: str) -> dict[str, str]:
     derived_stat_values = {}
     for suffix in suffixes:
@@ -148,14 +161,24 @@ def expand_suffixes(stat_name: str, suffixes: list[str], value: str) -> dict[str
     return derived_stat_values
 
 
+def get_dimensions(labels: dict) -> str | None:
+    if not labels:
+        return None
+    logger.info(f"{labels=}")
+    return " ".join("{{ %s }}" % k for k in labels.keys())
+
+
 def prometheus_to_queries(
     contents: str, filters: dict[str, Filter] | None = None
 ) -> str | None:
+    if filters is None:
+        filters = dict()
     filter_string = make_filter_string(filters)
     stat_names = set()
     stat_helps = {}
     stat_types = {}
-    stat_labels = {}
+    stat_labels: dict[str, dict] = {}
+    summaries = set()
     for line in contents.split("\n"):
         line = strip(line)
         if empty(line):
@@ -178,6 +201,7 @@ def prometheus_to_queries(
             elif "summary" == stat_type:
                 sub_types = expand_suffixes(stat_name, ["count", "sum"], "counter")
                 update_dict_if_not_set(sub_types, stat_types)
+                summaries.add(stat_name)
         else:
             stat_name, labels = get_stat(line)
             if empty(stat_name):
@@ -185,8 +209,9 @@ def prometheus_to_queries(
             stat_names.add(stat_name)
             if labels:
                 if stat_name not in stat_labels:
-                    stat_labels[stat_name] = set()
-                stat_labels[stat_name].update(labels)
+                    stat_labels[stat_name] = dict()
+                for label in labels:
+                    stat_labels[stat_name][label] = None
     for stat_name, stat_type in stat_types.items():
         if "histogram" == stat_type:
             sub_helps = expand_suffixes(
@@ -200,22 +225,36 @@ def prometheus_to_queries(
             update_dict_if_not_set(sub_helps, stat_helps)
     output = []
     # sum(genie_archive_item_priority{project=~"$project", env=~"$env"}) by (project, env, lag_project, item_type, queued_priority) > 0
+    stat_defs = {}
     for stat_name in sorted(stat_names):
-        stat_type = stat_types.get(stat_name, "gauge")
-        labels = stat_labels.get(stat_name) or set()
-        # stat_type = stat_types.get(stat_name)
-        # stat_help = stat_helps.get(stat_name)
-        if filters:
-            labels.update(filters.keys())
+        stat_type = guess_stat_type(stat_name, stat_types)
+        labels = dict()
+        labels.update(filters or dict())
+        labels.update(stat_labels.get(stat_name) or dict())
         name_filtered = f"{stat_name}{filter_string}"
+
         if "counter" == stat_type:
             name_filtered = f"rate({name_filtered}[$__rate_interval])"
         if labels:
-            label_string = ", ".join(labels)
-            output.append(f"sum({name_filtered}) by ({label_string})")
+            label_string = ", ".join(labels.keys())
+            if "max" in name_filtered:
+                stat_def = f"max by ({label_string}) ({name_filtered})"
+            else:
+                stat_def = f"sum by ({label_string}) ({name_filtered})"
         else:
-            output.append(f"{name_filtered}")
-
+            stat_def = f"{name_filtered}"
+        dimensions = get_dimensions(labels)
+        if dimensions:
+            as_legend = f" AS {stat_name} {dimensions}"
+        else:
+            as_legend = stat_name
+        output.append(f"{stat_def}{as_legend}")
+        stat_defs[stat_name] = stat_def
+    for summary in summaries:
+        seconds_def = stat_defs.get(f"{summary}_sum")
+        count_def = stat_defs.get(f"{summary}_count")
+        if seconds_def is not None and count_def is not None:
+            output.append(f"{seconds_def} / {count_def}")
     return "\n".join(output)
 
 
@@ -230,7 +269,7 @@ class Main(cmd.PrintingFileProcessor):
             help="what to call a top-level item",
         )
         self.parser.add_argument(
-            "filters",
+            "--filters",
             metavar="FILTERS",
             type=str,
             nargs="*",

@@ -11,30 +11,35 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-DIALECT_OPTIONS = ["excel", "excel-tab", "unix", "sniff", "presto", "rovi"]
+DIALECT_OPTIONS = csv.list_dialects() + ["sniff", "presto", "rovi"]
 
-csv.register_dialect(
-    "presto",
-    delimiter=",",
-    quotechar='"',
-    escapechar=None,
-    doublequote=True,
-    skipinitialspace=True,
-    lineterminator="\r\n",
-    quoting=csv.QUOTE_ALL,
-    strict=True,
-)
-csv.register_dialect(
-    "rovi",
-    delimiter="\1",
-    quotechar='"',
-    escapechar=None,
-    doublequote=True,
-    skipinitialspace=True,
-    lineterminator="\n",
-    quoting=csv.QUOTE_ALL,
-    strict=False,
-)
+
+class PrestoDialect(csv.Dialect):
+    delimiter = ","
+    doublequote = True
+    escapechar = None
+    lineterminator = "\r\n"
+    quotechar = '"'
+    quoting = csv.QUOTE_ALL
+    skipinitialspace = True
+    strict = True
+
+
+csv.register_dialect("excel", PrestoDialect)
+
+
+class RoviDialect(csv.Dialect):
+    delimiter = "\1"
+    doublequote = True
+    escapechar = None
+    lineterminator = "\2"
+    quotechar = "'"
+    quoting = csv.QUOTE_NONE
+    skipinitialspace = True
+    strict = False
+
+
+csv.register_dialect("rovi", RoviDialect)
 
 
 def zip_header(header: list, row: list):
@@ -54,6 +59,13 @@ def zip_header(header: list, row: list):
 
 
 def chunker(file_handle, newline: str, chunk_size: int = 4096):
+    for line in _chunker(file_handle, newline, chunk_size):
+        if newline in line:
+            logger.error(f"Newline {newline!r} found in line {line!r}")
+        yield line
+
+
+def _chunker(file_handle, newline: str, chunk_size: int = 4096):
     prior_chunk = ""
     x = 1
     while True:
@@ -112,6 +124,12 @@ def chunker(file_handle, newline: str, chunk_size: int = 4096):
         yield prior_chunk
 
 
+def unquoted_reader(chunker, delimiter):
+    for chunk in chunker:
+        if chunk is not None:
+            yield chunk.split(delimiter)
+
+
 def process(csvfile, dialect_name, has_header: bool, template=None):
     logger.debug(f"Processing {csvfile=} {dialect_name=} {has_header=}")
     compiled_template = Template(template)
@@ -124,12 +142,23 @@ def process(csvfile, dialect_name, has_header: bool, template=None):
         csvfile.seek(0)
 
     dialect = csv.get_dialect(dialect_name)
-    reader = csv.reader(chunker(csvfile, dialect.lineterminator), dialect=dialect_name)
+    chunk_iterator = chunker(csvfile, dialect.lineterminator)
+    if dialect_name == "rovi" or dialect.quoting == csv.QUOTE_NONE:
+        reader = unquoted_reader(chunk_iterator, delimiter=dialect.delimiter)
+    else:
+        reader = csv.reader(chunk_iterator, dialect=dialect_name)
     if has_header:
-        header = next(reader)
+        try:
+            header = next(reader)
+        except StopIteration:
+            logger.info("No content found when processing header")
+            return
     else:
         header = []
-
+    if template == "csv":
+        writer = csv.writer(sys.stdout)
+    else:
+        writer = None
     for csv_row in reader:
         if csv_row is None:
             break
@@ -139,17 +168,19 @@ def process(csvfile, dialect_name, has_header: bool, template=None):
         elif template == "json":
             print(json.dumps(d))
         elif template == "csv":
-            writer = csv.writer(sys.stdout)
             writer.writerow(csv_row)
         else:
             print(compiled_template.substitute(d))
 
 
-def open_file_or_stdin(filename: str, encoding="utf-8-sig") -> TextIO:
+def open_file_or_stdin(
+    filename: str, encoding="utf-8-sig", universal_newline=True
+) -> TextIO:
     if filename == "-":
         return sys.stdin
     else:
-        return open(filename, "r", encoding=encoding)
+        mode = "rU" if universal_newline else "r"
+        return open(filename, mode, encoding=encoding)
 
 
 class Main(cmd.Main):
@@ -171,6 +202,19 @@ class Main(cmd.Main):
         self.parser.add_argument(
             "--sniff-only", dest="sniff", action="store_true", default=False
         )
+        if hasattr(open, "newlines"):
+            self.parser.add_argument(
+                "--universal-newline",
+                dest="universal_newline",
+                action="store_true",
+                default=None,
+            )
+            self.parser.add_argument(
+                "--no-universal-newline",
+                dest="no_universal_newline",
+                action="store_false",
+                default=None,
+            )
         self.parser.add_argument(
             "-t",
             "--template",
@@ -187,12 +231,28 @@ class Main(cmd.Main):
             self.process_filename(filename)
 
     def process_filename(self, filename: str):
+        dialect = self.args.dialect
+        if self.args.sniff:
+            dialect = "sniff"
+        elif dialect is None:
+            dialect = "unix"
 
-        self.process_file_handle(
-            filename, open_file_or_stdin(filename, self.args.encoding)
+        if not hasattr(open, "newlines"):
+            universal_newline = False
+        elif self.args.universal_newline is not None:
+            universal_newline = True
+        elif self.args.no_universal_newline is not None:
+            universal_newline = False
+        elif dialect == "rovi":
+            universal_newline = True
+        else:
+            universal_newline = None
+        file_handle = open_file_or_stdin(
+            filename, self.args.encoding, universal_newline=universal_newline
         )
+        self.process_file_handle(filename, file_handle, dialect)
 
-    def process_file_handle(self, filename: str, file_handle: TextIO):
+    def process_file_handle(self, filename: str, file_handle: TextIO, dialect: str):
         if not self.logging_configured:
             self.logging_configured = True
             if self.args.verbose:
@@ -200,11 +260,6 @@ class Main(cmd.Main):
             else:
                 easy_initialize_logging("INFO", stream=sys.stderr)
         logger.debug(f"Processing {filename} via {file_handle}")
-        dialect = self.args.dialect
-        if self.args.sniff:
-            dialect = "sniff"
-        elif dialect is None:
-            dialect = "unix"
 
         template = self.args.template
         if (template is None or not len(template)) and dialect == "sniff":
