@@ -1,2 +1,52 @@
-#!/bin/bash
-ag --nonumbers "$@" "${HISTFILE}" | uniq
+#!/usr/bin/env python-venv
+import argparse
+import glob
+import os
+import time
+
+from jmullan_cmd import cmd
+
+HOME = os.path.expanduser("~")
+
+TIME_FORMAT = "%Y-%m-%d %H:%M:%S %Z"
+
+
+def main():
+    cmd.stop_on_broken_pipe_error()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("search", nargs="+")
+    args = parser.parse_args()
+
+    search_string = " ".join(args.search)
+    files = glob.glob(".history*", root_dir=HOME)
+
+    file_tuples = []
+    for file in files:
+        file_path = os.path.join(HOME, file)
+        modified = os.path.getmtime(file_path)
+        file_tuple = modified, file_path
+        file_tuples.append(file_tuple)
+    for file_tuple in sorted(file_tuples):
+        modified, file_path = file_tuple
+        timestamp = time.localtime(modified)
+        with open(file_path, 'r', encoding='UTF-8') as history:
+            formatted_was = None
+            for line in history:
+                line = line.strip()
+                if line.startswith("#"):
+                    try:
+                        timestamp = time.localtime(int(line.removeprefix("#")))
+                        continue
+                    except ValueError:
+                        pass
+
+                formatted_time = time.strftime(TIME_FORMAT, timestamp)
+                # formatted_time = calendar.timegm(timestamp)
+                formatted = f"[{formatted_time}] $ {line}"
+                if formatted != formatted_was and search_string in formatted:
+                    print(formatted)
+                formatted_was = formatted
+
+
+if __name__ == "__main__":
+    main()

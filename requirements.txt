@@ -8,3 +8,4 @@ jproperties
 jmullan_logging@git+http://github.com/jmullan/jmullan_logging
 jmullan_cmd@git+http://github.com/jmullan/jmullan_cmd
 jira
+rich

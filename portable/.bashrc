@@ -75,13 +75,9 @@ bind '"\e[7~": beginning-of-line'
 bind '"\e[8~": end-of-line'
 
 export HISTCONTROL=ignoredups
-if [ -n "$YROOT_NAME" ]; then
-    export HISTFILE="$HOME/.history_$(hostname)_$YROOT_NAME"
-else
-    export HISTFILE="$HOME/.history_$(hostname)"
-fi
+export HISTFILE="$HOME/.history_$(hostname)"
 export HISTSIZE=10000
-export HISTFILESIZE=1000000
+export HISTFILESIZE=10000000
 export HISTTIMEFORMAT='%F %T '
 export HISTIGNORE='exit'
 shopt -s histappend

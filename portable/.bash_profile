@@ -27,20 +27,20 @@ POSSIBLE_PATHS=(
     "/usr/local/bin"
     "/usr/local/icon/bin"
     "/usr/local/sbin"
+    "/usr/local/mysql/bin"
+    "/usr/local/opt/libxml2/bin"
+    "/usr/local/opt/coreutils/libexec/gnubin"
+    "/usr/local/opt/gnu-tar/libexec/gnubin"
+    "/usr/local/opt/coreutils/libexec/gnubin"
+    "/usr/local/opt/openssl@1.1/bin"
+    "/usr/local/opt/libxml2/bin"
+    "/opt/homebrew/bin"
     "${HOME}/src/hadoop"
     "${HOME}/bin/ec2/bin"
-    "/usr/local/mysql/bin"
     "${HOME}/.local/bin"
     "${HOME}/.go/bin"
     "${HOME}/bin"
     "${HOME}/.pyenv/bin"
-    "/usr/local/opt/libxml2/bin:$PATH"
-    "/Users/jmullan/rdio/arcanist/arcanist/bin"
-    "/usr/local/opt/coreutils/libexec/gnubin"
-    "/usr/local/opt/gnu-tar/libexec/gnubin"
-    "/usr/local/opt/coreutils/libexec/gnubin"
-    "/usr/local/opt/openssl@1.1/bin:$PATH"
-    "/usr/local/opt/libxml2/bin"
 )
 
 for p in "${POSSIBLE_PATHS[@]}"; do
@@ -92,7 +92,6 @@ if [ -e "${HOME}/.pyenv" ] ; then
     export PYENV_ROOT="${HOME}/.pyenv"
 fi
 
-
 test -r /sw/bin/init.sh && . /sw/bin/init.sh
 
 alias nodeunit=node_modules/nodeunit/bin/nodeunit
@@ -106,7 +105,7 @@ fi
 
 # OPAM configuration
 if [ -e "${HOME}/.opam/opam-init/init.sh" ] ; then
-    . /home/jmullan/.opam/opam-init/init.sh > /dev/null 2> /dev/null || true
+    . "${HOME}/.opam/opam-init/init.sh" > /dev/null 2> /dev/null || true
 fi
 
 export PIP_REQUIRE_VIRTUALENV=true
@@ -125,10 +124,7 @@ export LESS="-XFRK"
 alias bwd='pwd | sed -e "s:/:🥖:g"'
 GZIP=-9
 XZ_OPT=-9
-if [ -e "/usr/local/etc/openssl/cert.pem" ] ; then
-    export REQUESTS_CA_BUNDLE='/usr/local/etc/openssl/cert.pem'
-    export NODE_EXTRA_CA_CERTS='/usr/local/etc/openssl/cert.pem'
-fi
+
 if [ -e "${HOME}/dotfiles/submodules/ssh-find-agent/ssh-find-agent.sh" ] ; then
     source "${HOME}/dotfiles/submodules/ssh-find-agent/ssh-find-agent.sh"
     ssh-add -l >&/dev/null || ssh-find-agent -a || eval $(ssh-agent) > /dev/null

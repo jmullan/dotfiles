@@ -20,7 +20,6 @@ def main():
     cmd.stop_on_broken_pipe_error()
     parser = argparse.ArgumentParser(prog="json_pretty", description="Like json_pp")
     cmd.add_filenames_arguments(parser)
-
     args = parser.parse_args()
 
     for filename in cmd.get_filenames(args):

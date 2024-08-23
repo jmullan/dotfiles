@@ -1,0 +1,162 @@
+#!/usr/bin/env python-venv
+import dataclasses
+import logging
+import os.path
+import re
+import textwrap
+
+from jmullan_cmd import cmd
+from jmullan_logging.easy_logging import easy_initialize_logging
+
+logger = logging.getLogger(__name__)
+
+FILENAME = os.path.expanduser("~/.git_history")
+INDENT = "    "
+
+@dataclasses.dataclass
+class Entry:
+    day: str
+    time_of_day: str
+    repo: str
+    branch: str
+    command: str
+    message: str
+
+    @property
+    def rounded_time(self):
+        if not self.time_of_day:
+            return None
+        h, m, s = self.time_of_day.split(":")
+        m = int(m)
+        m = 15 * int(m / 15)
+        return f"{h}:{m:02}"
+
+def first(items):
+    for item in items:
+        if item is not None:
+            return item
+    return None
+
+
+def unique(items) -> list[str]:
+    seen: set[str] = set()
+    found = []
+    for item in items or []:
+        if item is None or item in seen:
+            continue
+        seen.add(item)
+        found.append(item)
+    return found
+
+
+def guess_jiras(*texts):
+    jiras = set()
+    for text in texts:
+        matches = re.findall(r"[A-Z]+-[0-9]+", text)
+        if matches:
+            jiras.update(matches)
+    return list(jiras)
+
+
+def chop_command(command: str) -> str:
+    return command.removeprefix("pre-")
+
+
+def indent(content, indentation):
+    indent_string = indentation * INDENT
+    return textwrap.fill(content, 80, initial_indent=indent_string, subsequent_indent=indent_string)
+
+
+def dump_branch_work(entries: list[Entry]):
+    if not entries:
+        return
+    day = first(entry.day for entry in entries)
+    repo = first(entry.repo for entry in entries)
+    branch = first(entry.branch for entry in entries)
+    chunks: dict[str, list[Entry]] = {}
+    for entry in entries:
+        if entry.rounded_time not in chunks:
+            chunks[entry.rounded_time] = []
+        chunks[entry.rounded_time].append(entry)
+
+    for chunk, chunk_entries in chunks.items():
+        commands = unique(chop_command(entry.command) for entry in chunk_entries)
+        messages = unique(entry.message for entry in chunk_entries if len(entry.message))
+        jiras = guess_jiras(branch, *messages)
+
+        chunk_parts = []
+        header = indent(f"{chunk} {repo} {branch}", 1)
+        chunk_parts.append(header)
+        if jiras:
+            chunk_parts.append(indent(", ".join(jiras), 1))
+        if commands:
+            chunk_parts.append(indent(" ".join(commands), 2))
+        if messages:
+            message_chunk = indent("\n".join(messages), 2)
+            chunk_parts.append(message_chunk)
+        print("\n".join(chunk_parts))
+
+class Main(cmd.Main):
+    """Stream csv files in different ways."""
+
+    def __init__(self):
+        super().__init__()
+        easy_initialize_logging()
+        self.parser.add_argument(
+            "--day",
+            dest="day",
+            default=None,
+            help="Just show for one day",
+        )
+
+    def main(self):
+        super().main()
+        if not os.path.exists(FILENAME):
+            logger.error("Could not find git history file")
+            exit(1)
+        with open(FILENAME, 'r', encoding="UTF-8") as history_file:
+            lines = history_file.readlines()
+        days: dict[str, list[Entry]] = {}
+
+        for line in lines:
+            line = line.strip()
+            if not len(line):
+                continue
+            parts = line.split(" ", 5)
+            if len(parts) == 5:
+                message = ""
+                day, time_of_day, repo, branch, command = parts
+            elif len(parts) == 6:
+                day, time_of_day, repo, branch, command, message = parts
+            else:
+                logger.debug(f"Skipping line {line=} {parts=}")
+                continue
+
+            if self.args.day and self.args.day != day:
+                continue
+            entry = Entry(day, time_of_day, repo, branch, command, message)
+            if day not in days:
+                days[day] = []
+            days[day].append(entry)
+        for day, entries in days.items():
+            print(day)
+            repo = None
+            branch = None
+            branch_work = []
+            for entry in entries:
+                found_branch = entry.branch
+                if entry.repo == repo and found_branch == "HEAD" and branch is not None:
+                    found_branch = branch
+                if entry.repo != repo or found_branch != branch:
+                    if branch_work:
+                        dump_branch_work(branch_work)
+                        branch_work = []
+                repo = entry.repo
+                branch = found_branch
+                branch_work.append(entry)
+            if branch_work:
+                dump_branch_work(branch_work)
+
+
+if __name__ == "__main__":
+    Main().main()
