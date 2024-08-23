@@ -44,16 +44,6 @@ fi
 if [ -f /etc/bash_completion ]; then
     . /etc/bash_completion
 fi
-
-if [ -e ~/.virtualenvs ]; then
-    export POETRY_VIRTUALENVS_PATH=~/.virtualenvs
-    export WORKON_HOME=~/.virtualenvs
-    VEW=`which virtualenvwrapper.sh`
-    if [ -n "${VEW}" ] ; then
-        . "${VEW}"
-    fi
-fi
-
 # alias screen='TERM=screen screen'
 
 #stty erase '^?'

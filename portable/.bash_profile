@@ -109,7 +109,7 @@ if [ -e "${HOME}/.opam/opam-init/init.sh" ] ; then
 fi
 
 export PIP_REQUIRE_VIRTUALENV=true
-if which pip >/dev/null; then
+if which pip3 >/dev/null; then
     export STANDARD_CACHE_DIR="${XDG_CACHE_HOME:-${HOME}/.cache}/pip"
     export WHEELHOUSE="${STANDARD_CACHE_DIR}/wheelhouse"
     mkdir -p "${WHEELHOUSE}"
@@ -120,6 +120,15 @@ if which pip >/dev/null; then
     export PIP_DOWNLOAD_CACHE="${STANDARD_CACHE_DIR}/packages"
     mkdir -p "${PIP_DOWNLOAD_CACHE}"
 fi
+if [ -e ~/.virtualenvs ]; then
+    export POETRY_VIRTUALENVS_PATH=~/.virtualenvs
+    export WORKON_HOME=~/.virtualenvs
+    VEW=`which virtualenvwrapper.sh`
+    if [ -n "${VEW}" ] ; then
+        . "${VEW}"
+    fi
+fi
+
 export LESS="-XFRK"
 alias bwd='pwd | sed -e "s:/:🥖:g"'
 GZIP=-9
