@@ -1,10 +1,10 @@
 #!/usr/bin/env python-venv
-import os
+
 import os.path
+import pathlib
 import re
 import signal
 import sys
-import pathlib
 from argparse import ArgumentParser
 
 
@@ -103,12 +103,15 @@ def check_dir(find, regex, replacement, path, verbose, excludes):
 def clean_file(find, regex, replacement, filename, verbose):
     if Stop.stopped:
         return
-    file_size = os.path.getsize(filename)
+    try:
+        file_size = os.path.getsize(filename)
+    except FileNotFoundError:
+        return
     try:
         with open(filename) as f:
             original_contents = f.read(file_size)
             contents = original_contents
-    except:
+    except Exception:
         return
     if regex:
         contents = re.sub(find, replacement, contents)
