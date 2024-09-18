@@ -1,6 +1,6 @@
 #!/bin/bash
-history -a
 EXIT="$?"
+history -a
 if [ "${DEBUG_PROMPT}" == "true" ] ; then
    set -x
 fi
@@ -12,11 +12,11 @@ FROWNY="${FROWNY:-$_FROWNY}"
 CLOUDY="${_CLOUDY:-$_CLOUDY}"
 PS1=""
 PS1+="\$(git sanity)"
-PS1+="\$(date '+[%-m/%-d %H:%M:%S]')"
-PS1+=" \[\e[36m\u@$(tput bold)$(tput setaf "$HOST_COLOR")\]\h\[$(tput sgr0)\]"
+PS1+="\$(date '+[%Y-%0m-%0d %H:%M:%S]')"
 PS1+="\$(ssh-agent-prompt)"
+PS1+="\$(aws-prompt)"
 if [ -n "$SC_REGION" ]; then
-  PS1+=" ($CLOUDY  $SC_REGION"
+  PS1+=" ($CLOUDY $SC_REGION"
   if [ -n "$SC_PROJECT" ]; then
     PS1+="/$SC_PROJECT)"
   else
@@ -26,14 +26,15 @@ fi
 PS1+="\$(screen_prompt)"
 PS1+="\$(virtualenv_prompt)"
 PS1+="\$(. sdk-prompt)"
-PS1+=":\[\w\e[0m\]"
 PS1+="\$(git prompt)\n"
 if [ $EXIT -eq 0 ]; then
     PS1+="$SMILEY "
 else
     PS1+="$FROWNY "
 fi
-PS1+="\$ "
+PS1+="\$(whoami_prompt)"
+PS1+=":\[\w\e[0m\]"
+PS1+=" \$ "
 
 if [ "${DEBUG_PROMPT}" == "true"  ] ; then
    set +x

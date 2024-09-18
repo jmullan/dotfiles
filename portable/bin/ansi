@@ -1,0 +1,52 @@
+#!/usr/bin/env python-venv
+
+import colorist
+
+from jmullan_cmd import cmd
+
+CLOUD = '\u2601\ufe0f'
+
+colors = {
+    'BLACK',
+    'RED',
+    'GREEN',
+    'YELLOW',
+    'BLUE',
+    'MAGENTA',
+    'CYAN',
+    'WHITE',
+    'DEFAULT',
+}
+color_schemes = [
+    'Color',
+    'BrightColor'
+    'BgColor',
+    'BgBrightColor'
+]
+color_options: dict = {}
+for color_scheme in color_schemes:
+    if hasattr(colorist, color_scheme):
+        scheme = getattr(colorist, color_scheme)
+        for color in colors:
+            name = f"{color_scheme}.{color}"
+            if hasattr(scheme, color):
+                color_options[name] = getattr(scheme, color)
+
+class Main(cmd.Main):
+    def __init__(self):
+        super().__init__()
+        self.parser.add_argument(
+            "commands",
+            nargs="+",
+            choices = list(color_options.keys()),
+            help="what effects to run",
+        )
+
+    def main(self):
+        super().main()
+        for command in self.args.commands:
+            if command in color_options:
+                print(color_options[command], end='')
+
+if __name__ == "__main__":
+    Main().main()

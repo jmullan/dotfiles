@@ -1,0 +1,81 @@
+#!/usr/bin/env python-venv
+
+import json
+import os
+import re
+import signal
+import subprocess
+import sys
+
+from colorist import Color
+
+CLOUD = '\u2601\ufe0f'
+
+def interrupt_handler(*_, **__):
+    sys.exit(0)
+
+
+def get_env_or_none(key: str) -> str | None:
+    value = os.environ.get(key)
+    if value is None:
+        return None
+    if len(value) == 0:
+        return None
+    return value
+
+
+def whoami() -> str | None:
+    result = subprocess.run(["whoami"], text=True, stdout=subprocess.PIPE)
+    found = result.stdout.strip()
+    if len(found):
+        return found
+    return None
+
+
+def get_hostname() -> str | None:
+    result = subprocess.run(["hostname"], text=True, stdout=subprocess.PIPE)
+    found = result.stdout.strip()
+    if len(found):
+        return found
+    return None
+
+
+def get_arn(aws_command: str) -> str | None:
+    result = subprocess.run([aws_command, 'sts', 'get-caller-identity'], text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    json_string = result.stdout.strip()
+    if not len(json_string):
+        return None
+    try:
+        caller_identity = json.loads(json_string)
+    except json.JSONDecodeError:
+        return None
+    return caller_identity.get('Arn')
+
+
+def get_assumed_role(user_arn: str, aws_workload_prefix: str | None) -> str:
+    assumed_role = re.sub(r".*assumed-role/SAML-", "", user_arn)
+    if aws_workload_prefix is not None:
+        assumed_role = assumed_role.removeprefix(aws_workload_prefix)
+    assumed_role = re.sub(r"/[-_.a-zA-Z]+@[-_.a-zA-Z]+$", '', assumed_role)
+    return assumed_role
+
+
+def main():
+    username = whoami()
+    if username is not None:
+        username = f'{Color.CYAN}{username}{Color.DEFAULT}@'
+    hostname = get_hostname()
+    if hostname is not None:
+        if hostname == 'M7967X31X':
+            hostname = None
+        else:
+            hostname = f'{Color.YELLOW}{hostname}{Color.DEFAULT}'
+    parts = [username, hostname]
+    parts = [x for x in parts if x is not None]
+    if parts:
+        prompt = "".join(parts)
+        print(f" {prompt}")
+
+if __name__ == "__main__":
+    signal.signal(signal.SIGINT, interrupt_handler)
+    main()

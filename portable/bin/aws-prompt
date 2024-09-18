@@ -1,0 +1,105 @@
+#!/usr/bin/env python-venv
+
+import json
+import os
+import re
+import signal
+import subprocess
+import sys
+
+from colorist import Color
+
+CLOUD = '\u2601\ufe0f'
+
+def get_env_or_none(key: str) -> str | None:
+    value = os.environ.get(key)
+    if value is None:
+        return None
+    if len(value) == 0:
+        return None
+    return value
+
+def interrupt_handler(*_, **__):
+    sys.exit(0)
+## STY is current screen
+## TERM=screen
+#if [ "${DEBUG_PROMPT}" == "true" ] ; then
+#   set -x
+#fi
+#AWS=$(which aws)
+#if [ -z "{$AWS}" ] ; then
+#    exit
+#fi
+#echo -n ' (aws: '
+#if [ -n "${AWS_REGION}" ] ; then
+#    echo -n "${AWS_REGION}"
+#fi
+#if [ -n "${AWS_PROFILE}" ] ; then
+#    echo -n "${AWS_PROFILE}"
+#fi
+#echo -n ')'
+
+def get_aws_command() -> str | None:
+    result = subprocess.run(["which", "aws"], text=True, stdout=subprocess.PIPE)
+    found = result.stdout.strip()
+    if len(found):
+        return found
+    return None
+
+def get_arn() -> str | None:
+    aws_command = get_aws_command()
+    if aws_command is None:
+        return None
+    result = subprocess.run([aws_command, 'sts', 'get-caller-identity'], text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    json_string = result.stdout.strip()
+    if not len(json_string):
+        return None
+    try:
+        caller_identity = json.loads(json_string)
+    except json.JSONDecodeError:
+        return None
+    return caller_identity.get('Arn')
+
+def get_assumed_role(aws_workload_prefix: str | None) -> str | None:
+    user_arn = get_arn()
+    if user_arn is None:
+        return None
+    assumed_role = re.sub(r".*assumed-role/SAML-", "", user_arn)
+    if aws_workload_prefix is not None:
+        assumed_role = assumed_role.removeprefix(aws_workload_prefix)
+    assumed_role = re.sub(r"/[-_.a-zA-Z]+@[-_.a-zA-Z]+$", '', assumed_role).strip()
+    if len(assumed_role) > 0:
+        return assumed_role
+    return None
+
+def main():
+    parts = []
+    aws_region = get_env_or_none("AWS_REGION")
+    aws_profile = get_env_or_none("AWS_PROFILE")
+    aws_workload = get_env_or_none("AWS_WORKLOAD")
+    aws_workload_prefix: str | None = None
+    if aws_region is not None:
+        parts.append(aws_region)
+    if aws_workload is not None:
+        aws_workload_prefix = f"{aws_workload}-"
+        parts.append(aws_workload)
+    if aws_profile is not None:
+        if aws_workload_prefix is not None:
+            aws_profile = aws_profile.removeprefix(aws_workload_prefix)
+        if len(aws_profile) > 0:
+            parts.append(aws_profile)
+
+    assumed_role = get_assumed_role(aws_workload_prefix)
+    if assumed_role is not None:
+        parts.append(assumed_role)
+    elif parts:
+        parts.append(f"{Color.RED}\u2205{Color.DEFAULT}")
+
+    if parts:
+        parts = [CLOUD] + parts
+        prompt = ":".join(parts)
+        print(f" ({prompt})")
+
+if __name__ == "__main__":
+    signal.signal(signal.SIGINT, interrupt_handler)
+    main()

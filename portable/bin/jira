@@ -203,10 +203,12 @@ class Main(cmd.Main):
         if project is not None:
             for ticket_number in range(1, project_max + 1):
                 ticket = f"{project}-{ticket_number}"
-                self.csv(jira_url, headers, ticket, forward)
+                if self.args.format == "dump":
+                    self.dump(jira_url, headers, ticket, forward)
+                else:
+                    self.csv(jira_url, headers, ticket, forward)
                 time.sleep(1)
             exit(0)
-
         ticket = self.args.jira_ticket
         if ticket:
             if self.args.format == "dump":

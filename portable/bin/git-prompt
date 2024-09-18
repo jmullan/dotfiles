@@ -8,6 +8,13 @@ if [ "${GIT_PROMPT_ENABLED}" != "1" ] ; then
     exit
 fi
 GIT_STATUS="$(git status -unormal 2>&1)"
+if [[ "${GIT_STATUS}" =~ nothing\ to\ commit ]]; then
+    GIT_STATUS_COLOR=Color.GREEN
+elif [[ "${GIT_STATUS}" =~ nothing\ added\ to\ commit\ but\ untracked\ files\ present ]]; then
+    GIT_STATUS_COLOR=Color.CYAN
+else
+    GIT_STATUS_COLOR=Color.DEFAULT
+fi
 TRACKING="$(git track)"
 REBASE="$(git rebasing)"
 if [ -f "$GIT_DIR/rebase-merge/head-name" ] ; then
@@ -26,15 +33,9 @@ else
 fi
 GROSS="$(expr "${ADDED}" + "${DELETED}")"
 NET="$(expr "${ADDED}" - "${DELETED}")"
-ORIGIN_DIFF_STATS=$(echo -n "+$ADDED -$DELETED =$NET ($GROSS)")
-if [[ "${GIT_STATUS}" =~ nothing\ to\ commit ]]; then
-    ansi=2
-elif [[ "${GIT_STATUS}" =~ nothing\ added\ to\ commit\ but\ untracked\ files\ present ]]; then
-    ansi=6
-else
-    ansi=5
-fi
-echo -n "["
+# ORIGIN_DIFF_STATS=$(echo -n "+${ADDED} -${DELETED} =${NET} ($GROSS)")
+ORIGIN_DIFF_STATS=$(echo -n "+${ADDED} -${DELETED}")
+echo -n " ["
 if [ -n "$REBASE" ]; then
     echo -n " $REBASE"
 fi
@@ -47,37 +48,85 @@ fi
 if [ -n "$MERGE_HEAD" ]; then
     echo -n " $MERGE_HEAD";
 fi
-HEADNAME="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
-if [ -n "${HEADNAME}" ]; then
-    echo -n " $(tput setaf $ansi)${HEADNAME}$(tput sgr0)"
-    if [[ "${GIT_STATUS}" =~ Changes\ to\ be\ committed ]] ; then
-        echo -n " $(tput setaf 7)staged$(tput sgr0)"
-    fi
-    if [[ "${GIT_STATUS}" =~ not\ staged ]] ; then
-        echo -n " $(tput setaf 3)unstaged$(tput sgr0)"
-    fi
-    if [[ "${GIT_STATUS}" =~ ntracked ]] ; then
-        echo -n " $(tput setaf 1)untracked$(tput sgr0)"
-    fi
-fi
-if [ "${GROSS}" -gt 0 ]; then
-    echo -n " $ORIGIN_DIFF_STATS "
-    git diff-graph
-fi
-AHEAD="$(git ahead || echo 0)"
-if [ "${AHEAD}" -gt 0 ] ; then
-    echo -n " $(tput setaf 2)AHEAD $AHEAD$(tput sgr0)";
-fi
-BEHIND="$(git behind || echo 0)"
-if [ "${BEHIND}" -gt 0 ] ; then
-    echo -n " $(tput setaf 1)BEHIND $BEHIND$(tput sgr0)";
-fi
-FEATURE=$(echo "${HEADNAME}" | grep ^feature/)
-REMOTE=$(git remote)
+TRACKING=$(git track 2>/dev/null)
+HEAD_NAME="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
 MAIN_NAME=$(git config --get gitflow.branch.main)
 if [ -z "${MAIN_NAME}" ] ; then
     MAIN_NAME=$(git main)
 fi
+if [ -z "${TRACKING}" ] && [ -n "${MAIN_NAME}"]; then
+    TRACKING="${MAIN_NAME}"
+fi
+if [ -n "${TRACKING}" ]; then
+    SHORT_TRACKING=$(echo "${TRACKING}" | sed 's#^origin/#o/#' | sed 's#^upstream/#up/#')
+    BEHIND="$(git behind "${TRACKING}" || echo 0)"
+    AHEAD="$(git ahead "${TRACKING}" || echo 0)"
+    if [ -n "${HEAD_NAME}" ] ; then
+        if [ -z "${SHORT_TRACKING##*/${HEAD_NAME}}" ] ; then
+            ansi Color.WHITE
+            echo -n "${SHORT_TRACKING%/${HEAD_NAME}}"
+            ansi Color.DEFAULT
+            echo -n "/"
+            ansi "${GIT_STATUS_COLOR}"
+            echo -n "${HEAD_NAME}"
+            ansi Color.DEFAULT
+            if [ "${BEHIND}" -gt 0 ] ; then
+                ansi Color.RED
+                echo -n "~${BEHIND}"
+                ansi Color.DEFAULT
+            fi
+            if [ "${AHEAD}" -gt 0 ] ; then
+                ansi Color.GREEN
+                echo -n "+${AHEAD}"
+                ansi Color.DEFAULT
+            fi
+        else
+            ansi Color.WHITE
+            echo -n "${SHORT_TRACKING}"
+            ansi Color.DEFAULT
+            if [ "${BEHIND}" -gt 0 ] ; then
+                ansi Color.RED
+                echo -n "~${BEHIND}"
+                ansi Color.DEFAULT
+            fi
+            if [ "${AHEAD}" -gt 0 ] ; then
+                ansi Color.GREEN
+                echo -n "+${AHEAD}"
+                ansi Color.DEFAULT
+            fi
+            ansi "${GIT_STATUS_COLOR}"
+            echo -n "${HEAD_NAME}"
+            ansi Color.DEFAULT
+        fi
+    fi
+else
+    if [ -n "${HEAD_NAME}" ]; then
+        ansi "${GIT_STATUS_COLOR}"
+        echo -n "${HEAD_NAME}"
+        ansi Color.DEFAULT
+    fi
+fi
+if [[ "${GIT_STATUS}" =~ Changes\ to\ be\ committed ]] ; then
+    ansi Color.WHITE
+    echo -n " staged"
+    ansi Color.DEFAULT
+fi
+if [[ "${GIT_STATUS}" =~ not\ staged ]] ; then
+    ansi Color.YELLOW
+    echo -n " unstaged"
+    ansi Color.DEFAULT
+fi
+if [[ "${GIT_STATUS}" =~ ntracked ]] ; then
+    ansi Color.RED
+    echo -n " untracked"
+    ansi Color.DEFAULT
+fi
+if [ "${GROSS}" -gt 0 ]; then
+    echo -n " ${ORIGIN_DIFF_STATS}"
+    # git diff-graph
+fi
+FEATURE=$(echo "${HEAD_NAME}" | grep ^feature/)
+REMOTE=$(git remote)
 DEVELOP_NAME=$(git config --get gitflow.branch.develop)
 if [ -z "${DEVELOP_NAME}" ] ; then
     DEVELOP_NAME=develop
@@ -91,20 +140,22 @@ if [ -n "$REMOTE" ] ; then
     if [ -n "$FEATURE" ] && [ -n "$ORIGIN_DEVELOP" ] && [ "$TRACKING" != "$ORIGIN_DEVELOP" ] ; then
         BEHIND=$(git behind "origin/${DEVELOP_NAME}")
         AHEAD=$(git ahead "origin/${DEVELOP_NAME}")
-        if [ "$BEHIND" -gt 0 ] || [ "$AHEAD" -gt 0 ] ; then
+        if [ "${BEHIND}" -gt 0 ] || [ "${AHEAD}" -gt 0 ] ; then
             echo -n " ( o/${DEVELOP_NAME}"
         fi
-        if [ "$AHEAD" -gt 0 ] ; then
-            echo -n " +$AHEAD"
+        if [ "${AHEAD}" -gt 0 ] ; then
+            echo -n " +${AHEAD}"
         fi
-        if [ "$BEHIND" -gt 0 ] ; then
-            echo -n " -$BEHIND"
+        if [ "${BEHIND}" -gt 0 ] ; then
+            echo -n " -${BEHIND}"
         fi
-        if [ "$BEHIND" -gt 0 ] || [ "$AHEAD" -gt 0 ] ; then
+        if [ "${BEHIND}" -gt 0 ] || [ "${AHEAD}" -gt 0 ] ; then
             echo -n ' )'
         fi
     fi
 else
-    echo -n " $(tput setaf 1)NO REMOTE$(tput sgr0)";
+    ansi Color.RED
+    echo -n "NO REMOTE"
+    ansi Color.DEFAULT
 fi
-echo -n " ]"
+echo -n "]"

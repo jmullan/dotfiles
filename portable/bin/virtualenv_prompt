@@ -6,16 +6,18 @@ VIRTUALENVWRAPPER=$(which virtualenvwrapper.sh)
 EXPECTED_VENV=
 ACTUAL_VENV=
 VENV_FILE=$(find_up .venv)
-PYTHONV=""
+PYTHON_VERSION=$(python --version | sed 's/Python //' | sed 's/\.[0-9]*$//' || echo 'v')
+EXPECTED_PYTHON=""
+SNAKE=$(echo -e "\xf0\x9f\x90\x8d")
 if [ -n "${VENV_FILE}" ] ; then
     EXPECTED_VENV=$(head -n 1 "${VENV_FILE}")
-    PYTHONV=$(tail -n +2 "${VENV_FILE}" | head -n 1)
+    EXPECTED_PYTHON=$(tail -n +2 "${VENV_FILE}" | head -n 1)
 fi
-if [ -n "${PYTHONV}" ] ; then
-    if [ -e "${HOME}/.pyenv/versions/${PYTHONV}/bin/python" ] ; then
-        VERSION="${HOME}/.pyenv/versions/${PYTHONV}/bin/python"
+if [ -n "${EXPECTED_PYTHON}" ] ; then
+    if [ -e "${HOME}/.pyenv/versions/${EXPECTED_PYTHON}/bin/python" ] ; then
+        VERSION="${HOME}/.pyenv/versions/${EXPECTED_PYTHON}/bin/python"
     else
-        VERSION=$(glob "${HOME}/.pyenv/versions/${PYTHONV}*/bin/python" | sort -Vr | head -n 1)
+        VERSION=$(glob "${HOME}/.pyenv/versions/${EXPECTED_PYTHON}*/bin/python" | sort -Vr | head -n 1)
     fi
 fi
 COMMAND="mkvirtualenv ${EXPECTED_VENV}"
@@ -71,7 +73,7 @@ else
     if [ -n "${EXPECTED_VENV}" ] ; then
         if [ -n "${ACTUAL_VENV}" ] ; then
             if [ "${ACTUAL_VENV}" == "${EXPECTED_VENV}" ] ; then
-                echo -n "venv:${ACTUAL_VENV}"
+                echo -n "${SNAKE}${ACTUAL_VENV}:${PYTHON_VERSION}"
             else
                 if [ -n "${AVAILABLE_VENV}" ] ; then
                     if [[ ${EXPECTED_VENV:0:1} == "/" ]] ; then
@@ -120,7 +122,7 @@ else
                 fi
                 echo -n "$(tput sgr0)"
             else
-                echo -n " venv:${ACTUAL_VENV} "
+                echo -n " ${SNAKE}${ACTUAL_VENV}:${PYTHON_VERSION}: "
             fi
         fi
     fi
