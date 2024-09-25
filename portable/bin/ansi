@@ -4,8 +4,6 @@ import colorist
 
 from jmullan_cmd import cmd
 
-CLOUD = '\u2601\ufe0f'
-
 colors = {
     'BLACK',
     'RED',

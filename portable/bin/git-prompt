@@ -1,161 +1,457 @@
-#!/bin/bash
-GIT_DIR="$(git rev-parse --git-dir 2>/dev/null)"
-if [ -z "$GIT_DIR" ] ; then
-    exit
-fi
-GIT_PROMPT_ENABLED="$(git config prompt.enabled)"
-if [ "${GIT_PROMPT_ENABLED}" != "1" ] ; then
-    exit
-fi
-GIT_STATUS="$(git status -unormal 2>&1)"
-if [[ "${GIT_STATUS}" =~ nothing\ to\ commit ]]; then
-    GIT_STATUS_COLOR=Color.GREEN
-elif [[ "${GIT_STATUS}" =~ nothing\ added\ to\ commit\ but\ untracked\ files\ present ]]; then
-    GIT_STATUS_COLOR=Color.CYAN
-else
-    GIT_STATUS_COLOR=Color.DEFAULT
-fi
-TRACKING="$(git track)"
-REBASE="$(git rebasing)"
-if [ -f "$GIT_DIR/rebase-merge/head-name" ] ; then
-    REBASE_HEAD="$(cat "$GIT_DIR/rebase-merge/head-name")"
-fi
-if [ -f "$GIT_DIR/MERGE_HEAD" ] ; then
-    MERGING="MERGING"
-    MERGE_HEAD="$(cat "$GIT_DIR/MERGE_HEAD")"
-fi
-if [ -n "$TRACKING" ] ; then
-    ADDED="$(git diff --numstat "${TRACKING}" | total)"
-    DELETED="$(git diff --numstat "${TRACKING}" | awk '{print $2}' | total)"
-else
-    ADDED=0
-    DELETED=0
-fi
-GROSS="$(expr "${ADDED}" + "${DELETED}")"
-NET="$(expr "${ADDED}" - "${DELETED}")"
-# ORIGIN_DIFF_STATS=$(echo -n "+${ADDED} -${DELETED} =${NET} ($GROSS)")
-ORIGIN_DIFF_STATS=$(echo -n "+${ADDED} -${DELETED}")
-echo -n " ["
-if [ -n "$REBASE" ]; then
-    echo -n " $REBASE"
-fi
-if [ -n "$REBASE_HEAD" ]; then
-    echo -n " $REBASE_HEAD"
-fi
-if [ -n "$MERGING" ]; then
-    echo -n " $MERGING"
-fi
-if [ -n "$MERGE_HEAD" ]; then
-    echo -n " $MERGE_HEAD";
-fi
-TRACKING=$(git track 2>/dev/null)
-HEAD_NAME="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
-MAIN_NAME=$(git config --get gitflow.branch.main)
-if [ -z "${MAIN_NAME}" ] ; then
-    MAIN_NAME=$(git main)
-fi
-if [ -z "${TRACKING}" ] && [ -n "${MAIN_NAME}"]; then
-    TRACKING="${MAIN_NAME}"
-fi
-if [ -n "${TRACKING}" ]; then
-    SHORT_TRACKING=$(echo "${TRACKING}" | sed 's#^origin/#o/#' | sed 's#^upstream/#up/#')
-    BEHIND="$(git behind "${TRACKING}" || echo 0)"
-    AHEAD="$(git ahead "${TRACKING}" || echo 0)"
-    if [ -n "${HEAD_NAME}" ] ; then
-        if [ -z "${SHORT_TRACKING##*/${HEAD_NAME}}" ] ; then
-            ansi Color.WHITE
-            echo -n "${SHORT_TRACKING%/${HEAD_NAME}}"
-            ansi Color.DEFAULT
-            echo -n "/"
-            ansi "${GIT_STATUS_COLOR}"
-            echo -n "${HEAD_NAME}"
-            ansi Color.DEFAULT
-            if [ "${BEHIND}" -gt 0 ] ; then
-                ansi Color.RED
-                echo -n "~${BEHIND}"
-                ansi Color.DEFAULT
-            fi
-            if [ "${AHEAD}" -gt 0 ] ; then
-                ansi Color.GREEN
-                echo -n "+${AHEAD}"
-                ansi Color.DEFAULT
-            fi
-        else
-            ansi Color.WHITE
-            echo -n "${SHORT_TRACKING}"
-            ansi Color.DEFAULT
-            if [ "${BEHIND}" -gt 0 ] ; then
-                ansi Color.RED
-                echo -n "~${BEHIND}"
-                ansi Color.DEFAULT
-            fi
-            if [ "${AHEAD}" -gt 0 ] ; then
-                ansi Color.GREEN
-                echo -n "+${AHEAD}"
-                ansi Color.DEFAULT
-            fi
-            ansi "${GIT_STATUS_COLOR}"
-            echo -n "${HEAD_NAME}"
-            ansi Color.DEFAULT
-        fi
-    fi
-else
-    if [ -n "${HEAD_NAME}" ]; then
-        ansi "${GIT_STATUS_COLOR}"
-        echo -n "${HEAD_NAME}"
-        ansi Color.DEFAULT
-    fi
-fi
-if [[ "${GIT_STATUS}" =~ Changes\ to\ be\ committed ]] ; then
-    ansi Color.WHITE
-    echo -n " staged"
-    ansi Color.DEFAULT
-fi
-if [[ "${GIT_STATUS}" =~ not\ staged ]] ; then
-    ansi Color.YELLOW
-    echo -n " unstaged"
-    ansi Color.DEFAULT
-fi
-if [[ "${GIT_STATUS}" =~ ntracked ]] ; then
-    ansi Color.RED
-    echo -n " untracked"
-    ansi Color.DEFAULT
-fi
-if [ "${GROSS}" -gt 0 ]; then
-    echo -n " ${ORIGIN_DIFF_STATS}"
-    # git diff-graph
-fi
-FEATURE=$(echo "${HEAD_NAME}" | grep ^feature/)
-REMOTE=$(git remote)
-DEVELOP_NAME=$(git config --get gitflow.branch.develop)
-if [ -z "${DEVELOP_NAME}" ] ; then
-    DEVELOP_NAME=develop
-fi
-DEVELOP_REV=$(git rev-parse --abbrev-ref "${DEVELOP_NAME}" 2>&1 | grep 'unknown revision or path not in the working tree')
-if [ -n "${DEVELOP_REV}" ] ; then
-    DEVELOP_NAME="${MAIN_NAME}"
-fi
-if [ -n "$REMOTE" ] ; then
-    ORIGIN_DEVELOP=$(git for-each-ref --format='%(refname:short)' refs/heads refs/remotes/origin | grep "^origin/${DEVELOP_NAME}\$")
-    if [ -n "$FEATURE" ] && [ -n "$ORIGIN_DEVELOP" ] && [ "$TRACKING" != "$ORIGIN_DEVELOP" ] ; then
-        BEHIND=$(git behind "origin/${DEVELOP_NAME}")
-        AHEAD=$(git ahead "origin/${DEVELOP_NAME}")
-        if [ "${BEHIND}" -gt 0 ] || [ "${AHEAD}" -gt 0 ] ; then
-            echo -n " ( o/${DEVELOP_NAME}"
-        fi
-        if [ "${AHEAD}" -gt 0 ] ; then
-            echo -n " +${AHEAD}"
-        fi
-        if [ "${BEHIND}" -gt 0 ] ; then
-            echo -n " -${BEHIND}"
-        fi
-        if [ "${BEHIND}" -gt 0 ] || [ "${AHEAD}" -gt 0 ] ; then
-            echo -n ' )'
-        fi
-    fi
-else
-    ansi Color.RED
-    echo -n "NO REMOTE"
-    ansi Color.DEFAULT
-fi
-echo -n "]"
+#!/usr/bin/env python-venv
+import dataclasses
+import json
+import logging
+import subprocess
+from enum import Enum
+import re
+from typing import Any
+
+from colorist import Color, BgColor
+from jmullan_cmd import cmd
+
+logger = logging.getLogger(__name__)
+
+
+
+class EntryStatus(str, Enum):
+    unmerged = 'unmerged'
+    untracked = 'untracked'
+    changed = 'changed'
+    ignored = 'ignored'
+    unknown = 'unknown'
+
+    @property
+    def color(self) -> Color | None:
+        mappings = {
+            self.unmerged: Color.MAGENTA,
+            self.untracked: Color.CYAN,
+            self.changed: Color.YELLOW,
+            self.ignored: None,
+            self.unknown: None
+        }
+        return mappings.get(self)
+
+    @property
+    def short(self) -> str | None:
+        mappings = {
+            self.unmerged: "\u26CC",
+            self.untracked: "+",
+            self.changed: "\u0394",
+            self.ignored: None,
+            self.unknown: "?"
+        }
+        return mappings.get(self)
+
+@dataclasses.dataclass
+class GitFlow:
+    main: str | None  # Branch name for production releases
+    develop: str | None  # Branch name for "next release" development
+    feature: str | None
+    bugfix: str | None
+    hotfix: str | None
+    support: str | None
+    versiontag: str | None
+
+    @classmethod
+    def from_config(cls, config: dict[str, str]) -> "GitFlow":
+        full_config = {
+            "main": config.get("gitflow.branch.master", "main"),
+            "develop": config.get("gitflow.branch.develop", None),
+            "feature": config.get("gitflow.prefix.feature", "feature/"),
+            "bugfix": config.get("gitflow.prefix.bugfix", "bugfix/"),
+            "hotfix": config.get("gitflow.prefix.hotfix", "hotfix/"),
+            "support": config.get("gitflow.prefix.support", "support/"),
+            "versiontag": config.get("gitflow.prefix.versiontag", ""),
+        }
+        return GitFlow(**full_config)
+
+
+@dataclasses.dataclass
+class Branch:
+    refname: str | None = None
+    full_refname: str | None = None
+    tracking: str | None = None
+    push: str | None = None
+    upstream: str | None = None
+    remotename: str | None = None
+    remoteref: str | None = None
+    sha: str | None = None
+    is_remote: bool = False
+    git_flow: GitFlow | None = None
+
+    def _is_git_flow(self, key):
+        if self.git_flow is None or self.refname is None:
+            return False
+        if hasattr(self.git_flow, key):
+            return self.refname == getattr(self.git_flow, key)
+        return False
+
+    def _starts_with_git_flow(self, key):
+        if self.git_flow is None or self.refname is None:
+            return False
+        if hasattr(self.git_flow, key):
+            return self.refname.startswith(getattr(self.git_flow, key))
+        return False
+
+
+    @property
+    def is_main(self) -> bool:
+        return self._is_git_flow("main")
+
+    @property
+    def is_develop(self) -> bool:
+        return self._is_git_flow("develop")
+
+    @property
+    def is_feature(self) -> bool:
+        return self._starts_with_git_flow("feature")
+
+    @property
+    def is_bugfix(self) -> bool:
+        return self._starts_with_git_flow("bugfix")
+
+    @property
+    def is_hotfix(self) -> bool:
+        return self._starts_with_git_flow("hotfix")
+
+    @property
+    def is_support(self) -> bool:
+        return self._starts_with_git_flow("support")
+
+
+class DataclassesJsonEncoder(json.JSONEncoder):
+    def default(self, o):
+        if dataclasses.is_dataclass(o):
+            return {x: y for x, y in dataclasses.asdict(o).items() if y is not None}
+        return super().default(o)
+
+
+def get_remotes():
+    command = ["git", "remote"]
+    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, encoding="UTF8") as proc:
+        return [x for x in [line.strip() for line in proc.stdout.readlines()] if len(x)]
+
+
+def get_branches(remotes: list[str], git_flow: GitFlow) -> dict[str, Branch]:
+    s = "%(objectname:short)"
+    fields = {
+        "refname": "refname:short",
+        "full_refname": "refname",
+        "push": "push:short",
+        "upstream": "upstream:short",
+        "remotename": "upstream:remotename",
+        "remoteref": "upstream:remoteref"
+    }
+    fields_format = f"{s}".join(f"{x}:%({y})" for x, y in fields.items())
+    git_format = f"{s} {fields_format}"
+    command = ["git", "for-each-ref", f"--format={git_format}", "refs/heads", "refs/remotes/origin"]
+    for remote in set(remotes or []):
+        command.append(f"refs/remotes/{remote}")
+
+    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, encoding="UTF8") as proc:
+        lines = [x for x in [line.strip() for line in proc.stdout.readlines()] if len(x)]
+        branches: dict = {}
+        for line in lines:
+            sha, remainder = line.split(" ", 1)
+            field_pairs = remainder.split(sha)
+            fields = {
+                x: y for x, y in (
+                    field_pair.split(":", 1)
+                    for field_pair in field_pairs
+                )
+                if y is not None and y != ''
+            }
+            fields["sha"] = sha
+            fields["is_remote"] = any(fields["refname"].startswith(f"{remote}/") for remotes in remotes)
+            branches[fields["refname"]] = Branch(**fields, git_flow=git_flow)
+        return branches
+
+
+def get_heads(remotes: list[str]):
+    heads = ["HEAD"]
+    for remote in remotes or []:
+        heads.append(f"{remote}/HEAD")
+    head_mappings: dict = {}
+    for head in heads:
+        command = ["git", "rev-parse", "--abbrev-ref", head]
+        with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, encoding="UTF8") as proc:
+            value = proc.stdout.readline().strip()
+            if len(value):
+                head_mappings[head] = value
+    return head_mappings
+
+
+def get_config():
+    command = ["git", "config", "list"]
+    config: dict[str, str] = {}
+    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, encoding="UTF8") as proc:
+        lines = [x for x in [line.strip() for line in proc.stdout.readlines()] if len(x)]
+        for line in lines:
+            if line is not None and len(line) > 0 and "=" in line:
+                key, value = line.split("=", 1)
+                config[key] = value
+    return config
+
+
+def count_commits(branch_one: Branch, branch_two: Branch) -> tuple[float, float]:
+    if branch_one is None or branch_two is None:
+        return 0, 0
+    command = ["git", "for-each-ref", f"--format=%(ahead-behind:{branch_two.full_refname})", branch_one.full_refname]
+    # print(f"running command {' '.join(command)}")
+    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, encoding="UTF8") as proc:
+        value = proc.stdout.readline().strip()
+        if len(value):
+            try:
+                ahead, behind = value.split(" ", 1)
+                return int(ahead), int(behind)
+            except Exception:
+                pass
+    return 0, 0
+
+
+def count_lines(against: Branch | str) -> tuple[float, float]:
+    if against is None:
+        against = "HEAD"
+    elif isinstance(against, Branch):
+        against = against.full_refname
+    command = [
+        "git", "diff", "--numstat", against
+    ]
+    ahead = 0
+    behind = 0
+    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, encoding="UTF8") as proc:
+        lines = [x for x in [line.strip() for line in proc.stdout.readlines()] if len(x)]
+        for line in lines:
+            matches = re.match(r"^([0-9]+)\s+([0-9]+)\s", line)
+            if matches:
+                ahead += int(matches.group(1))
+                behind += int(matches.group(2))
+    return ahead, behind
+
+
+def get_short_remotes(remotes: list[str]) -> dict[str, str]:
+    remote_mappings = {}
+    mutable_remotes = [r for r in set(remotes) if r is not None and len(r) > 0]
+    while len(mutable_remotes):
+        remote = mutable_remotes.pop()
+        length = 0
+        while length < len(remote):
+            length += 1
+            substring = remote[:length]
+            remote_mappings[remote] = substring
+            collisions = len([x for x in mutable_remotes if x.startswith(substring)])
+            if collisions == 0:
+                break
+    return remote_mappings
+
+
+def increment(to_dict: dict[str, int], key: str):
+    if key is None or key in ['', '.']:
+        return
+    if key not in to_dict:
+        to_dict[key] = 0
+    to_dict[key] += 1
+
+
+def get_status():
+    command = ["git", "status", "--porcelain=2", "--ahead-behind", "--branch", "--show-stash"]
+    # print(f"running command {' '.join(command)}")
+    counts: dict[str, Any] = {
+        "index": {},
+        "tree": {},
+        "merge": {}
+    }
+    status: dict[str, Any] = {}
+    status["counts"] = counts
+    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, encoding="UTF8") as proc:
+        lines = [x for x in [line.strip() for line in proc.stdout.readlines()] if len(x)]
+        for line in lines:
+            if line.startswith("#"):
+                parts = line.split(" ", 2)
+                if len(parts) == 3:
+                    key = parts[1]
+                    value = parts[2]
+                    status[key] = value
+                continue
+            parts = line.split(" ")
+            if parts[0] == '?':
+                entry_status = EntryStatus.untracked
+                index_state = "."
+                tree_state = "."
+                head_state_one = "."
+                head_state_two = "."
+            elif parts[0] == '!':
+                entry_status = EntryStatus.ignored
+                index_state = "."
+                tree_state = "."
+                head_state_one = "."
+                head_state_two = "."
+            elif parts[0] == "1":
+                XY = parts[1]
+                entry_status = EntryStatus.changed
+                index_state = XY[0]
+                tree_state = XY[1]
+                head_state_one = "."
+                head_state_two = "."
+            elif parts[0] == "2":
+                XY = parts[1]
+                entry_status = EntryStatus.changed
+                index_state = XY[0]
+                tree_state = XY[1]
+                head_state_one = "."
+                head_state_two = "."
+            elif parts[0] == "u":
+                XY = parts[1]
+                entry_status = EntryStatus.unmerged
+                index_state = "."
+                tree_state = "."
+                head_state_one = XY[0]
+                head_state_two = XY[1]
+            else:
+                entry_status = EntryStatus.unknown
+                index_state = "."
+                tree_state = "."
+                head_state_one = "."
+                head_state_two = "."
+            increment(counts, entry_status)
+            increment(counts["index"], index_state)
+            increment(counts["tree"], tree_state)
+            increment(counts["merge"], head_state_one)
+            increment(counts["merge"], head_state_two)
+    status["color"] = Color.GREEN
+    for entry_status in list(EntryStatus):
+        if counts.get(entry_status) and entry_status.color is not None:
+            status["color"] = entry_status.color
+            break
+    # print(json.dumps(status, indent=4))
+    return status
+
+
+class Main(cmd.Main):
+    def __init__(self):
+        super().__init__()
+
+
+    def main(self):
+        super().main()
+        git_status = get_status()
+        config = get_config()
+        git_flow = GitFlow.from_config(config)
+        # print(json.dumps(config, cls=DataclassesJsonEncoder, indent=4))
+        remotes = get_remotes()
+        unique_remotes = get_short_remotes(remotes)
+        # print(remotes)
+        branches = get_branches(remotes, git_flow)
+        # print(json.dumps(branches, cls=DataclassesJsonEncoder, indent=4))
+        head_mappings = get_heads(remotes)
+        # print(json.dumps(head_mappings, cls=DataclassesJsonEncoder, indent=4))
+
+        head_name = head_mappings.get("HEAD")
+        if head_name is None:
+            exit(0)
+
+        head_branch = branches.get(head_name)
+        if head_branch is None:
+            print(f"Error finding HEAD as {head_name}")
+            exit(1)
+
+        print(" [", end="")
+        head_upstream_name = head_branch.upstream
+        head_upstream_branch: Branch | None = None
+        if head_upstream_name is not None:
+            head_upstream_branch = branches.get(head_upstream_name)
+
+        if head_upstream_branch is not None:
+            lines_ahead, lines_behind = count_lines(head_upstream_branch)
+        else:
+            lines_ahead, lines_behind = count_lines(head_branch)
+
+        develop_branch: Branch | None = None
+        develop_upstream_branch: Branch | None = None
+        if git_flow.develop and not head_branch.is_develop:
+            develop_branch = branches.get(git_flow.develop)
+            if develop_branch is not None and develop_branch.upstream:
+                develop_upstream_branch = branches.get(develop_branch.upstream)
+
+        main_branch: Branch | None = None
+        main_upstream_branch: Branch | None = None
+        if git_flow.main and not head_branch.is_main:
+            main_branch = branches.get(git_flow.main)
+            if main_branch is not None and main_branch.upstream:
+                main_upstream_branch = branches.get(main_branch.upstream)
+
+        prompt_branches: list[tuple[Branch, Branch]] = [b for b in [
+            (main_upstream_branch, main_branch),
+            (develop_upstream_branch, develop_branch),
+            (head_upstream_branch, head_branch),
+        ] if b[0] is not None or b[1] is not None]
+        prior_b: Branch | None = None
+        for up, b in prompt_branches:
+            ahead, behind = 0, 0
+            if b is None:
+                # b should never be None because then we wouldn't have an
+                # upstream for b
+                continue
+            elif up is None:
+                # we need to compare b to the prior b
+                ahead, behind = count_commits(prior_b, b)
+            elif up is not None and b is not None:
+                # this could be just an else, but for clarity
+                if prior_b is not None:
+                    ahead, behind = count_commits(up, prior_b)
+                    if ahead != 0 or behind != 0:
+                        print("(c", end="")
+                        if behind != 0:
+                            print(f"{Color.RED}~{behind}{Color.DEFAULT}", end="")
+                        if ahead != 0:
+                            print(f"{Color.GREEN}+{ahead}{Color.DEFAULT}", end="")
+                        print(") ", end="")
+                ahead, behind = count_commits(b, up)
+                prior = up.refname
+                if b.upstream == up.refname and b.remotename is not None:
+                    remote = f"{b.remotename}/"
+                    if up.refname.removeprefix(remote) == b.refname:
+                        prior = f"{unique_remotes[b.remotename]}/"
+                if "/" in prior:
+                    parts = prior.split("/", 1)
+                    if parts[0] in unique_remotes:
+                        parts[0] = unique_remotes[parts[0]]
+                        prior = "/".join(parts)
+                print(f"{Color.WHITE}{prior}{Color.DEFAULT}", end="")
+            if ahead != 0 or behind != 0:
+                print("(c", end="")
+                if behind != 0:
+                    print(f"{Color.RED}~{behind}{Color.DEFAULT}", end="")
+                if ahead != 0:
+                    print(f"{Color.GREEN}+{ahead}{Color.DEFAULT}", end="")
+                print(")", end="")
+            status_color = git_status.get("color")
+            if b.refname == head_mappings["HEAD"] and status_color is not None:
+                print(f"{status_color}{b.refname}{Color.DEFAULT} ", end = "")
+            else:
+                print(f"{b.refname} ", end = "")
+            prior_b = b
+
+        non_zero_entry_statuses = [entry_status for entry_status in EntryStatus if git_status["counts"].get(entry_status)]
+        if non_zero_entry_statuses:
+            print("(f", end="")
+            for entry_status in non_zero_entry_statuses:
+                count = git_status["counts"].get(entry_status)
+                print(f" {entry_status.color}{count}{entry_status.short}{Color.DEFAULT}", end = "")
+            print(")", end="")
+
+        if lines_ahead or lines_behind:
+            print(" (L", end="")
+            if lines_ahead != 0:
+                print(f"{Color.GREEN}+{lines_ahead}{Color.DEFAULT}", end="")
+            if lines_behind != 0:
+                print(f"{Color.RED}-{lines_behind}{Color.DEFAULT}", end="")
+            print(")", end="")
+
+        print(" ]", end="")
+
+
+
+if __name__ == "__main__":
+    Main().main()

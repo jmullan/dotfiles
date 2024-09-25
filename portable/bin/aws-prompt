@@ -98,7 +98,7 @@ def main():
     if parts:
         parts = [CLOUD] + parts
         prompt = ":".join(parts)
-        print(f" ({prompt})")
+        print(f" ({prompt})", end='')
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, interrupt_handler)

@@ -53,3 +53,6 @@ nosetests.xml
 .git
 .svn
 libphutil
+.git/*
+target/failsafe-reports/*xml
+target/surefire-reports/*xml

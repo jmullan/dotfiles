@@ -9,7 +9,6 @@ import sys
 
 from colorist import Color
 
-CLOUD = '\u2601\ufe0f'
 
 def interrupt_handler(*_, **__):
     sys.exit(0)
@@ -63,13 +62,13 @@ def get_assumed_role(user_arn: str, aws_workload_prefix: str | None) -> str:
 def main():
     username = whoami()
     if username is not None:
-        username = f'{Color.CYAN}{username}{Color.DEFAULT}@'
+        username = f'\x01{Color.CYAN}\x02{username}\x01{Color.DEFAULT}\x02@'
     hostname = get_hostname()
     if hostname is not None:
         if hostname == 'M7967X31X':
             hostname = None
         else:
-            hostname = f'{Color.YELLOW}{hostname}{Color.DEFAULT}'
+            hostname = f'\x01{Color.YELLOW}\x02{hostname}\x01{Color.DEFAULT}\x02'
     parts = [username, hostname]
     parts = [x for x in parts if x is not None]
     if parts:
