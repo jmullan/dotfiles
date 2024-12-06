@@ -10,3 +10,4 @@ jmullan_cmd@git+http://github.com/jmullan/jmullan_cmd
 jira
 rich
 colorist
+httpx

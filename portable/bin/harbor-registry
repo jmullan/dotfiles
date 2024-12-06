@@ -5,10 +5,8 @@ import json
 import logging
 import os.path
 from argparse import Namespace, ArgumentParser, ArgumentError
-from dataclasses import dataclass
 
 import requests
-
 from jmullan_cmd import cmd
 from jmullan_logging.easy_logging import easy_initialize_logging
 

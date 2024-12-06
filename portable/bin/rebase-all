@@ -23,8 +23,8 @@ restore_settings() {
     git prune
     git gc
 
-    git config gc.auto "${GC_AUTO}"
-    git config gc.autodetach "${GC_AUTODETACH}"
+#    git config gc.auto "${GC_AUTO}"
+#    git config gc.autodetach "${GC_AUTODETACH}"
 }
 
 git fetch --all --tags || ( echo "Could not git fetch" >&2 && restore_settings && exit 1 )

@@ -1,4 +1,6 @@
-;;; package dot emacs -- emacs configs
+;;; package --- Summary
+;;; Commentary: oh no
+;;; dot emacs -- emacs configs
 (defun add-search-dir (path)
   (setq load-path (cons (expand-file-name path) load-path)))
 (add-search-dir "~/lib/emacs/lisp")
@@ -21,30 +23,18 @@
 
 (setq package-list
     '(
-         column-marker
          dash
          editorconfig
-         editorconfig-core
-         editorconfig-fnmatch
-         epl
          flycheck
-         flycheck-pyflakes
-         groovy-mode
-         js3-mode
          json-mode
-         json-reformat
          less-css-mode
          let-alist
          lua-mode
          markdown-mode
          php-mode
-         pkg-info
-         rjsx-mode
-         scala-mode2
          seq
          sql-indent
          yaml-mode
-         yaml-tomato
          )
     )
 
@@ -91,7 +81,7 @@
 
 ;; display settings
 (column-number-mode)
-(global-linum-mode 1)
+(display-line-numbers-mode 1)
 (menu-bar-mode nil)
 (setq split-height-threshold 400)
 (setq split-width-threshold 121)
@@ -133,8 +123,9 @@
 (define-key input-decode-map "\e[1;2A" [S-up])
 ;(global-set-key (kbd "C-c TAB") 'indent-by-four)
 ;(global-set-key (kbd "C-c q") 'dedent-by-four)
-(global-set-key (kbd "C-c TAB") 'indent-by-two)
+(global-set-key (kbd "C-c <TAB>") 'indent-by-two)
 (global-set-key (kbd "C-c q") 'dedent-by-two)
+(global-set-key (kbd "C-c 1") 'replace-string)
 
 ; From:
 ; http://snarfed.org/space/emacs+page+up+page+down
@@ -168,14 +159,14 @@
 (add-to-list 'auto-mode-alist '("\\.pyi\\'" . python-mode))
 
 ;; editorconfig hooks
-(add-hook 'editorconfig-custom-hooks
-  '(lambda (props)
-       (let ((max_line_length (gethash 'max_line_length props)))
-           (column-marker-1
-               (string-to-number (if max_line_length max_line_length "80")))
-           )
-       )
-    )
+;(add-hook 'editorconfig-custom-hooks
+;  '(lambda (props)
+;       (let ((max_line_length (gethash 'max_line_length props)))
+;           (column-marker-1
+;               (string-to-number (if max_line_length max_line_length "80")))
+;           )
+;       )
+;    )
 
 (add-hook 'editorconfig-custom-hooks
   '(lambda (props)

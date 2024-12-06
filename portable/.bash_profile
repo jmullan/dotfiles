@@ -35,6 +35,7 @@ POSSIBLE_PATHS=(
     "/usr/local/opt/openssl@1.1/bin"
     "/usr/local/opt/libxml2/bin"
     "/opt/homebrew/bin"
+    "/opt/homebrew/opt/curl/bin"
     "${HOME}/src/hadoop"
     "${HOME}/bin/ec2/bin"
     "${HOME}/.local/bin"

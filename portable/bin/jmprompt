@@ -17,6 +17,7 @@ CLOUDY="${CLOUDY:-$_CLOUDY}"
 {
     echo -n $(date '+[%Y-%0m-%0d %H:%M:%S]')
     ssh-agent-prompt
+    docker_prompt
     aws-prompt
 
     if [ -n "${SC_REGION}" ]; then
@@ -29,9 +30,9 @@ CLOUDY="${CLOUDY:-$_CLOUDY}"
     screen_prompt
     virtualenv_prompt
     . sdk-prompt
-    git prompt
+    git prompt | tail -n 1
     echo
-} | tail
+} | tail -n +0
 
 if [ $EXIT -eq 0 ]; then
     _EMOJI="${SMILEY}"

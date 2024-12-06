@@ -1,0 +1,43 @@
+#!/usr/bin/env python-venv
+
+import re
+import sys
+
+from jmullan_cmd import cmd
+
+
+class Main(cmd.Main):
+    def __init__(self):
+        super().__init__()
+        self.parser.add_argument(
+            "--regex",
+            dest="regex",
+            action="store_true",
+            default=False,
+            help="Treat the find as a regex (and thusly the replacement as the same)",
+        )
+        self.parser.add_argument(
+            "find",
+            nargs=1,
+            help=f"Look for this thing",
+        )
+        self.parser.add_argument(
+            "replace",
+            nargs='?',
+            help=f"Replace it with this thing",
+        )
+
+
+    def main(self):
+        super().main()
+        find = self.args.find[0]
+        replace = self.args.replace or ''
+        for line in sys.stdin:
+            line = line.removesuffix("\n")
+            if self.args.regex:
+                print(re.sub(find, replace, line))
+            else:
+                print(line.replace(find, replace))
+
+if __name__ == "__main__":
+    Main().main()

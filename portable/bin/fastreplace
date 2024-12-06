@@ -1,12 +1,15 @@
 #!/usr/bin/env python-venv
 
+import logging
 import os.path
 import pathlib
 import re
-import signal
 import sys
-from argparse import ArgumentParser
 
+from jmullan_cmd import cmd
+from jmullan_logging.easy_logging import easy_initialize_logging
+
+logger = logging.getLogger(__name__)
 
 class Stop:
     stopped = False
@@ -24,61 +27,60 @@ def process_gitignore(path: str):
             for line in gitignore.readlines():
                 if Stop.stopped:
                     return
-                line = re.sub("#.*", "", line).strip()
+                line = re.sub(r"^\s*#+.*", "", line).strip()
                 if len(line):
                     excludes.add(line)
     return excludes
 
+class Main(cmd.Main):
+    def __init__(self):
+        super().__init__()
+        self.parser.add_argument(
+            "-r",
+            "--regex",
+            dest="regex",
+            action="store_true",
+            default=False,
+            help="treat the find string as a regex",
+        )
+        self.parser.add_argument("find")
+        self.parser.add_argument("replacement")
+        self.parser.add_argument("filenames", nargs="*")
 
-def main():
-    """Strip $Id$ and stuff."""
-    parser = ArgumentParser()
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        dest="verbose",
-        action="store_true",
-        default=False,
-        help="verbose is more verbose",
-    )
-    parser.add_argument(
-        "-r",
-        "--regex",
-        dest="regex",
-        action="store_true",
-        default=False,
-        help="treat the find string as a regex",
-    )
-    parser.add_argument("find")
-    parser.add_argument("replacement")
-    parser.add_argument("filenames", nargs="*")
-
-    args = parser.parse_args()
-    find = args.find
-    regex = args.regex
-    replacement = args.replacement
-    verbose = args.verbose
-
-    filenames = args.filenames
-    if not filenames:
-        filenames = ["."]
-
-    excludes = process_gitignore(".gitignore")
-    excludes.update(process_gitignore("~/.gitignore"))
-    excludes.add(".git")
-
-    for filename in filenames:
-        check_filename(find, regex, replacement, filename, verbose, excludes)
+    def setup(self):
+        super().setup()
+        if self.args.verbose:
+            easy_initialize_logging("DEBUG")
+        else:
+            easy_initialize_logging()
 
 
-def check_filename(find, regex, replacement, filename, verbose, excludes):
+    def main(self):
+        self.setup()
+        find = self.args.find
+        regex = self.args.regex
+        replacement = self.args.replacement
+
+        filenames = self.args.filenames
+        if not filenames:
+            filenames = ["."]
+
+        excludes = process_gitignore(".gitignore")
+        excludes.update(process_gitignore("~/.gitignore"))
+        excludes.add(".git")
+
+        for filename in filenames:
+            check_filename(find, regex, replacement, filename, excludes)
+
+
+def check_filename(find, regex, replacement, filename, excludes):
     if os.path.isdir(filename):
-        check_dir(find, regex, replacement, filename, verbose, excludes)
+        check_dir(find, regex, replacement, filename, excludes)
     if os.path.isfile(filename):
-        clean_file(find, regex, replacement, filename, verbose)
+        clean_file(find, regex, replacement, filename)
 
 
-def check_dir(find, regex, replacement, path, verbose, excludes):
+def check_dir(find, regex, replacement, path, excludes):
     for root, dirs, files in os.walk(path, topdown=True):
         if Stop.stopped:
             return
@@ -97,10 +99,10 @@ def check_dir(find, regex, replacement, path, verbose, excludes):
                     process = False
                     break
             if process:
-                clean_file(find, regex, replacement, subpath, verbose)
+                clean_file(find, regex, replacement, subpath)
 
 
-def clean_file(find, regex, replacement, filename, verbose):
+def clean_file(find, regex, replacement, filename):
     if Stop.stopped:
         return
     try:
@@ -119,12 +121,10 @@ def clean_file(find, regex, replacement, filename, verbose):
         contents = contents.replace(find, replacement)
     changed = contents != original_contents
     if changed:
-        if verbose:
-            sys.stdout.write("updated file %s" % filename)
+        logger.debug(f"Updated file {filename}")
         with open(filename, "w") as f:
             f.write(contents)
 
 
 if __name__ == "__main__":
-    signal.signal(signal.SIGINT, interrupt_handler)
-    main()
+    Main().main()
