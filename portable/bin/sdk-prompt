@@ -3,51 +3,49 @@ if [ "${DEBUG_PROMPT}" == "true" ] ; then
    set -x
 fi
 SDK=$(sdk v 2>/dev/null)
-if [ -z "${SDK}" ] ; then
-    exit
+if [ -n "${SDK}" ] ; then
+    EXPECTED_SDKENV=
+    SDK_MISSING_ENVS=
+    FOUND_EXPECTED=
+    SDKENV_FILE=$(find_up .sdkmanrc)
+    if [ -n "${SDKENV_FILE}" ] ; then
+        EXPECTED_SDKENV="$(cat "${SDKENV_FILE}" | sed 's/#.*//' | not-empty | awk '/./ {print}')"
+        SDK_MISSING_ENVS="$(cat "${SDKENV_FILE}" | sed 's/#.*//' | not-empty| awk '/./ {print}')"
+    fi
+    SDK_CURRENTS="$(sdk current | grep -v 'Using:' | grep ':' | sed 's/ *: */=/' | awk '/./ {print}')"
+    SDK_FOUND_ENVS=
+    if [ -n "${EXPECTED_SDKENV}" ] ; then
+        while read -r x ; do
+            FOUND_EXPECTED=$(echo "${SDK_CURRENTS}" | grep "${x}")
+            if [ -n "${FOUND_EXPECTED}" ] ; then
+                SDK_CURRENTS=$(echo "${SDK_CURRENTS}" | grep -v "${FOUND_EXPECTED}")
+                SDK_MISSING_ENVS=$(echo "${SDK_MISSING_ENVS}" | grep -v "${x}")
+                SDK_FOUND_ENVS="${FOUND_EXPECTED} ${SDK_FOUND_ENVS}"
+            fi
+        done <<<"${EXPECTED_SDKENV}"
+    fi
+    SDK_VERSIONS=$(echo "${SDK_CURRENTS}" | awk '/./ {printf $0" "}')
+    SDK_VERSIONS=$(echo "${SDK_VERSIONS}" | sed 's/^  *//' | sed 's/ * $//')
+    SDK_FOUND_ENVS=$(echo "${SDK_FOUND_ENVS}" | sed 's/^  *//' | sed 's/ * $//')
+    SDK_PROMPT=" ("
+    S=
+    if [ -n "${SDK_FOUND_ENVS}" ] ; then
+        SDK_PROMPT="${SDK_PROMPT}$(tput setaf 2)${SDK_FOUND_ENVS}$(tput sgr0)"
+        S=" "
+    fi
+    if [ -n "${SDK_VERSIONS}" ] ; then
+        SDK_PROMPT="${SDK_PROMPT}${S}${SDK_VERSIONS}"
+        S=" "
+    fi
+    if [ -n "${SDK_MISSING_ENVS}" ] ; then
+        SDK_PROMPT="${SDK_PROMPT}${S}$(tput setaf 1)${SDK_MISSING_ENVS}$(tput sgr0)"
+        S=" "
+    fi
+    SDK_PROMPT="${SDK_PROMPT})"
+    if [ -n "${S}" ] ; then
+        echo -n "${SDK_PROMPT}" | sed 's/java/jv/g' | sed 's/scala/sc/g' | sed 's/  */ /g'
+    fi
 fi
-EXPECTED_SDKENV=
-SDK_MISSING_ENVS=
-FOUND_EXPECTED=
-SDKENV_FILE=$(find_up .sdkmanrc)
-if [ -n "${SDKENV_FILE}" ] ; then
-    EXPECTED_SDKENV="$(cat "${SDKENV_FILE}" | sed 's/#.*//' | not-empty | awk '/./ {print}')"
-    SDK_MISSING_ENVS="$(cat "${SDKENV_FILE}" | sed 's/#.*//' | not-empty| awk '/./ {print}')"
-fi
-SDK_CURRENTS="$(sdk current | grep -v 'Using:' | grep ':' | sed 's/ *: */=/' | awk '/./ {print}')"
-SDK_FOUND_ENVS=
-if [ -n "${EXPECTED_SDKENV}" ] ; then
-    while read -r x ; do
-        FOUND_EXPECTED=$(echo "${SDK_CURRENTS}" | grep "${x}")
-        if [ -n "${FOUND_EXPECTED}" ] ; then
-            SDK_CURRENTS=$(echo "${SDK_CURRENTS}" | grep -v "${FOUND_EXPECTED}")
-            SDK_MISSING_ENVS=$(echo "${SDK_MISSING_ENVS}" | grep -v "${x}")
-            SDK_FOUND_ENVS="${FOUND_EXPECTED} ${SDK_FOUND_ENVS}"
-        fi
-    done <<<"${EXPECTED_SDKENV}"
-fi
-SDK_VERSIONS=$(echo "${SDK_CURRENTS}" | awk '/./ {printf $0" "}')
-SDK_VERSIONS=$(echo "${SDK_VERSIONS}" | sed 's/^  *//' | sed 's/ * $//')
-SDK_FOUND_ENVS=$(echo "${SDK_FOUND_ENVS}" | sed 's/^  *//' | sed 's/ * $//')
-SDK_PROMPT=" ("
-S=
-if [ -n "${SDK_FOUND_ENVS}" ] ; then
-    SDK_PROMPT="${SDK_PROMPT}$(tput setaf 2)${SDK_FOUND_ENVS}$(tput sgr0)"
-    S=" "
-fi
-if [ -n "${SDK_VERSIONS}" ] ; then
-    SDK_PROMPT="${SDK_PROMPT}${S}${SDK_VERSIONS}"
-    S=" "
-fi
-if [ -n "${SDK_MISSING_ENVS}" ] ; then
-    SDK_PROMPT="${SDK_PROMPT}${S}$(tput setaf 1)${SDK_MISSING_ENVS}$(tput sgr0)"
-    S=" "
-fi
-SDK_PROMPT="${SDK_PROMPT})"
-if [ -n "${S}" ] ; then
-    echo -n "${SDK_PROMPT}" | sed 's/java/jv/g' | sed 's/scala/sc/g' | sed 's/  */ /g'
-fi
-
 if [ "${DEBUG_PROMPT}" == "true"  ] ; then
    set +x
 fi

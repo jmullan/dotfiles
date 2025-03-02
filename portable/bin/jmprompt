@@ -29,7 +29,7 @@ CLOUDY="${CLOUDY:-$_CLOUDY}"
     fi
     screen_prompt
     virtualenv_prompt
-    . sdk-prompt
+    sdk-prompt
     git prompt | tail -n 1
     echo
 } | tail -n +0

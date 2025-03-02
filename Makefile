@@ -7,6 +7,7 @@ submodules: portable/bin/back portable/bin/git-helpers portable/bin/git-toolbelt
 	git submodule update --init --recursive
 	git submodule update --recursive
 	git submodule foreach git fetch
+	git submodule foreach 'git main --refresh'
 	git submodule foreach 'git checkout main 2>/dev/null || git checkout master'
 	git submodule foreach git rebase
 
