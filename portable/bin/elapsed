@@ -22,7 +22,7 @@ class Interval:
 NS = Interval("nanoseconds", "ns")
 US = Interval("microseconds", "μs")
 MS = Interval("milliseconds", "ms")
-S = Interval("seconds", "ns")
+S = Interval("seconds", "s")
 MIN = Interval("minutes", "min")
 HOURS = Interval("hours", "hrs")
 D = Interval("days", "d")

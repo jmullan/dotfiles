@@ -1,6 +1,6 @@
 #!/bin/bash
 if [ -e ~/.virtualenvs/dotfiles/bin/activate ]; then
     source ~/.virtualenvs/dotfiles/bin/activate
-    pip install --upgrade pip
-    pip install --upgrade -r requirements.txt
+    pip install --upgrade pip uv
+    uv pip install --upgrade -r requirements.txt
 fi
