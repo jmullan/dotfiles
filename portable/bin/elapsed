@@ -1,0 +1,144 @@
+#!/usr/bin/env python-venv
+import dataclasses
+import logging
+import re
+import sys
+import time
+
+from jmullan_cmd import cmd
+from jmullan_logging.easy_logging import easy_initialize_logging
+
+logger = logging.getLogger(__name__)
+
+@dataclasses.dataclass
+class Interval:
+    name: str
+    abbreviation: str
+
+    def __hash__(self):
+        return hash(self.name)
+
+
+NS = Interval("nanoseconds", "ns")
+US = Interval("microseconds", "μs")
+MS = Interval("milliseconds", "ms")
+S = Interval("seconds", "ns")
+MIN = Interval("minutes", "min")
+HOURS = Interval("hours", "hrs")
+D = Interval("days", "d")
+W = Interval("weeks", "wk")
+MO = Interval("months", "mo")
+YEARS = Interval("years", "yr")
+
+ALL_INTERVALS = [
+    YEARS, MO, W, D, HOURS, MIN, S, MS, US, NS
+]
+
+# these should be in order
+INTERVAL_MULTIPLIERS = (
+    (365, YEARS),
+    (24, D),
+    (60, HOURS),
+    (60, MIN),
+    (1000, S),
+    (1000, MS),
+    (1000, US),
+    (1, NS)
+)
+
+TO_NANOSECONDS: dict[Interval, int] = {}
+
+_x = 1
+for _m, _i in reversed(INTERVAL_MULTIPLIERS):
+    _x = _x * _m
+    TO_NANOSECONDS[_i] = _x
+
+
+def epoch_diff(now: int, since: int) -> str:
+    if now is None or since is None:
+        return ""
+    parts: dict[Interval, int] = {interval: 0 for interval in ALL_INTERVALS}
+    diff = abs(now - since)
+    if diff == 0:
+        logger.debug("now and since are the same")
+        return ""
+    fraction_threshold = 10 * TO_NANOSECONDS[S]
+    if diff < fraction_threshold:
+        diff = diff / TO_NANOSECONDS[S]
+        logger.debug("short-cutting to a fraction of a second")
+        return f' in {diff:.2f}s'
+    logger.debug(f"{diff=}{NS.abbreviation}")
+    for _, interval in INTERVAL_MULTIPLIERS:
+        multiplier = TO_NANOSECONDS[interval]
+        count, diff = divmod(diff, multiplier)
+        logger.debug(f"{count}{interval.abbreviation}, {diff=}{NS.abbreviation}")
+        parts[interval] = count
+    if D in parts:
+        days = parts[D]
+        if days > 7 and days < 28:
+            weeks, days = divmod(days, 7)
+            parts[W] = weeks
+            parts[D] = days
+    logger.debug(f'{diff} {parts}')
+    in_use = {interval: count for interval, count in parts.items() if count > 0}
+    if not len(in_use):
+        logger.debug("WTF")
+        return ""
+    nice = " ".join([
+        f"{count}{interval.abbreviation}"
+        for interval, count in in_use.items()
+    ])
+    return f" in {nice}"
+
+
+class Main(cmd.Main):
+    """TODO: This should work for more than just prompt-timing cases."""
+
+    def __init__(self):
+        super().__init__()
+        self.parser.add_argument(
+            "since",
+            nargs='?',
+            help=f"Calculate elapsed since this timestamp",
+        )
+
+
+    def main(self):
+        super().main()
+        if self.args.verbose:
+            easy_initialize_logging("DEBUG", stream=sys.stderr)
+        else:
+            easy_initialize_logging("INFO", stream=sys.stderr)
+        since: str | None = self.args.since
+
+        if since is None:
+            return
+        since = since.strip()
+        if not len(since) or since == "0":
+            return
+        if not re.match(r"^[0-9]+$", since):
+            return
+        since_time = int(since)
+        logger.debug(f'{since_time}')
+        if since_time < 1740947738:
+            # TODO: should this work for any epoch? Maybe the command
+            #   could take an optional argumant to define the resolution
+            #   of the thing
+            logger.debug(f'what is this, an epoch for ants: {since_time}')
+            return
+        while since_time < 1740947555136331958:
+            # multiply by 1000 until the timestamp looks nanoseconds-ish
+            since_time = since_time * 1000
+            logger.debug(f'multiplied by 1000: {since_time}')
+        if since_time > 10419050138000000000:
+            logger.debug(f'I guess your time is in the year 2300 or later? {since_time}')
+            return
+        now = time.time_ns()
+        logger.debug(f'{since_time} {now}')
+        elapsed = epoch_diff(now, since_time)
+
+        print(f"{elapsed}")
+
+
+if __name__ == "__main__":
+    Main().main()

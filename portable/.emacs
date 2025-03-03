@@ -1,6 +1,8 @@
 ;;; package --- Summary
 ;;; Commentary: oh no
 ;;; dot emacs -- emacs configs
+;; (setq package-check-signature nil)
+
 (defun add-search-dir (path)
   (setq load-path (cons (expand-file-name path) load-path)))
 (add-search-dir "~/lib/emacs/lisp")
@@ -26,6 +28,7 @@
          dash
          editorconfig
          flycheck
+         gnu-elpa-keyring-update
          json-mode
          less-css-mode
          let-alist
@@ -123,7 +126,7 @@
 (define-key input-decode-map "\e[1;2A" [S-up])
 ;(global-set-key (kbd "C-c TAB") 'indent-by-four)
 ;(global-set-key (kbd "C-c q") 'dedent-by-four)
-(global-set-key (kbd "C-c <TAB>") 'indent-by-two)
+;(global-set-key (kbd "C-c <TAB>") 'indent-by-two)
 (global-set-key (kbd "C-c q") 'dedent-by-two)
 (global-set-key (kbd "C-c 1") 'replace-string)
 
