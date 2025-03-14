@@ -4,20 +4,12 @@ import logging
 import os.path
 import pathlib
 import re
-import sys
 
 from jmullan_cmd import cmd
+from jmullan_cmd.cmd import Jmullan
 from jmullan_logging.easy_logging import easy_initialize_logging
 
 logger = logging.getLogger(__name__)
-
-class Stop:
-    stopped = False
-
-
-def interrupt_handler(signum, frame):
-    Stop.stopped = True
-    sys.exit(0)
 
 
 def process_gitignore(path: str):
@@ -25,7 +17,7 @@ def process_gitignore(path: str):
     if os.path.isfile(path):
         with open(path, "r") as gitignore:
             for line in gitignore.readlines():
-                if Stop.stopped:
+                if not Jmullan.GO:
                     return
                 line = re.sub(r"^\s*#+.*", "", line).strip()
                 if len(line):
@@ -56,7 +48,7 @@ class Main(cmd.Main):
 
 
     def main(self):
-        self.setup()
+        super().main()
         find = self.args.find
         regex = self.args.regex
         replacement = self.args.replacement
@@ -70,10 +62,14 @@ class Main(cmd.Main):
         excludes.add(".git")
 
         for filename in filenames:
+            if not Jmullan.GO:
+                return
             check_filename(find, regex, replacement, filename, excludes)
 
 
 def check_filename(find, regex, replacement, filename, excludes):
+    if not Jmullan.GO:
+        return
     if os.path.isdir(filename):
         check_dir(find, regex, replacement, filename, excludes)
     if os.path.isfile(filename):
@@ -81,18 +77,20 @@ def check_filename(find, regex, replacement, filename, excludes):
 
 
 def check_dir(find, regex, replacement, path, excludes):
+    if not Jmullan.GO:
+        return
     for root, dirs, files in os.walk(path, topdown=True):
-        if Stop.stopped:
+        if not Jmullan.GO:
             return
         for subfilename in files:
-            if Stop.stopped:
+            if not Jmullan.GO:
                 return
             if subfilename.startswith("."):
                 continue
             subpath = os.path.join(root, subfilename)
             process = True
             for exclude in excludes:
-                if Stop.stopped:
+                if not Jmullan.GO:
                     return
                 if pathlib.PurePath(subpath).match(exclude):
                     # print(f"skipping {subpath} because it matches {exclude}")
@@ -103,7 +101,7 @@ def check_dir(find, regex, replacement, path, excludes):
 
 
 def clean_file(find, regex, replacement, filename):
-    if Stop.stopped:
+    if not Jmullan.GO:
         return
     try:
         file_size = os.path.getsize(filename)
@@ -115,10 +113,14 @@ def clean_file(find, regex, replacement, filename):
             contents = original_contents
     except Exception:
         return
+    if not Jmullan.GO:
+        return
     if regex:
         contents = re.sub(find, replacement, contents)
     else:
         contents = contents.replace(find, replacement)
+    if not Jmullan.GO:
+        return
     changed = contents != original_contents
     if changed:
         logger.debug(f"Updated file {filename}")

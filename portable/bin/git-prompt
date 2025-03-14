@@ -155,12 +155,11 @@ def get_branches(remotes: list[str], git_flow: GitFlow) -> dict[str, Branch]:
         lines = [x for x in [line.strip() for line in proc.stdout.readlines()] if len(x)]
         branches: dict = {}
         for line in lines:
-            # print(line)
             sha, remainder = line.split(" ", 1)
             field_pairs = remainder.split(sha)
             fields = {
                 x: y for x, y in (
-                    field_pair.split(":", 1)
+                    split_field_pair(field_pair)
                     for field_pair in field_pairs
                 )
                 if y is not None and y != ''
@@ -169,6 +168,13 @@ def get_branches(remotes: list[str], git_flow: GitFlow) -> dict[str, Branch]:
             fields["is_remote"] = any(fields["refname"].startswith(f"{remote}/") for remotes in remotes)
             branches[fields["refname"]] = Branch(**fields, git_flow=git_flow)
         return branches
+
+def split_field_pair(field_pair: str):
+    parts = field_pair.split(":", 1)
+    if len(parts) == 1:
+        return parts[0], ""
+    else:
+        return parts
 
 
 def get_heads(remotes: list[str]):

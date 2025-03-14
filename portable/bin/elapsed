@@ -97,6 +97,13 @@ class Main(cmd.Main):
     def __init__(self):
         super().__init__()
         self.parser.add_argument(
+            "--trailing-space",
+            dest="trailing_space",
+            action="store_true",
+            default=False,
+            help="Add a trailing space if there is output"
+        )
+        self.parser.add_argument(
             "since",
             nargs='?',
             help=f"Calculate elapsed since this timestamp",
@@ -116,6 +123,9 @@ class Main(cmd.Main):
         since = since.strip()
         if not len(since) or since == "0":
             return
+        if since.endswith("N"):
+            logger.debug("date +%s%N on osx looks like 1741028501N")
+            since = since.removesuffix("N")
         if not re.match(r"^[0-9]+$", since):
             return
         since_time = int(since)
@@ -137,7 +147,12 @@ class Main(cmd.Main):
         logger.debug(f'{since_time} {now}')
         elapsed = epoch_diff(now, since_time)
 
-        print(f"{elapsed}")
+        if len(elapsed):
+            if self.args.trailing_space:
+                print(f"{elapsed} ")
+            else:
+                print(f"{elapsed}")
+
 
 
 if __name__ == "__main__":

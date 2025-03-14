@@ -1,51 +1,109 @@
-#!/bin/bash
-if [ "${DEBUG_PROMPT}" == "true" ] ; then
-   set -x
-fi
-SDK=$(sdk v 2>/dev/null)
-if [ -n "${SDK}" ] ; then
-    EXPECTED_SDKENV=
-    SDK_MISSING_ENVS=
-    FOUND_EXPECTED=
-    SDKENV_FILE=$(find_up .sdkmanrc)
-    if [ -n "${SDKENV_FILE}" ] ; then
-        EXPECTED_SDKENV="$(cat "${SDKENV_FILE}" | sed 's/#.*//' | not-empty | awk '/./ {print}')"
-        SDK_MISSING_ENVS="$(cat "${SDKENV_FILE}" | sed 's/#.*//' | not-empty| awk '/./ {print}')"
-    fi
-    SDK_CURRENTS="$(sdk current | grep -v 'Using:' | grep ':' | sed 's/ *: */=/' | awk '/./ {print}')"
-    SDK_FOUND_ENVS=
-    if [ -n "${EXPECTED_SDKENV}" ] ; then
-        while read -r x ; do
-            FOUND_EXPECTED=$(echo "${SDK_CURRENTS}" | grep "${x}")
-            if [ -n "${FOUND_EXPECTED}" ] ; then
-                SDK_CURRENTS=$(echo "${SDK_CURRENTS}" | grep -v "${FOUND_EXPECTED}")
-                SDK_MISSING_ENVS=$(echo "${SDK_MISSING_ENVS}" | grep -v "${x}")
-                SDK_FOUND_ENVS="${FOUND_EXPECTED} ${SDK_FOUND_ENVS}"
-            fi
-        done <<<"${EXPECTED_SDKENV}"
-    fi
-    SDK_VERSIONS=$(echo "${SDK_CURRENTS}" | awk '/./ {printf $0" "}')
-    SDK_VERSIONS=$(echo "${SDK_VERSIONS}" | sed 's/^  *//' | sed 's/ * $//')
-    SDK_FOUND_ENVS=$(echo "${SDK_FOUND_ENVS}" | sed 's/^  *//' | sed 's/ * $//')
-    SDK_PROMPT=" ("
-    S=
-    if [ -n "${SDK_FOUND_ENVS}" ] ; then
-        SDK_PROMPT="${SDK_PROMPT}$(tput setaf 2)${SDK_FOUND_ENVS}$(tput sgr0)"
-        S=" "
-    fi
-    if [ -n "${SDK_VERSIONS}" ] ; then
-        SDK_PROMPT="${SDK_PROMPT}${S}${SDK_VERSIONS}"
-        S=" "
-    fi
-    if [ -n "${SDK_MISSING_ENVS}" ] ; then
-        SDK_PROMPT="${SDK_PROMPT}${S}$(tput setaf 1)${SDK_MISSING_ENVS}$(tput sgr0)"
-        S=" "
-    fi
-    SDK_PROMPT="${SDK_PROMPT})"
-    if [ -n "${S}" ] ; then
-        echo -n "${SDK_PROMPT}" | sed 's/java/jv/g' | sed 's/scala/sc/g' | sed 's/  */ /g'
-    fi
-fi
-if [ "${DEBUG_PROMPT}" == "true"  ] ; then
-   set +x
-fi
+#!/usr/bin/env python-venv
+
+import logging
+import os.path
+import sys
+
+from colorist import Color
+from jmullan_cmd import cmd
+from jmullan_logging.easy_logging import easy_initialize_logging
+
+logger = logging.getLogger(__name__)
+
+
+def find_up(filename: str) -> str | None:
+    working = os.getcwd()
+    limit = 20
+    while len(working) > 1 and limit > 0:
+        limit -= 1
+        logger.debug(f"{working}")
+        if os.path.exists(f"{working}/{filename}"):
+            return f'{working}/{filename}'
+        working = os.path.dirname(working)
+
+def load_sdk_man_rc(file_path: str) -> dict[str, str]:
+    configs: dict[str, str] = {}
+    with open(file_path) as handle:
+        lines = handle.readlines()
+    for line in lines:
+        line = line.strip()
+        if "=" in line:
+            parts = line.split("=")
+            configs[parts[0]] = parts[1]
+    return configs
+
+def get_java_version(java_home: str | None, sdk_dir: str | None) -> str | None:
+    if java_home is None:
+        return None
+    java_bin = f"{java_home}/bin/java"
+    if not os.path.exists(java_bin):
+        logger.debug(f"{java_bin} does not appear to have java")
+        return None
+    if sdk_dir is None:
+        logger.debug("sdk does not appear to be configured")
+        return None
+    if not os.path.exists(sdk_dir):
+        logger.debug("configured sdk dir does not exist")
+        return None
+    sdk_java_candidate_dir = f"{sdk_dir}/java"
+    sdk_current = f"{sdk_java_candidate_dir}/current"
+    if java_home == sdk_current:
+        if not os.path.islink(sdk_current):
+            logger.debug("current sdk candidate isn't a link? very weird")
+            return None
+        java_home = os.path.realpath(sdk_current)
+    if not java_home.startswith(sdk_java_candidate_dir):
+        logger.debug(f"{java_home} does not appear to be managed by sdk")
+        return None
+    java_bin = f"{java_home}/bin/java"
+    if not os.path.exists(java_bin):
+        logger.debug(f"{java_home} does not appear to have java")
+        return None
+    no_trailing_slash = java_home.rstrip("/")
+    return no_trailing_slash.split("/")[-1]
+
+
+
+
+def resolve_java(java_config: str | None, java_home: str | None):
+    if java_config is None and java_home is None:
+        return
+    logger.debug(f"{java_config}")
+    sdk_dir = os.environ.get("SDKMAN_CANDIDATES_DIR")
+    java_version = get_java_version(java_home, sdk_dir)
+    if java_config is None and java_version is None:
+        return
+    if java_config is None:
+        print(f" (\u2615:{java_version})", end="")
+        return
+    if java_version is None:
+        print(f" (\u2615:{Color.RED}Missing {Color.OFF}{java_config})", end="")
+        return
+    if java_config != java_version:
+        logger.debug(f"{java_config} expected, actual is: {java_version}")
+        print(f" (\u2615:{Color.RED}{java_version}{Color.OFF}/{java_config})", end="")
+    else:
+        print(f" (\u2615:{Color.GREEN}{java_version}{Color.OFF})", end="")
+
+class Main(cmd.Main):
+    def __init__(self):
+        super().__init__()
+
+    def main(self):
+        super().main()
+        if self.args.verbose:
+            easy_initialize_logging("DEBUG", stream=sys.stderr)
+        else:
+            easy_initialize_logging("INFO", stream=sys.stderr)
+        sdk_man_rc = find_up(".sdkmanrc")
+        if sdk_man_rc is None:
+            return
+        logger.debug(f"{sdk_man_rc}")
+        configs = load_sdk_man_rc(sdk_man_rc)
+        logger.debug(f"{configs}")
+        java_home = os.environ.get("JAVA_HOME")
+        resolve_java(configs.get('java'), java_home)
+
+
+if __name__ == "__main__":
+    Main().main()

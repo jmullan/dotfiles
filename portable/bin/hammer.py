@@ -11,7 +11,7 @@ from jmullan_logging.helpers import logging_context, logging_context_from_args
 logger = logging.getLogger(__name__)
 
 class Main(cmd.TextIoProcessor):
-    base: str
+    bases: list[str]
 
     def __init__(self):
         super().__init__()
@@ -23,7 +23,12 @@ class Main(cmd.TextIoProcessor):
             default=False,
             help="treat the find string as a regex",
         )
-        self.parser.add_argument("base")
+        self.parser.add_argument(
+            "--base",
+            dest="bases",
+            action="append",
+            help="Use these base urls"
+        )
 
     def setup(self):
         super().setup()
@@ -31,11 +36,13 @@ class Main(cmd.TextIoProcessor):
             easy_initialize_logging("DEBUG")
         else:
             easy_initialize_logging()
-        self.base = self.args.base
-        logger.info(f"Using base url {self.base}")
+        self.bases = self.args.bases
+        logger.info(f"Using base urls {self.bases}")
 
     def process_file_handle(self, filename: str, file_handle: TextIO):
         for line in file_handle:
+            if not cmd.Jmullan.GO:
+                break
             stripped = line.strip()
             parts = stripped.split(" ", 1)
             if len(parts) != 2:
@@ -45,8 +52,13 @@ class Main(cmd.TextIoProcessor):
             path = parts[1]
             if not len(path):
                 continue
-            full_url = f"{self.base}{path}"
-            self.get(full_url)
+            if self.bases:
+                for base in self.bases:
+                    full_url = f"{base}{path}"
+                    self.get(full_url)
+            else:
+                full_url = path
+                self.get(full_url)
 
     @logging_context_from_args("full_url")
     def get(self, full_url: str):

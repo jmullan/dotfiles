@@ -42,7 +42,7 @@ class RoviDialect(csv.Dialect):
 csv.register_dialect("rovi", RoviDialect)
 
 
-def zip_header(header: list, row: list):
+def zip_header(header: list, row: list, fields: list[str] | None = None):
     field_count = max(len(header), len(row))
     zipped = {}
     for x in range(0, field_count):
@@ -55,6 +55,8 @@ def zip_header(header: list, row: list):
         if x < len(row):
             v = row[x]
         zipped[h] = v
+    if fields:
+        return {k: v for k, v in zipped.items() if k in fields}
     return zipped
 
 
@@ -130,8 +132,9 @@ def unquoted_reader(chunker, delimiter):
             yield chunk.split(delimiter)
 
 
-def process(csvfile, dialect_name, has_header: bool, template=None):
+def process(csvfile, dialect_name, has_header: bool, template=None, fields: str | None=None):
     logger.debug(f"Processing {csvfile=} {dialect_name=} {has_header=}")
+    fields = [f.strip() for f in (fields or "").split(",") if len(f.strip())]
     compiled_template = Template(template)
 
     if dialect_name == "sniff":
@@ -162,13 +165,14 @@ def process(csvfile, dialect_name, has_header: bool, template=None):
     for csv_row in reader:
         if csv_row is None:
             break
-        d = zip_header(header, csv_row)
+        d = zip_header(header, csv_row, fields)
+
         if template is None:
             print(d)
         elif template == "json":
             print(json.dumps(d))
         elif template == "csv":
-            writer.writerow(csv_row)
+            writer.writerow(d.values())
         else:
             print(compiled_template.substitute(d))
 
@@ -222,6 +226,12 @@ class Main(cmd.Main):
             default=None,
             help="The commands to run",
         )
+        self.parser.add_argument(
+            "--fields",
+            dest="fields",
+            default=None,
+            help="for json or csv template, just use these fields. Command separated"
+        )
         self.logging_configured = False
 
     def main(self):
@@ -270,7 +280,7 @@ class Main(cmd.Main):
                 raise Exception(
                     "Cannot sniff stdin and perform other actions besides sniff"
                 )
-        process(file_handle, dialect, self.args.has_header, template=template)
+        process(file_handle, dialect, self.args.has_header, template=template, fields=self.args.fields)
 
 
 if __name__ == "__main__":

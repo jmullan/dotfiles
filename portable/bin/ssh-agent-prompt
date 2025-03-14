@@ -60,6 +60,6 @@ fi
 ansi Color.DEFAULT
 echo -n ")"
 
-if [ "${DEBUG_PROMPT}" == "true"  ] ; then
+if [ "${DEBUG_PROMPT}" == "true" ] ; then
    set +x
 fi

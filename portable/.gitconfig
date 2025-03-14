@@ -74,3 +74,5 @@
     allowtimecard = true
 [log]
 	mailmap = true
+[blame]
+	ignoreRevsFile = .git-blame-ignore-revs

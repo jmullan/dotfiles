@@ -1,17 +1,39 @@
 #!/usr/bin/env python-venv
+
 import dataclasses
+import datetime
+import json
 import logging
 import os.path
 import re
+import sqlite3
 import textwrap
+import time
+from contextlib import closing
+from typing import Any
+from urllib.parse import urlparse, parse_qs
 
+import bashlex
+import bashlex.ast
+import pytz
 from jmullan_cmd import cmd
 from jmullan_logging.easy_logging import easy_initialize_logging
 
 logger = logging.getLogger(__name__)
 
-FILENAME = os.path.expanduser("~/.git_history")
+TZ = pytz.timezone("America/Los_Angeles")
+DAY_FORMAT = "%Y-%m-%d"
+TIME_FORMAT = "%H:%M:%S"
+
+CHROME_HISTORY_FILENAME = os.path.expanduser("~/Library/Application Support/Google/Chrome/Default/History")
+CONTEXT_HISTORY_FILENAME = os.path.expanduser("~/.context_history")
+GIT_HISTORY_FILENAME = os.path.expanduser("~/.git_history")
+DEV = os.path.expanduser("~/dev/")
+HISTORY_LOCATION = os.environ.get("HISTFILE", "~/.history")
+HISTORY_FILENAME = os.path.expanduser(HISTORY_LOCATION)
 INDENT = "    "
+MAIN_BRANCHES = {"main", "master", "develop", "origin/main", "origin/master"}
+
 
 @dataclasses.dataclass
 class Entry:
@@ -22,6 +44,11 @@ class Entry:
     command: str
     message: str
 
+    def __lt__(self, other):
+        if other is None:
+            return False
+        return self.day < other.day or (self.day == other.day and self.time_of_day < other.time_of_day)
+
     @property
     def rounded_time(self):
         if not self.time_of_day:
@@ -31,7 +58,11 @@ class Entry:
         m = 15 * int(m / 15)
         return f"{h}:{m:02}"
 
+
 def first(items):
+    for item in items:
+        if item is not None and item != "":
+            return item
     for item in items:
         if item is not None:
             return item
@@ -49,16 +80,37 @@ def unique(items) -> list[str]:
     return found
 
 
+def no_blanks(items) -> list[str]:
+    seen: set[str] = set()
+    found = []
+    for item in items or []:
+        if item is None or item == "" or item in seen:
+            continue
+        seen.add(item)
+        found.append(item)
+    return found
+
+
 def guess_jiras(*texts):
     jiras = set()
     for text in texts:
-        matches = re.findall(r"[A-Z]+-[0-9]+", text)
-        if matches:
-            jiras.update(matches)
-    return list(jiras)
+        if text is not None:
+            matches = re.findall(r"[A-Z]+-[0-9]+", text)
+            if matches:
+                jiras.update(matches)
+    if "UTF-8" in jiras:
+        jiras.remove("UTF-8")
+    if "SHA-256" in jiras:
+        jiras.remove("SHA-256")
+    if jiras:
+        return list(jiras)
+    else:
+        return ['']
 
 
 def chop_command(command: str) -> str:
+    if command is None:
+        return ""
     return command.removeprefix("pre-")
 
 
@@ -67,37 +119,473 @@ def indent(content, indentation):
     return textwrap.fill(content, 80, initial_indent=indent_string, subsequent_indent=indent_string)
 
 
-def dump_branch_work(entries: list[Entry]):
-    if not entries:
-        return
-    day = first(entry.day for entry in entries)
-    repo = first(entry.repo for entry in entries)
-    branch = first(entry.branch for entry in entries)
+
+def dump_day(entries: list[Entry]):
     chunks: dict[str, list[Entry]] = {}
     for entry in entries:
         if entry.rounded_time not in chunks:
             chunks[entry.rounded_time] = []
         chunks[entry.rounded_time].append(entry)
 
-    for chunk, chunk_entries in chunks.items():
-        commands = unique(chop_command(entry.command) for entry in chunk_entries)
-        messages = unique(entry.message for entry in chunk_entries if len(entry.message))
-        jiras = guess_jiras(branch, *messages)
+    for chunk in sorted(chunks.keys()):
+        chunk_entries = chunks[chunk]
+        dump_chunk(chunk, chunk_entries)
 
-        chunk_parts = []
-        header = indent(f"{chunk} {repo} {branch}", 1)
-        chunk_parts.append(header)
-        if jiras:
-            chunk_parts.append(indent(", ".join(jiras), 1))
+
+def best_branch(branches: list[str] | None) -> str:
+    if not branches:
+        return ""
+    non_main = [b for b in branches if b not in MAIN_BRANCHES]
+    if non_main:
+        return first(non_main)
+    else:
+        return first(branches)
+
+
+def dump_chunk(chunk: str, entries: list[Entry]):
+    if not entries:
+        return
+    entries = [entry for entry in entries if entry is not None]
+    repo = first(entry.repo for entry in entries) or ''
+    branch = best_branch([entry.branch for entry in entries]) or ''
+    commands = unique(no_blanks(chop_command(entry.command) for entry in entries))
+    messages = unique(no_blanks(entry.message for entry in entries if len(entry.message)))
+    jiras = guess_jiras(branch, *commands, *messages)
+
+    chunk_parts = []
+    header = indent(f"{chunk} {repo} {branch}", 1)
+    chunk_parts.append(header)
+    if jiras:
+        chunk_parts.append(indent(", ".join(jiras), 1))
+    if commands:
+        chunk_parts.append(indent("; ".join(commands), 2))
+    if messages:
         if commands:
-            chunk_parts.append(indent(" ".join(commands), 2))
-        if messages:
-            message_chunk = indent("\n".join(messages), 2)
-            chunk_parts.append(message_chunk)
-        print("\n".join(chunk_parts))
+            chunk_parts.append("")
+        message_chunk = indent(".\n".join(messages), 2)
+        chunk_parts.append(message_chunk)
+    print("\n".join(chunk_parts))
+    print("")
+
+
+def get_git_history(args_day: str | None) -> dict[str, list[Entry]]:
+    if not os.path.exists(GIT_HISTORY_FILENAME):
+        logger.error("Could not find git history file")
+        return {}
+    with open(GIT_HISTORY_FILENAME, 'r', encoding="UTF-8") as history_file:
+        lines = history_file.readlines()
+    days: dict[str, list[Entry]] = {}
+
+    for line in lines:
+        line = line.strip()
+        if not len(line):
+            continue
+        parts = line.split(" ", 5)
+        if len(parts) == 5:
+            message = ""
+            day, time_of_day, repo, branch, command = parts
+        elif len(parts) == 6:
+            day, time_of_day, repo, branch, command, message = parts
+        else:
+            logger.debug(f"Skipping line {line=} {parts=}")
+            continue
+
+        if args_day and args_day != day:
+            continue
+        entry = Entry(day, time_of_day, repo, branch, command, message)
+        if day not in days:
+            days[day] = []
+        days[day].append(entry)
+    return days
+
+
+def get_context_history(args_day: str | None) -> dict[str, list[Entry]]:
+    if not os.path.exists(CONTEXT_HISTORY_FILENAME):
+        logger.error("Could not find git history file")
+        return {}
+    with open(CONTEXT_HISTORY_FILENAME, 'r', encoding="UTF-8") as history_file:
+        lines = history_file.readlines()
+    days: dict[str, list[Entry]] = {}
+    timestamp = time.time()
+    day_time = datetime.datetime.fromtimestamp(timestamp, TZ)
+    for line in lines:
+        line = line.strip()
+        if not len(line):
+            continue
+        # 2025-01-22
+        match = re.match("^# *([0-9]+)$", line)
+        if match:
+            timestamp = float(match.group(1))
+            day_time = datetime.datetime.fromtimestamp(timestamp, TZ)
+            continue
+        day = day_time.strftime(DAY_FORMAT)
+        if args_day and args_day != day:
+            continue
+        time_of_day = day_time.strftime(TIME_FORMAT)
+        path, branch = extract_location_and_branch(line)
+        repo = find_git(path)
+        if len(repo) > 0 or len(branch) > 0:
+            entry = Entry(day, time_of_day, repo, branch, "", "")
+            if entry is not None:
+                if day not in days:
+                    days[day] = []
+                days[day].append(entry)
+    return days
+
+
+def extract_location_and_branch(line: str) -> tuple[str, str]:
+    if line is None:
+        return "", ""
+    line = line.strip()
+    if len(line) == 0:
+        return "", ""
+    matches = re.match(r"^# *(.*)$", line)
+    if matches:
+        line = matches.group(1).strip()
+    parts = line.split(" ")
+    line = ""
+    while len(parts):
+        part = parts.pop(0)
+        candidate = f"{line} {part}".strip()
+        if not os.path.exists(candidate):
+            return line, "".join(parts)
+        line = candidate
+    return line, "".join(parts)
+
+
+def find_git(path: str) -> str:
+    while path is not None and len(path) > 1:
+        path = path.removesuffix("/")
+        parts = path.split("/")
+        last = parts[-1]
+        if os.path.exists(f"{path}/.git"):
+            return last
+        path = path.removesuffix(last)
+    return ""
+
+
+def get_history(args_day: str | None) -> dict[str, list[Entry]]:
+    if not os.path.exists(HISTORY_FILENAME):
+        logger.error("Could not find history file")
+        return {}
+    with open(HISTORY_FILENAME, 'r', encoding="UTF-8") as history_file:
+        lines = history_file.readlines()
+    days: dict[str, list[Entry]] = {}
+    timestamp = time.time()
+    day_time = datetime.datetime.fromtimestamp(timestamp, TZ)
+    for line in lines:
+        line = line.strip()
+        if not len(line):
+            continue
+        # 2025-01-22
+        match = re.match("^#([0-9]+)$", line)
+        if match:
+            timestamp = float(match.group(1))
+            day_time = datetime.datetime.fromtimestamp(timestamp, TZ)
+            continue
+        day = day_time.strftime(DAY_FORMAT)
+        if args_day and args_day != day:
+            continue
+        time_of_day = day_time.strftime(TIME_FORMAT)
+        for entry in parse_history_line(day, time_of_day, line):
+            if day not in days:
+                days[day] = []
+            days[day].append(entry)
+    return days
+
+def get_chrome_history(args_day: str | None) -> dict[str, list[Entry]]:
+    if not os.path.exists(CHROME_HISTORY_FILENAME):
+        logger.error("Could not find chrome history file")
+        return {}
+    uri = f"file:{CHROME_HISTORY_FILENAME}?mode=ro&nolock=1"
+    query = """
+    SELECT
+        last_visit_time/1000000-11644473600,
+        url
+    FROM urls
+    WHERE date(last_visit_time/1000000-11644473600,'unixepoch','localtime') = :day
+    ORDER BY last_visit_time DESC
+    """
+    entries = {}
+    try:
+        with closing(sqlite3.connect(uri, uri=True)) as connection:
+            with closing(connection.cursor()) as cursor:
+                params = {
+                    "day": args_day
+                }
+                result = cursor.execute(query, params)
+                data = result.fetchall()
+                for row in data:
+                    entry = url_to_entry(row[0], row[1])
+                    if entry is not None:
+                        day = entry.day
+                        if day not in entries:
+                            entries[day] = []
+                        entries[entry.day].append(entry)
+    except Exception as ex:
+        logger.error("Couldn't get history from chrome file", exc_info=ex)
+    return entries
+
+def url_to_entry(timestamp: float, url: str) -> Entry | None:
+    instant = datetime.datetime.fromtimestamp(timestamp, TZ)
+    day = instant.strftime(DAY_FORMAT)
+    time_of_day = instant.strftime(TIME_FORMAT)
+
+    if "zoom.us" in url:
+        return Entry(day, time_of_day, "", "", "ZOOM", "Attended a meeting")
+
+    command, message, repo = parse_url(url)
+    branch = ""
+    return Entry(day, time_of_day, repo, branch, command, message)
+
+
+def parse_url(url: str) -> tuple[str, str, str]:
+    if not url:
+        return "", "", ""
+    parsed_url = urlparse(url)
+
+    query_string = parsed_url.query
+    parsed_url = parsed_url._replace(fragment="", query="")
+    if url.startswith("https://ghe.siriusxm.com"):
+        repo = parsed_url.path.removeprefix("/").strip()
+        repo = "/".join(repo.split("/")[:2])
+    elif "bitbucket" in url:
+        matches = re.search(r"/repos/([^/]+)/", url)
+        if matches:
+            repo = matches.group(1)
+        else:
+            repo = ""
+    else:
+        repo = ""
+
+    query_params = parse_qs(query_string)
+    values = set(filter_query_params(query_params).values())
+    jiras = guess_jiras(f"{parsed_url.path} {' '.join(values)}")
+    if jiras:
+        return parsed_url.hostname, ", ".join(jiras), repo
+    else:
+        return parsed_url.hostname, best_query_param(values), repo
+
+
+def best_query_param(params: set[str]) -> str:
+    if not params:
+        return ""
+    values = list(sorted(params, key=lambda x: len(x), reverse=True))
+    for value in values:
+        if " " in value:
+            return value
+    return first(values)
+
+
+def filter_query_params(params: dict[str, list[str]]) -> dict[str, str]:
+    FORBIDDEN = {
+        "stateToken", "SAMLRequest", "RelayState", "permissionViolation"
+    }
+    filtered = {}
+    for k, v in params.items():
+        if k in FORBIDDEN:
+            continue
+        if v:
+            value = v[0].strip()
+            if len(value) > 16 and " " not in value:
+                continue
+            filtered[k] = value
+    return filtered
+
+
+class Word:
+    kind: str | None
+    pos: tuple[int, int] | None
+    value: str | None
+
+    def __init__(self, ast: bashlex.ast.node):
+        d = dict(ast.__dict__)
+        self.kind = d.pop('kind')
+        pos = d.pop("pos", None)
+        if pos:
+            self.pos = pos
+        if self.kind == "word":
+            value = d.get("word")
+        elif self.kind == "operator":
+            value = d.get("op")
+        else:
+            raise ValueError("WTF is this")
+        if value is None or not len(value):
+            raise ValueError("Illegal empty word")
+        self.value = value
+
+
+class Node:
+    kind: str | None
+    s: Any
+    pos: tuple[int, int] | None
+    parts: Any
+    fields: list | None = None
+
+    def __init__(self, ast: bashlex.ast.node):
+        d = dict(ast.__dict__)
+        self.kind = d.pop('kind')
+        fields = []
+        v = d.pop('s', None)
+        if v:
+            self.s = visit(v)
+        pos = d.pop("pos", None)
+        if pos:
+            self.pos = pos
+        v = d.pop('parts', None)
+        if v:
+            self.parts = visit(v)
+        for k, v in sorted(d.items()):
+            if not v :
+                continue
+            fields.append((k, visit(v)))
+        if self.kind == 'function':
+            fields = [visit(f) for f in fields if f[0] not in ('name', 'body')]
+        else:
+            fields = fields
+        if fields:
+            self.fields = fields
+
+    def words(self) -> list[str]:
+        if self.kind not in ("function", "command"):
+            return []
+        words = []
+        for part in self.parts:
+            if isinstance(part, Word):
+                words.append(part.value)
+        return words
+
+    def assemble(self) -> str | None:
+        words = self.words()
+        if not words:
+            return None
+        if words[0] == "ag":
+            words = [word for word in words if not word.startswith("-")][:2]
+        return " ".join(words)
+
+    def repo(self) -> str:
+        words = self.words()
+        if not words:
+            return ""
+        command = " ".join(words)
+        if command.startswith("git clone "):
+            logger.debug(f"{len(words)} {words}")
+            if len(words) == 4:
+                logger.debug(f"3 {words[3]}")
+                return words[3]
+            if len(words) == 3:
+                logger.debug(f"2 {words[2]}")
+                url = words[2]
+                return re.sub(r".*/", "", url)
+        if words[0] == "cd" and len(words) == 2:
+            path = words[1]
+            if path.startswith("dev/"):
+                path = f"~/{path}"
+            if path.startswith("~/"):
+                path = os.path.expanduser(path)
+            if path.startswith(DEV):
+                path = path.removeprefix(DEV)
+                path = path.strip("/")
+                parts = path.split("/")
+                if parts:
+                    path = parts[0]
+                    if os.path.isdir(f"{DEV}/{path}"):
+                        return path
+        return ""
+
+    def branch(self) -> str:
+        words = self.words()
+        if not words:
+            return ""
+        command = " ".join(words)
+        if len(words) == 5 and command.startswith("git push -u origin"):
+            return words[4]
+        if len(words) == 3 and command.startswith("git checkout "):
+            return words[2]
+        if len(words) == 5 and command.startswith("git checkout ") and words[3] == "-b":
+            # git checkout origin/main -b CONTIN-11051-allow-disabling-eventbridge
+            return words[4]
+
+        return ""
+
+class NodeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Node | Word):
+            return obj.__dict__
+        # Let the base class default method raise the TypeError
+        return super().default(obj)
+
+
+def visit(thing):
+    if isinstance(thing, bashlex.ast.node):
+        kind = getattr(thing, "kind", None)
+        if kind in ("word", "operator"):
+            return Word(thing)
+        elif kind == "list":
+            parts = getattr(thing, "parts", None) or []
+            return visit(parts)
+        else:
+            return Node(thing)
+    elif isinstance(thing, tuple):
+        return tuple([visit(x) for x in thing])
+    elif isinstance(thing, list):
+        return [visit(x) for x in thing]
+    elif isinstance(thing, dict):
+        return {visit(k): visit(v) for k, v in thing.items()}
+    else:
+        return thing
+
+
+def handle_thing(day, time_of_day, thing: Any) -> list[Entry]:
+    if not thing:
+        return []
+    if isinstance(thing, list):
+        entries = []
+        for subthing in thing:
+            entries.extend(handle_thing(day, time_of_day, subthing))
+        return entries
+    if isinstance(thing, Node):
+        if thing.kind == "operation":
+            return []
+        if thing.kind in ("function", "command"):
+            command = thing.assemble()
+            if command is not None:
+                return [Entry(day, time_of_day, thing.repo(), thing.branch(), thing.assemble(), "")]
+            return []
+    # print(f"{thing=}")
+    # print(json.dumps(thing, indent=4, cls=NodeEncoder))
+    return []
+
+
+def parse_history_line(day, time_of_day, line) -> list[Entry]:
+    if not line:
+        return []
+    try:
+        parsed_line = bashlex.parse(line)
+    except Exception as ex:
+        # print(f"oh no {ex} in {line}")
+        return [Entry(day, time_of_day, "", "", line, "")]
+    entries = []
+    for ast in parsed_line:
+        thing = visit(ast)
+        entries.extend(handle_thing(day, time_of_day, thing))
+    return entries
+
+
+def extend(*dicts: dict) -> dict:
+    base_days = {}
+    if dicts:
+        for days in dicts:
+
+            for day, entries in days.items():
+                if day not in base_days:
+                    base_days[day] = []
+                base_days[day].extend(entries)
+    return base_days
+
 
 class Main(cmd.Main):
-    """Stream csv files in different ways."""
+    """Print a bunch of stuff that was done on a particular day."""
 
     def __init__(self):
         super().__init__()
@@ -111,51 +599,16 @@ class Main(cmd.Main):
 
     def main(self):
         super().main()
-        if not os.path.exists(FILENAME):
-            logger.error("Could not find git history file")
-            exit(1)
-        with open(FILENAME, 'r', encoding="UTF-8") as history_file:
-            lines = history_file.readlines()
-        days: dict[str, list[Entry]] = {}
+        chrome_history = get_chrome_history(self.args.day)
+        context_history = get_context_history(self.args.day)
+        history_days = get_history(self.args.day)
+        git_days = get_git_history(self.args.day)
 
-        for line in lines:
-            line = line.strip()
-            if not len(line):
-                continue
-            parts = line.split(" ", 5)
-            if len(parts) == 5:
-                message = ""
-                day, time_of_day, repo, branch, command = parts
-            elif len(parts) == 6:
-                day, time_of_day, repo, branch, command, message = parts
-            else:
-                logger.debug(f"Skipping line {line=} {parts=}")
-                continue
+        all_days = extend(context_history, chrome_history, history_days, git_days)
 
-            if self.args.day and self.args.day != day:
-                continue
-            entry = Entry(day, time_of_day, repo, branch, command, message)
-            if day not in days:
-                days[day] = []
-            days[day].append(entry)
-        for day, entries in days.items():
+        for day, entries in all_days.items():
             print(day)
-            repo = None
-            branch = None
-            branch_work = []
-            for entry in entries:
-                found_branch = entry.branch
-                if entry.repo == repo and found_branch == "HEAD" and branch is not None:
-                    found_branch = branch
-                if entry.repo != repo or found_branch != branch:
-                    if branch_work:
-                        dump_branch_work(branch_work)
-                        branch_work = []
-                repo = entry.repo
-                branch = found_branch
-                branch_work.append(entry)
-            if branch_work:
-                dump_branch_work(branch_work)
+            dump_day(entries)
 
 
 if __name__ == "__main__":
