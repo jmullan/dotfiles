@@ -39,6 +39,7 @@ for branch in $(git branch --format '%(refname:short)'); do
     git fetch "${REMOTE}" "${branch}:${branch}"
     if [ -n "${MAIN}" ] ; then
         git fetch "${REMOTE}" "${MAIN}:${branch}"
+        git checkout "${branch}"
         git rebase "${MAIN}" || git rebase --abort
     fi
     echo

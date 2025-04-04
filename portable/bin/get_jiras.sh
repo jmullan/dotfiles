@@ -16,17 +16,16 @@ while read -r line || [[ -n "$line" ]] ; do
             CSV_LINE=$(jira --ticket "${line}" --format csv)
         fi
         if [ -n "${CSV_LINE}" ] ; then
-            sleep 5
-            echo "found ${line} as ${CSV_LINE}"
+            echo "fetched ${line} as ${CSV_LINE}"
             echo "${CSV_LINE}" >> "${JIRAS_CSV}"
         else
-            echo "Did not find ${line}"
+            echo "Did not fetch ${line}"
         fi
-        sleep 5
+        sleep 1
     else
         echo "Already have ${FOUND}"
     fi
-done < <(sort -u ~/.jiras_interesting)
+done < <(sort -ur ~/.jiras_interesting | grep RADIO)
 
 # jira --project AESOP --max 304 --no-forward >> ~/.jiras.csv
 # jira --project API --max 362 --no-forward >> ~/.jiras.csv

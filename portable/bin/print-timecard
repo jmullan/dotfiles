@@ -411,7 +411,7 @@ class Word:
         else:
             raise ValueError("WTF is this")
         if value is None or not len(value):
-            raise ValueError("Illegal empty word")
+            self.value = ""
         self.value = value
 
 

@@ -1,7 +1,8 @@
 #!/usr/bin/env python-venv
-
+import dataclasses
 import logging
 import os.path
+import re
 import sys
 
 from colorist import Color
@@ -9,6 +10,74 @@ from jmullan_cmd import cmd
 from jmullan_logging.easy_logging import easy_initialize_logging
 
 logger = logging.getLogger(__name__)
+
+OSX_JAVA_VIRTUAL_MACHINES_DIR = "/Library/Java/JavaVirtualMachines/"
+
+
+
+@dataclasses.dataclass
+class JVM:
+    home: str
+    version: str
+    shortname: str
+
+
+def guess_version(value: str):
+    matches = re.search(r"-([1-9][0-9]*)\.jdk", value)
+    if matches:
+        return matches.group(1)
+    matches = re.search("\b([1-9][0-9]*)\b", value)
+    if matches:
+        return matches.group(1)
+    return ""
+
+
+def osx_java_virtual_machines() -> list[JVM]:
+    if not os.path.exists(OSX_JAVA_VIRTUAL_MACHINES_DIR):
+        return []
+    jvms = []
+    dir_list = os.listdir(OSX_JAVA_VIRTUAL_MACHINES_DIR)
+    for jdk_dir in dir_list:
+        jdk_dir_home = f"{OSX_JAVA_VIRTUAL_MACHINES_DIR}/{jdk_dir}/Contents/Home"
+        java_bin = f"{jdk_dir_home}/bin/java"
+        if jdk_dir.endswith(".jdk") and os.path.exists(java_bin):
+            jvm = JVM(
+                jdk_dir_home,
+                guess_version(jdk_dir),
+                jdk_dir
+            )
+            jvms.append(jvm)
+    return jvms
+
+
+def get_sdk_virtual_machines() -> list[JVM]:
+    sdk_dir = os.environ.get("SDKMAN_CANDIDATES_DIR")
+    if sdk_dir is None or not os.path.exists(sdk_dir):
+        return []
+    sdk_java_dir = f"{sdk_dir}/java"
+    if sdk_java_dir is None or not os.path.exists(sdk_java_dir):
+        return []
+    jvms = []
+    dir_list = os.listdir(sdk_java_dir)
+    for jdk_dir in dir_list:
+        jdk_dir_home = f"{get_sdk_virtual_machines}/{jdk_dir}"
+        java_bin = f"{jdk_dir_home}/bin/java"
+        if jdk_dir.endswith(".jdk") and os.path.exists(java_bin):
+            jvm = JVM(
+                jdk_dir_home,
+                guess_version(jdk_dir),
+                jdk_dir
+            )
+            jvms.append(jvm)
+
+    return jvms
+
+
+def java_versions() -> list[JVM]:
+    jvms = []
+    jvms.extend(osx_java_virtual_machines())
+    jvms.extend(get_sdk_virtual_machines())
+    return jvms
 
 
 def find_up(filename: str) -> str | None:
@@ -21,6 +90,7 @@ def find_up(filename: str) -> str | None:
             return f'{working}/{filename}'
         working = os.path.dirname(working)
 
+
 def load_sdk_man_rc(file_path: str) -> dict[str, str]:
     configs: dict[str, str] = {}
     with open(file_path) as handle:
@@ -31,6 +101,7 @@ def load_sdk_man_rc(file_path: str) -> dict[str, str]:
             parts = line.split("=")
             configs[parts[0]] = parts[1]
     return configs
+
 
 def get_java_version(java_home: str | None, sdk_dir: str | None) -> str | None:
     if java_home is None:
@@ -63,8 +134,6 @@ def get_java_version(java_home: str | None, sdk_dir: str | None) -> str | None:
     return no_trailing_slash.split("/")[-1]
 
 
-
-
 def resolve_java(java_config: str | None, java_home: str | None):
     if java_config is None and java_home is None:
         return
@@ -84,6 +153,7 @@ def resolve_java(java_config: str | None, java_home: str | None):
         print(f" (\u2615:{Color.RED}{java_version}{Color.OFF}/{java_config})", end="")
     else:
         print(f" (\u2615:{Color.GREEN}{java_version}{Color.OFF})", end="")
+
 
 class Main(cmd.Main):
     def __init__(self):

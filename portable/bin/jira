@@ -10,8 +10,17 @@ import time
 import requests
 from typing import Any
 from jmullan_cmd import cmd
+from jmullan_logging.easy_logging import easy_initialize_logging
 
 logger = logging.getLogger(__name__)
+
+def strip_or_none(value: str | None):
+    if value is None:
+        return None
+    value = value.strip()
+    if len(value) > 0:
+        return value
+    return None
 
 
 @dataclasses.dataclass
@@ -29,19 +38,19 @@ class Issue:
 
     @property
     def created(self) -> str | None:
-        return self.get("created")
+        return strip_or_none(self.get("created"))
 
     @property
     def updated(self) -> str | None:
-        return self.get("updated")
+        return strip_or_none(self.get("updated"))
 
     @property
     def summary(self) -> str | None:
-        return self.get("summary")
+        return strip_or_none(self.get("summary"))
 
     @property
     def description(self) -> str | None:
-        return self.get("description")
+        return strip_or_none(self.get("description"))
 
     def simplified(self, ticket_number: str | None = None) -> dict:
         key = ticket_number if ticket_number is not None else self.key
@@ -54,7 +63,7 @@ class Issue:
                 "updated": self.updated,
                 "description": self.description,
             }.items()
-            if v is not None
+            if v is not None and v != ""
         }
 
 
@@ -170,6 +179,8 @@ class Main(cmd.Main):
             return None
         try:
             data = response.json()
+            formatted = json.dumps(data, indent=4)
+            logger.debug(f"{formatted}")
         except Exception:
             logger.exception("Could not decode json from %s", response.content)
             return None
@@ -185,10 +196,14 @@ class Main(cmd.Main):
         issue = self.fetch(jira_url, headers, ticket)
         if issue is not None:
             key = issue.key if forward else ticket
-            csv.writer(sys.stdout).writerow([key, issue.summary])
+            csv.writer(sys.stdout).writerow([key, issue.summary, issue.description])
 
     def main(self):
         super().main()
+        if self.args.verbose:
+            easy_initialize_logging("DEBUG", stream=sys.stderr)
+        else:
+            easy_initialize_logging("INFO", stream=sys.stderr)
         jira_url = self.args.jira_url
         jira_token = self.args.jira_token
         forward = self.args.forward
