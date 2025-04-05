@@ -25,20 +25,20 @@
 
 (setq package-list
     '(
-         dash
-         editorconfig
-         flycheck
-         gnu-elpa-keyring-update
-         json-mode
-         less-css-mode
-         let-alist
-         lua-mode
-         markdown-mode
-         php-mode
-         seq
-         sql-indent
-         yaml-mode
-         )
+        dash
+        editorconfig
+        flycheck
+        gnu-elpa-keyring-update
+        json-mode
+        less-css-mode
+        let-alist
+        lua-mode
+        markdown-mode
+        php-mode
+        seq
+        sql-indent
+        yaml-mode
+        )
     )
 
 (mapc

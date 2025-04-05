@@ -129,10 +129,19 @@ class DataclassesJsonEncoder(json.JSONEncoder):
         return super().default(o)
 
 
+def run(command: list[str]) -> list[str]:
+    logger.debug(f"{' '.join(command)}")
+    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="UTF8") as proc:
+        std_out = [x for x in [line.strip() for line in proc.stdout.readlines()] if len(x)]
+        std_err = [x for x in [line.strip() for line in proc.stderr.readlines()] if len(x)]
+        if std_err:
+            logger.debug(f"{std_err}")
+        return std_out
+
+
 def get_remotes():
     command = ["git", "remote"]
-    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, encoding="UTF8") as proc:
-        return [x for x in [line.strip() for line in proc.stdout.readlines()] if len(x)]
+    return run(command)
 
 
 def get_branches(remotes: list[str], git_flow: GitFlow) -> dict[str, Branch]:
@@ -151,23 +160,22 @@ def get_branches(remotes: list[str], git_flow: GitFlow) -> dict[str, Branch]:
     for remote in set(remotes or []):
         command.append(f"refs/remotes/{remote}")
     logger.debug(f"{' '.join(command)}")
-    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, encoding="UTF8") as proc:
-        lines = [x for x in [line.strip() for line in proc.stdout.readlines()] if len(x)]
-        branches: dict = {}
-        for line in lines:
-            sha, remainder = line.split(" ", 1)
-            field_pairs = remainder.split(sha)
-            fields = {
-                x: y for x, y in (
-                    split_field_pair(field_pair)
-                    for field_pair in field_pairs
-                )
-                if y is not None and y != ''
-            }
-            fields["sha"] = sha
-            fields["is_remote"] = any(fields["refname"].startswith(f"{remote}/") for remotes in remotes)
-            branches[fields["refname"]] = Branch(**fields, git_flow=git_flow)
-        return branches
+    lines = run(command)
+    branches: dict = {}
+    for line in lines:
+        sha, remainder = line.split(" ", 1)
+        field_pairs = remainder.split(sha)
+        fields = {
+            x: y for x, y in (
+                split_field_pair(field_pair)
+                for field_pair in field_pairs
+            )
+            if y is not None and y != ''
+        }
+        fields["sha"] = sha
+        fields["is_remote"] = any(fields["refname"].startswith(f"{remote}/") for remotes in remotes)
+        branches[fields["refname"]] = Branch(**fields, git_flow=git_flow)
+    return branches
 
 def split_field_pair(field_pair: str):
     parts = field_pair.split(":", 1)
@@ -184,9 +192,9 @@ def get_heads(remotes: list[str]):
     head_mappings: dict = {}
     for head in heads:
         command = ["git", "rev-parse", "--abbrev-ref", head]
-        logger.debug(f"{' '.join(command)}")
-        with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, encoding="UTF8") as proc:
-            value = proc.stdout.readline().strip()
+        lines = run(command)
+        if lines:
+            value = lines[0]
             if len(value):
                 head_mappings[head] = value
     return head_mappings
@@ -195,13 +203,11 @@ def get_heads(remotes: list[str]):
 def get_config():
     command = ["git", "config", "list"]
     config: dict[str, str] = {}
-    logger.debug(f"{' '.join(command)}")
-    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, encoding="UTF8") as proc:
-        lines = [x for x in [line.strip() for line in proc.stdout.readlines()] if len(x)]
-        for line in lines:
-            if line is not None and len(line) > 0 and "=" in line:
-                key, value = line.split("=", 1)
-                config[key] = value
+    lines = run(command)
+    for line in lines:
+        if line is not None and len(line) > 0 and "=" in line:
+            key, value = line.split("=", 1)
+            config[key] = value
     return config
 
 
@@ -209,9 +215,9 @@ def count_commits(branch_one: Branch, branch_two: Branch) -> tuple[float, float]
     if branch_one is None or branch_two is None:
         return 0, 0
     command = ["git", "for-each-ref", f"--format=%(ahead-behind:{branch_two.full_refname})", branch_one.full_refname]
-    logger.debug(f"{' '.join(command)}")
-    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, encoding="UTF8") as proc:
-        value = proc.stdout.readline().strip()
+    lines = run(command)
+    if lines:
+        value = lines[0]
         if len(value):
             try:
                 ahead, behind = value.split(" ", 1)
@@ -231,14 +237,12 @@ def count_lines(against: Branch | str) -> tuple[float, float]:
     ]
     ahead = 0
     behind = 0
-    logger.debug(f"{' '.join(command)}")
-    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, encoding="UTF8") as proc:
-        lines = [x for x in [line.strip() for line in proc.stdout.readlines()] if len(x)]
-        for line in lines:
-            matches = re.match(r"^([0-9]+)\s+([0-9]+)\s", line)
-            if matches:
-                ahead += int(matches.group(1))
-                behind += int(matches.group(2))
+    lines = run(command)
+    for line in lines:
+        matches = re.match(r"^([0-9]+)\s+([0-9]+)\s", line)
+        if matches:
+            ahead += int(matches.group(1))
+            behind += int(matches.group(2))
     return ahead, behind
 
 
@@ -276,62 +280,60 @@ def get_status():
     }
     status: dict[str, Any] = {}
     status["counts"] = counts
-    logger.debug(f"{' '.join(command)}")
-    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, encoding="UTF8") as proc:
-        lines = [x for x in [line.strip() for line in proc.stdout.readlines()] if len(x)]
-        for line in lines:
-            if line.startswith("#"):
-                parts = line.split(" ", 2)
-                if len(parts) == 3:
-                    key = parts[1]
-                    value = parts[2]
-                    status[key] = value
-                continue
-            parts = line.split(" ")
-            if parts[0] == '?':
-                entry_status = EntryStatus.untracked
-                index_state = "."
-                tree_state = "."
-                head_state_one = "."
-                head_state_two = "."
-            elif parts[0] == '!':
-                entry_status = EntryStatus.ignored
-                index_state = "."
-                tree_state = "."
-                head_state_one = "."
-                head_state_two = "."
-            elif parts[0] == "1":
-                XY = parts[1]
-                entry_status = EntryStatus.changed
-                index_state = XY[0]
-                tree_state = XY[1]
-                head_state_one = "."
-                head_state_two = "."
-            elif parts[0] == "2":
-                XY = parts[1]
-                entry_status = EntryStatus.changed
-                index_state = XY[0]
-                tree_state = XY[1]
-                head_state_one = "."
-                head_state_two = "."
-            elif parts[0] == "u":
-                XY = parts[1]
-                entry_status = EntryStatus.unmerged
-                index_state = "."
-                tree_state = "."
-                head_state_one = XY[0]
-                head_state_two = XY[1]
-            else:
-                entry_status = EntryStatus.unknown
-                index_state = "."
-                tree_state = "."
-                head_state_one = "."
-                head_state_two = "."
-            increment(counts, entry_status)
-            increment(counts["index"], index_state)
-            increment(counts["tree"], tree_state)
-            increment(counts["merge"], head_state_one)
-            increment(counts["merge"], head_state_two)
+    lines = run(command)
+    for line in lines:
+        if line.startswith("#"):
+            parts = line.split(" ", 2)
+            if len(parts) == 3:
+                key = parts[1]
+                value = parts[2]
+                status[key] = value
+            continue
+        parts = line.split(" ")
+        if parts[0] == '?':
+            entry_status = EntryStatus.untracked
+            index_state = "."
+            tree_state = "."
+            head_state_one = "."
+            head_state_two = "."
+        elif parts[0] == '!':
+            entry_status = EntryStatus.ignored
+            index_state = "."
+            tree_state = "."
+            head_state_one = "."
+            head_state_two = "."
+        elif parts[0] == "1":
+            XY = parts[1]
+            entry_status = EntryStatus.changed
+            index_state = XY[0]
+            tree_state = XY[1]
+            head_state_one = "."
+            head_state_two = "."
+        elif parts[0] == "2":
+            XY = parts[1]
+            entry_status = EntryStatus.changed
+            index_state = XY[0]
+            tree_state = XY[1]
+            head_state_one = "."
+            head_state_two = "."
+        elif parts[0] == "u":
+            XY = parts[1]
+            entry_status = EntryStatus.unmerged
+            index_state = "."
+            tree_state = "."
+            head_state_one = XY[0]
+            head_state_two = XY[1]
+        else:
+            entry_status = EntryStatus.unknown
+            index_state = "."
+            tree_state = "."
+            head_state_one = "."
+            head_state_two = "."
+        increment(counts, entry_status)
+        increment(counts["index"], index_state)
+        increment(counts["tree"], tree_state)
+        increment(counts["merge"], head_state_one)
+        increment(counts["merge"], head_state_two)
     status["color"] = Color.GREEN
     for entry_status in list(EntryStatus):
         if counts.get(entry_status) and entry_status.color is not None:
