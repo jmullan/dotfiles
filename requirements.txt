@@ -1,6 +1,7 @@
 bashlex
 black
 colorist
+emoji
 httpx
 ipython
 isort

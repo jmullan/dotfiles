@@ -5,13 +5,13 @@ if [ "${DEBUG_PROMPT}" == "true" ] ; then
    set -x
 fi
 
-_SOCK_EMOJI=$(echo -e "\xf0\x9f\xa7\xa6")
+_SOCK_EMOJI=$(emoji :socks:)
 SOCK_EMOJI="${SOCK_EMOJI:-$_SOCK_EMOJI}"
 _X_EMOJI=$(echo -e "\xe2\x9d\x8c")
 X_EMOJI="${X_EMOJI:-$_X_EMOJI}"
-_PID_EMOJI=$(echo -e "\xF0\x9F\xA5\x94")
+_PID_EMOJI=$(emoji :potato:)
 PID_EMOJI="${PID_EMOJI:-$_PID_EMOJI}"
-_KEY_EMOJI=$(echo -e "\xf0\x9f\x94\x91")
+_KEY_EMOJI=$(emoji :key:)
 KEY_EMOJI="${KEY_EMOJI:-$_KEY_EMOJI}"
 
 ansi Color.DEFAULT

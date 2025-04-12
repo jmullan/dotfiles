@@ -8,7 +8,7 @@ git sanity
 # the uncounted space is to fix bash's prompt character counts
 _SMILEY=$(echo -e "\xf0\x9f\x92\x80 ")
 _FROWNY=$(echo -e "\xf0\x9f\x98\xa1 ")
-_CLOUDY=$(echo -e "\xf0\x9f\x8c\xa9 ")
+_CLOUDY=$(emoji :cloud:)
 SMILEY="${SMILEY:-$_SMILEY}"
 FROWNY="${FROWNY:-$_FROWNY}"
 CLOUDY="${CLOUDY:-$_CLOUDY}"
