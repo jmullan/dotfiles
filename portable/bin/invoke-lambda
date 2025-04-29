@@ -1,0 +1,82 @@
+#!/usr/bin/env -S uv --quiet run --script
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "boto3",
+#     "jsonlines",
+#     "jmullan_cmd@git+https://github.com/jmullan/jmullan_cmd",
+#     "jmullan_logging@git+https://github.com/jmullan/jmullan_logging"
+# ]
+# ///
+import sys
+from typing import TextIO
+
+import boto3
+import json
+import logging
+import time
+
+from jmullan_cmd import cmd
+from jmullan_logging.easy_logging import easy_initialize_logging
+
+logger = logging.getLogger(__name__)
+
+
+class Main(cmd.TextIoProcessor):
+
+    def process_file_handle(self, filename: str, file_handle: TextIO):
+        chunk = ""
+        sent = 0
+        while line := file_handle.readline():
+            chunk = f'{chunk}{line}'
+            try:
+                data = json.loads(chunk)
+                if data:
+                    sent += 1
+                    if self.args.only_detail and "detail" in data:
+                        data = data["detail"]
+                    self.invoke_with(data)
+                    chunk = ""
+            except json.decoder.JSONDecodeError:
+                # print(f"skipping {chunk}")
+                continue
+        logger.info(f"Sent {sent} messages")
+
+    def __init__(self):
+        super().__init__()
+        self.parser.add_argument(
+            "--lambda-name",
+            dest="lambda_name",
+            required=True,
+            help="Send to this lambda"
+        )
+        self.parser.add_argument(
+            "--only-detail",
+            dest="only_detail",
+            action="store_true",
+            default=False,
+            help="Just use the detail from a given message"
+        )
+
+    def invoke_with(self, data):
+        logger.debug(f"Submitting {json.dumps(data, indent=4)}")
+        response = self.client.invoke(
+            FunctionName=self.args.lambda_name,
+            InvocationType='RequestResponse',
+            Payload=json.dumps(data)
+        )
+        time.sleep(2)
+        payload = response['Payload'].read()
+        logger.debug(f"Got payload {payload}")
+
+    def setup(self):
+        super().setup()
+        if self.args.verbose:
+            easy_initialize_logging("DEBUG", stream=sys.stderr)
+        else:
+            easy_initialize_logging("INFO", stream=sys.stderr)
+        self.client = boto3.client('lambda')
+
+
+if __name__ == "__main__":
+    Main().main()

@@ -7,9 +7,13 @@ import signal
 import subprocess
 import sys
 
-from colorist import Color
-
 CLOUD = '\u2601\ufe0f'
+# colorist is too slow to import
+COLORS = {
+    'Color.DEFAULT': '\x1b[39m',
+    'Color.GREEN': '\x1b[32m',
+    'Color.RED': '\x1b[31m'
+}
 
 def get_env_or_none(key: str) -> str | None:
     value = os.environ.get(key)
@@ -21,23 +25,6 @@ def get_env_or_none(key: str) -> str | None:
 
 def interrupt_handler(*_, **__):
     sys.exit(0)
-## STY is current screen
-## TERM=screen
-#if [ "${DEBUG_PROMPT}" == "true" ] ; then
-#   set -x
-#fi
-#AWS=$(which aws)
-#if [ -z "{$AWS}" ] ; then
-#    exit
-#fi
-#echo -n ' (aws: '
-#if [ -n "${AWS_REGION}" ] ; then
-#    echo -n "${AWS_REGION}"
-#fi
-#if [ -n "${AWS_PROFILE}" ] ; then
-#    echo -n "${AWS_PROFILE}"
-#fi
-#echo -n ')'
 
 def get_aws_command() -> str | None:
     result = subprocess.run(["which", "aws"], text=True, stdout=subprocess.PIPE)
@@ -93,7 +80,7 @@ def main():
     if assumed_role is not None:
         parts.append(assumed_role)
     elif parts:
-        parts.append(f"{Color.RED}\u2205{Color.DEFAULT}")
+        parts.append(f"{COLORS['Color.RED']}\u2205{COLORS['Color.DEFAULT']}")
 
     if parts:
         parts = [CLOUD] + parts

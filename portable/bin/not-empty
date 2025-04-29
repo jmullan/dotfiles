@@ -2,7 +2,8 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "jmullan_cmd@git+https://github.com/jmullan/jmullan_cmd"]
+#     "jmullan_cmd@git+https://github.com/jmullan/jmullan_cmd"
+# ]
 # ///
 
 import re

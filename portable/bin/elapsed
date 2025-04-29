@@ -66,7 +66,7 @@ def epoch_diff(now: int, since: int) -> str:
     if diff < fraction_threshold:
         diff = diff / TO_NANOSECONDS[S]
         logger.debug("short-cutting to a fraction of a second")
-        return f' in {diff:.2f}s'
+        return f'{diff:.2f}s'
     logger.debug(f"{diff=}{NS.abbreviation}")
     for _, interval in INTERVAL_MULTIPLIERS:
         multiplier = TO_NANOSECONDS[interval]
@@ -88,7 +88,7 @@ def epoch_diff(now: int, since: int) -> str:
         f"{count}{interval.abbreviation}"
         for interval, count in in_use.items()
     ])
-    return f" in {nice}"
+    return f"{nice}"
 
 
 class Main(cmd.Main):
@@ -96,6 +96,12 @@ class Main(cmd.Main):
 
     def __init__(self):
         super().__init__()
+        self.parser.add_argument(
+            "--prefix",
+            dest="prefix",
+            default=" in ",
+            help="prefix with this if there is output"
+        )
         self.parser.add_argument(
             "--trailing-space",
             dest="trailing_space",
@@ -149,9 +155,9 @@ class Main(cmd.Main):
 
         if len(elapsed):
             if self.args.trailing_space:
-                print(f"{elapsed} ")
+                print(f"{self.args.prefix}{elapsed} ")
             else:
-                print(f"{elapsed}")
+                print(f"{self.args.prefix}{elapsed}")
 
 
 

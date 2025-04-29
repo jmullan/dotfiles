@@ -275,9 +275,8 @@ osc52 = "CopyPaste"  # Default: "OnlyCopy"
 # Default for Linux/BSD/macOS is $SHELL or user's login shell
 # Default for Windows is "powershell"
 
-# shell = "/bin/bash"
-# program = "/bin/bash"  # Example for Linux/BSD/macOS
-# args = ["-l"]
+# shell = {"program" = "/bin/bash", args = ["~"]}
+
 
 #########
 # MOUSE #

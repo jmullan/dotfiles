@@ -4,17 +4,14 @@ history -a
 if [ "${DEBUG_PROMPT}" == "true" ] ; then
    set -x
 fi
-git sanity
-# the uncounted space is to fix bash's prompt character counts
-_SMILEY=$(echo -e "\xf0\x9f\x92\x80 ")
-_FROWNY=$(echo -e "\xf0\x9f\x98\xa1 ")
-_CLOUDY=$(emoji :cloud:)
-SMILEY="${SMILEY:-$_SMILEY}"
-FROWNY="${FROWNY:-$_FROWNY}"
-CLOUDY="${CLOUDY:-$_CLOUDY}"
-CYAN=$(ansi Color.CYAN)
-RESET=$(ansi Color.DEFAULT)
-_WHOAMI="$(whoami)"
+[ -e ".git" ] && git sanity
+SMILEY="${SMILEY:-\xf0\x9f\x92\x80 }"
+FROWNY="${FROWNY:-\xf0\x9f\x98\xa1 }"
+CLOUDY="${CLOUDY:-$(emoji :cloud:)}"
+COLOR_CYAN="${COLOR_CYAN:-$(ansi Color.CYAN)}"
+COLOR_DEFAULT="${COLOR_DEFAULT:-$(ansi Color.DEFAULT)}"
+WHOAMI="${WHOAMI:-$(whoami)}"
+HOSTNAME="${HOSTNAME:-$(hostname)}"
 date '+# %s' >> "${HOME}/.context_history"
 CONTEXT="# $(pwd) $(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
 echo "${CONTEXT}" >> "${HOME}/.context_history"
@@ -45,13 +42,9 @@ if [ $EXIT -eq 0 ]; then
 else
     _EMOJI="${FROWNY}"
 fi
-CYAN="$(ansi Color.CYAN)"
-RESET="$(ansi Color.DEFAULT)"
-_WHOAMI="$(whoami)"
-_HOSTNAME="$(hostname)"
 PS0='\[${PS1:$((PS0time=$(date +%s%N), 0)):0}\]'
-PS1="${_EMOJI}$(elapsed --trailing-space ${PS0time})"
-PS1+="\[${CYAN}\]${_WHOAMI}@${HOSTNAME}\[${RESET}\]"
+PS1="${_EMOJI}$([ -n "${PS0time}" ] && elapsed --trailing-space ${PS0time})"
+PS1+="\[${COLOR_CYAN}\]${WHOAMI}@${HOSTNAME}\[${COLOR_DEFAULT}\]"
 PS1+=":\w \$ "
 PS1+='\[${PS0:$((PS0time=0, 0)):0}\]'
 

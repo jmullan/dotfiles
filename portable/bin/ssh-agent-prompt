@@ -5,59 +5,63 @@ if [ "${DEBUG_PROMPT}" == "true" ] ; then
    set -x
 fi
 
-_SOCK_EMOJI=$(emoji :socks:)
-SOCK_EMOJI="${SOCK_EMOJI:-$_SOCK_EMOJI}"
 _X_EMOJI=$(echo -e "\xe2\x9d\x8c")
 X_EMOJI="${X_EMOJI:-$_X_EMOJI}"
-_PID_EMOJI=$(emoji :potato:)
-PID_EMOJI="${PID_EMOJI:-$_PID_EMOJI}"
-_KEY_EMOJI=$(emoji :key:)
-KEY_EMOJI="${KEY_EMOJI:-$_KEY_EMOJI}"
+SOCK_EMOJI="${SOCK_EMOJI:-$(emoji :socks:)}"
+PID_EMOJI="${PID_EMOJI:-$(emoji :potato:)}"
+KEY_EMOJI="${KEY_EMOJI:-$(emoji :key:)}"
 
-ansi Color.DEFAULT
+COLOR_CYAN="${COLOR_CYAN:-$(ansi Color.CYAN)}"
+COLOR_DEFAULT="${COLOR_DEFAULT:-$(ansi Color.DEFAULT)}"
+COLOR_GREEN="${COLOR_GREEN:-$(ansi Color.GREEN)}"
+COLOR_RED="${COLOR_RED:-$(ansi Color.RED)}"
+COLOR_WHITE="${COLOR_WHITE:-$(ansi Color.WHITE)}"
+COLOR_YELLOW="${COLOR_YELLOW:-$(ansi Color.YELLOW)}"
+
+echo -n "${COLOR_DEFAULT}"
 echo -n " ("
 LEGIT_SOCK=$(echo "${SSH_AUTH_SOCK}" | egrep "ssh.*agent")
 LEGIT_PID=$([ -n "${SSH_AGENT_PID}" ] && [ "${SSH_AGENT_PID}" != "1" ] && echo "${SSH_AGENT_PID}")
 if [ -z "${LEGIT_SOCK}" ] || [ -z "${LEGIT_PID}" ] ; then
-    ansi Color.RED
+    echo -n "${COLOR_RED}"
     echo -n "ssh "
-    ansi Color.DEFAULT
+    echo -n "${COLOR_DEFAULT}"
 fi
 if [ -n "${LEGIT_SOCK}" ] ; then
-    ansi Color.GREEN
+    echo -n "${COLOR_GREEN}"
     echo -n "${SOCK_EMOJI}"
-    ansi Color.DEFAULT
+    echo -n "${COLOR_DEFAULT}"
 else
-    ansi Color.RED
+    echo -n "${COLOR_RED}"
     echo -n "${X_EMOJI}"
-    ansi Color.DEFAULT
+    echo -n "${COLOR_DEFAULT}"
 fi
 if [ -n "${LEGIT_PID}" ] ; then
-    ansi Color.GREEN
+    echo -n "${COLOR_GREEN}"
     echo -n "${PID_EMOJI}"
-    ansi Color.DEFAULT
+    echo -n "${COLOR_DEFAULT}"
 else
-    ansi Color.RED
+    echo -n "${COLOR_RED}"
     echo -n "${X_EMOJI}"
-    ansi Color.DEFAULT
+    echo -n "${COLOR_DEFAULT}"
 fi
 if [ -n "${EXPECTED_KEY}" ] ; then
     # if there's a particular key that we need, look for it
     LEGIT_KEY=$(ssh-add -l | grep "${EXPECTED_KEY}")
 
     if [ -n "${LEGIT_KEY}" ] ; then
-        ansi Color.GREEN
+        echo -n "${COLOR_GREEN}"
         echo -n "${KEY_EMOJI}"
-        ansi Color.DEFAULT
+        echo -n "${COLOR_DEFAULT}"
     else
-        ansi Color.RED
+        echo -n "${COLOR_RED}"
         echo -n "${X_EMOJI}"
-        ansi Color.DEFAULT
+        echo -n "${COLOR_DEFAULT}"
     fi
 
 fi
 
-ansi Color.DEFAULT
+echo -n "${COLOR_DEFAULT}"
 echo -n ")"
 
 if [ "${DEBUG_PROMPT}" == "true" ] ; then

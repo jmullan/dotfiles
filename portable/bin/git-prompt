@@ -447,7 +447,7 @@ class Main(cmd.Main):
             branch_short_names = {}
             unique_remotes = {}
 
-        print(" [", end="")
+        print("[", end="")
         prior_b: Branch | None = None
         for up, b in prompt_branches:
             ahead, behind = 0, 0

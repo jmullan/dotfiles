@@ -3,9 +3,6 @@
 # the files are located in the bash-doc package.
 umask 022
 
-if [ -f ~/.bash_profile_local ]; then
-    source ~/.bash_profile_local
-fi
 
 if [ -f ~/.bashrc ]; then
     source ~/.bashrc
@@ -149,3 +146,14 @@ if [ -e "${HOME}/.sdkman" ] ; then
 fi
 export BASH_SILENCE_DEPRECATION_WARNING=1
 export DEFAULT_COPYRIGHT="Jesse Mullan"
+
+export COLOR_CYAN="$(ansi Color.CYAN)"
+export COLOR_DEFAULT="$(ansi Color.DEFAULT)"
+export COLOR_GREEN="$(ansi Color.GREEN)"
+export COLOR_RED="$(ansi Color.RED)"
+export COLOR_WHITE="$(ansi Color.WHITE)"
+export COLOR_YELLOW="$(ansi Color.YELLOW)"
+
+if [ -f ~/.bash_profile_local ]; then
+    source ~/.bash_profile_local
+fi

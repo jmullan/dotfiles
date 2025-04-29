@@ -1,5 +1,6 @@
 bashlex
 black
+boto3
 colorist
 emoji
 httpx
@@ -9,6 +10,7 @@ jira
 jmullan_cmd@git+https://github.com/jmullan/jmullan_cmd
 jmullan_logging@git+https://github.com/jmullan/jmullan_logging
 jproperties
+jsonlines
 pip
 python-dateutil
 pytz
