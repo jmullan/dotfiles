@@ -17,6 +17,10 @@ def add_missing_colons(string: str) -> str:
     return f":{string}:"
 
 
+def demojize(string: str) -> str:
+    return emoji.demojize(string, language="alias")
+
+
 def emojize(string: str, colonize: bool = False) -> str:
     if colonize:
         colonized = add_missing_colons(string)
@@ -53,6 +57,13 @@ class Main(cmd.Main):
             help="Wrap words in colons if they don't have them"
         )
         self.parser.add_argument(
+            "--demojize",
+            dest="demojize",
+            action="store_true",
+            default=False,
+            help="If given an emoji, figure out its name"
+        )
+        self.parser.add_argument(
             "strings",
             nargs='+',
             help=f"Try to turn these strings into emojis",
@@ -72,7 +83,10 @@ class Main(cmd.Main):
         if not strings:
             logger.debug("No strings provided, exiting")
             return
-        emojis = [emojize(x, colonize) for x in strings]
+        if self.args.demojize:
+            emojis = [demojize(x) for x in strings]
+        else:
+            emojis = [emojize(x, colonize) for x in strings]
         output = " ".join(emojis)
         if trailing_space:
             output = f"{output} "

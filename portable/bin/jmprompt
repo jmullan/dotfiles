@@ -5,8 +5,8 @@ if [ "${DEBUG_PROMPT}" == "true" ] ; then
    set -x
 fi
 [ -e ".git" ] && git sanity
-SMILEY="${SMILEY:-\xf0\x9f\x92\x80 }"
-FROWNY="${FROWNY:-\xf0\x9f\x98\xa1 }"
+SMILEY="${SMILEY:-$(emoji :skull:)}"
+FROWNY="${FROWNY:-$(emoji :rage:)}"
 CLOUDY="${CLOUDY:-$(emoji :cloud:)}"
 COLOR_CYAN="${COLOR_CYAN:-$(ansi Color.CYAN)}"
 COLOR_DEFAULT="${COLOR_DEFAULT:-$(ansi Color.DEFAULT)}"
