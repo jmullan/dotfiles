@@ -1,6 +1,7 @@
 bashlex
 black
 boto3
+chardet
 colorist
 emoji
 httpx

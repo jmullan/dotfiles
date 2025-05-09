@@ -136,3 +136,7 @@ fi
 
 # added by travis gem
 [ -f /home/jmullan/.travis/travis.sh ] && source /home/jmullan/.travis/travis.sh
+
+if [ -e "${HOME}/.cargo/env" ] ; then
+    . "${HOME}/.cargo/env"
+fi

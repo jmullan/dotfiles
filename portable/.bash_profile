@@ -154,6 +154,10 @@ export COLOR_RED="$(ansi Color.RED)"
 export COLOR_WHITE="$(ansi Color.WHITE)"
 export COLOR_YELLOW="$(ansi Color.YELLOW)"
 
+if [ -e "${HOME}/.cargo/env" ] ; then
+    . "${HOME}/.cargo/env"
+fi
+
 if [ -f ~/.bash_profile_local ]; then
     source ~/.bash_profile_local
 fi

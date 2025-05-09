@@ -3,7 +3,7 @@ TEMPLATE='{path}:{line}: {category} ({msg_id}, {symbol}, {obj}) {msg}'
 
 trap exit SIGHUP SIGINT SIGTERM
 
-EMACS="$(ps | grep emacs | wc -l | sed 's/ //g')
+EMACS="$(ps | grep emacs | wc -l | sed 's/ //g')"
 
 if [ "$EMACS" == 1 ] ; then
     if [ "$@" ] ; then
@@ -21,31 +21,33 @@ if [ "$EMACS" == 1 ] ; then
     fi
 fi
 
-[ $(which pyflakes) ] && pyflakes ${1+"$@"}
-[ $(which flake8) ] && flake8 ${1+"$@"}
-[ $(which pep8) ] && pep8 ${1+"$@"}
+# [ $(which pyflakes) ] && pyflakes ${1+"$@"}
+# [ $(which flake8) ] && flake8 ${1+"$@"}
+# [ $(which pep8) ] && pep8 ${1+"$@"}
 # [ $(which pyroma) ] && pyroma ${1+"$@"}
-[ $(which frosted) ] && frosted -r ${1+"$@"}
-[ $(which mccabe) ] && mccabe ${1+"$@"}
-[ $(which pylint) ] && pylint -r n --msg-template="${TEMPLATE}" ${1+"$@"} 2>&1 | grep -v '\*\*\*\*\*\*\*\*\*\*\*\*\* Module' | sed 's/^ //' | grep -v '^$'
+# [ $(which frosted) ] && frosted -r ${1+"$@"}
+# [ $(which mccabe) ] && mccabe ${1+"$@"}
+# [ $(which pylint) ] && pylint -r n --msg-template="${TEMPLATE}" ${1+"$@"} 2>&1 | grep -v '\*\*\*\*\*\*\*\*\*\*\*\*\* Module' | sed 's/^ //' | grep -v '^$'
+[ $(which ruff) ] && ruff check ${1+"$@"}
 
-if [ $(which pep257) ] ; then
-    HAS_TEMPLATE="$(pep257 --help | grep template | head -n 1)"
-    if [ -z "$HAS_TEMPLATE" ] ; then
-        pep257 ${1+"$@"} 2>&1 | grep -v 'Unknown option'
-    else
-        pep257 --template='%(filename)s:%(line)s:%(code)s:%(definition)s %(short_desc)s\n' ${1+"$@"} 2>&1 | grep -v 'Unknown option'
-    fi
-fi
+# if [ $(which pep257) ] ; then
+#     HAS_TEMPLATE="$(pep257 --help | grep template | head -n 1)"
+#     if [ -z "$HAS_TEMPLATE" ] ; then
+#         pep257 ${1+"$@"} 2>&1 | grep -v 'Unknown option'
+#     else
+#         pep257 --template='%(filename)s:%(line)s:%(code)s:%(definition)s %(short_desc)s\n' ${1+"$@"} 2>&1 | grep -v 'Unknown option'
+#     fi
+# fi
 [ $(which ag) ] && ag -s --nobreak --nocolor --noheading 'logging.(debug|info|warn|error|exception)' ${1+"$@"}
 [ $(which ag) ] && ag --nobreak --nocolor --noheading 'assertNone' ${1+"$@"}
 [ $(which ag) ] && ag --nobreak --nocolor --noheading 'assertNotNone' ${1+"$@"}
-[ $(which isort) ] && isort -q -rc --check-only ${1+"$@"} | sed 's/^ERROR: //' | sed 's/ \(Imports are incorrectly sorted.\)/:0:0:\1/'
+# [ $(which isort) ] && isort -q -rc --check-only ${1+"$@"} | sed 's/^ERROR: //' | sed 's/ \(Imports are incorrectly sorted.\)/:0:0:\1/'
 if [ -e "vulture.txt" ] ; then
     for i in ${1+"$@"}; do
         grep "$i" vulture.txt
     done
 fi
+
 COVERAGE="$(find_up .coverage)"
 if [ -n "${COVERAGE}" ] ; then
     CWD="$(pwd)/"
@@ -58,6 +60,6 @@ if [ -n "${COVERAGE}" ] ; then
         else
             FILENAME="${i}"
         fi
-        [ $(which coverage) ] && coverage report -m --skip-covered | coverage_report_to_line_error.py "$FILENAME"
+        [ "$(which coverage)" ] && coverage report -m --skip-covered | coverage_report_to_line_error.py "${FILENAME}"
     done
 fi
