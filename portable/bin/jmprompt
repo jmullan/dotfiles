@@ -36,12 +36,12 @@ echo "${CONTEXT}" >> "${HOME}/.context_history"
     git prompt | tail -n 1
     echo
 } | tail -n +0
-
 if [ $EXIT -eq 0 ]; then
     _EMOJI="${SMILEY}"
 else
     _EMOJI="${FROWNY}"
 fi
+__X=" "
 PS0='\[${PS1:$((PS0time=$(date +%s%N), 0)):0}\]'
 PS1="${_EMOJI}$([ -n "${PS0time}" ] && elapsed --trailing-space ${PS0time})"
 PS1+="\[${COLOR_CYAN}\]${WHOAMI}@${HOSTNAME}\[${COLOR_DEFAULT}\]"

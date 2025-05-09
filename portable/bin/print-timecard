@@ -1,5 +1,6 @@
 #!/usr/bin/env python-venv
 
+import csv
 import dataclasses
 import datetime
 import json
@@ -7,6 +8,7 @@ import logging
 import os.path
 import re
 import sqlite3
+import sys
 import textwrap
 import time
 from contextlib import closing
@@ -17,6 +19,7 @@ import bashlex
 import bashlex.ast
 import pytz
 from jmullan_cmd import cmd
+from jmullan_logging import formatters
 from jmullan_logging.easy_logging import easy_initialize_logging
 
 logger = logging.getLogger(__name__)
@@ -28,6 +31,7 @@ TIME_FORMAT = "%H:%M:%S"
 CHROME_HISTORY_FILENAME = os.path.expanduser("~/Library/Application Support/Google/Chrome/Default/History")
 CONTEXT_HISTORY_FILENAME = os.path.expanduser("~/.context_history")
 GIT_HISTORY_FILENAME = os.path.expanduser("~/.git_history")
+JIRA_FILENAME = os.path.expanduser("~/.jiras.csv")
 DEV = os.path.expanduser("~/dev/")
 HISTORY_LOCATION = os.environ.get("HISTFILE", "~/.history")
 HISTORY_FILENAME = os.path.expanduser(HISTORY_LOCATION)
@@ -91,7 +95,7 @@ def no_blanks(items) -> list[str]:
     return found
 
 
-def guess_jiras(*texts):
+def guess_jiras(*texts, jira_descriptions: dict[str, str]):
     jiras = set()
     for text in texts:
         if text is not None:
@@ -103,9 +107,16 @@ def guess_jiras(*texts):
     if "SHA-256" in jiras:
         jiras.remove("SHA-256")
     if jiras:
-        return list(jiras)
+        described_jiras = []
+        for jira in jiras:
+            if jira in jira_descriptions:
+                description = jira_descriptions[jira].strip().replace("\n", " ")
+                described_jiras.append(f"{jira}: {description}")
+            else:
+                described_jiras.append(jira)
+        return described_jiras
     else:
-        return ['']
+        return []
 
 
 def chop_command(command: str) -> str:
@@ -116,11 +127,20 @@ def chop_command(command: str) -> str:
 
 def indent(content, indentation):
     indent_string = indentation * INDENT
-    return textwrap.fill(content, 80, initial_indent=indent_string, subsequent_indent=indent_string)
+    if "\n" in content:
+        subsequent_indent_string = (indentation + 1) * INDENT
+
+        lines = [
+            textwrap.fill(line, 80, initial_indent=indent_string, subsequent_indent=subsequent_indent_string)
+            for line in content.split("\n")
+        ]
+        return "\n".join(lines)
+    else:
+        return textwrap.fill(content, 80, initial_indent=indent_string, subsequent_indent=indent_string)
 
 
 
-def dump_day(entries: list[Entry]):
+def dump_day(entries: list[Entry], jira_descriptions: dict[str, str]):
     chunks: dict[str, list[Entry]] = {}
     for entry in entries:
         if entry.rounded_time not in chunks:
@@ -129,34 +149,43 @@ def dump_day(entries: list[Entry]):
 
     for chunk in sorted(chunks.keys()):
         chunk_entries = chunks[chunk]
-        dump_chunk(chunk, chunk_entries)
+        dump_chunk(chunk, chunk_entries, jira_descriptions)
 
 
-def best_branch(branches: list[str] | None) -> str:
+def best_branches(branches: list[str] | None) -> list[str]:
     if not branches:
-        return ""
+        return []
+    branches = [b.strip() for b in branches if b is not None]
+    branches = [b for b in branches if len(b)]
     non_main = [b for b in branches if b not in MAIN_BRANCHES]
     if non_main:
-        return first(non_main)
+        return list(set(non_main))
     else:
-        return first(branches)
+        return list(set(branches))
 
 
-def dump_chunk(chunk: str, entries: list[Entry]):
+def dump_chunk(chunk: str, entries: list[Entry], jira_descriptions: dict[str, str]):
     if not entries:
         return
     entries = [entry for entry in entries if entry is not None]
     repo = first(entry.repo for entry in entries) or ''
-    branch = best_branch([entry.branch for entry in entries]) or ''
+    branches = best_branches([entry.branch for entry in entries]) or ''
     commands = unique(no_blanks(chop_command(entry.command) for entry in entries))
     messages = unique(no_blanks(entry.message for entry in entries if len(entry.message)))
-    jiras = guess_jiras(branch, *commands, *messages)
+    jiras = guess_jiras(*branches, *commands, *messages, jira_descriptions=jira_descriptions)
+    messages = [message for message in messages if message not in jiras]
 
     chunk_parts = []
-    header = indent(f"{chunk} {repo} {branch}", 1)
+    header = indent(f"{chunk} {repo}", 1)
     chunk_parts.append(header)
+    if branches:
+        chunk_parts.append(indent(", ".join(branches), 1))
     if jiras:
-        chunk_parts.append(indent(", ".join(jiras), 1))
+        if len(jiras) > 1:
+            chunk_parts.append("")
+        chunk_parts.append(indent("\n".join(jiras), 1))
+        if len(jiras) > 1:
+            chunk_parts.append("")
     if commands:
         chunk_parts.append(indent("; ".join(commands), 2))
     if messages:
@@ -293,7 +322,7 @@ def get_history(args_day: str | None) -> dict[str, list[Entry]]:
             days[day].append(entry)
     return days
 
-def get_chrome_history(args_day: str | None) -> dict[str, list[Entry]]:
+def get_chrome_history(args_day: str | None, jira_descriptions: dict[str, str]) -> dict[str, list[Entry]]:
     if not os.path.exists(CHROME_HISTORY_FILENAME):
         logger.error("Could not find chrome history file")
         return {}
@@ -316,7 +345,7 @@ def get_chrome_history(args_day: str | None) -> dict[str, list[Entry]]:
                 result = cursor.execute(query, params)
                 data = result.fetchall()
                 for row in data:
-                    entry = url_to_entry(row[0], row[1])
+                    entry = url_to_entry(row[0], row[1], jira_descriptions=jira_descriptions)
                     if entry is not None:
                         day = entry.day
                         if day not in entries:
@@ -326,20 +355,22 @@ def get_chrome_history(args_day: str | None) -> dict[str, list[Entry]]:
         logger.error("Couldn't get history from chrome file", exc_info=ex)
     return entries
 
-def url_to_entry(timestamp: float, url: str) -> Entry | None:
+def url_to_entry(timestamp: float, url: str, jira_descriptions: dict[str, str]) -> Entry | None:
     instant = datetime.datetime.fromtimestamp(timestamp, TZ)
     day = instant.strftime(DAY_FORMAT)
     time_of_day = instant.strftime(TIME_FORMAT)
 
     if "zoom.us" in url:
         return Entry(day, time_of_day, "", "", "ZOOM", "Attended a meeting")
+    if "id.siriusxm.com" in url:
+        return Entry(day, time_of_day, "", "", "Login", "Logged in")
 
-    command, message, repo = parse_url(url)
+    command, message, repo = parse_url(url, jira_descriptions=jira_descriptions)
     branch = ""
     return Entry(day, time_of_day, repo, branch, command, message)
 
 
-def parse_url(url: str) -> tuple[str, str, str]:
+def parse_url(url: str, jira_descriptions: dict[str, str]) -> tuple[str, str, str]:
     if not url:
         return "", "", ""
     parsed_url = urlparse(url)
@@ -359,8 +390,10 @@ def parse_url(url: str) -> tuple[str, str, str]:
         repo = ""
 
     query_params = parse_qs(query_string)
+    if "datadog" in url or "id.siriusxm.com" in url:
+        query_params = {}
     values = set(filter_query_params(query_params).values())
-    jiras = guess_jiras(f"{parsed_url.path} {' '.join(values)}")
+    jiras = guess_jiras(f"{parsed_url.path} {' '.join(values)}", jira_descriptions=jira_descriptions)
     if jiras:
         return parsed_url.hostname, ", ".join(jiras), repo
     else:
@@ -379,7 +412,9 @@ def best_query_param(params: set[str]) -> str:
 
 def filter_query_params(params: dict[str, list[str]]) -> dict[str, str]:
     FORBIDDEN = {
-        "stateToken", "SAMLRequest", "RelayState", "permissionViolation"
+        "stateToken", "SAMLRequest", "RelayState", "permissionViolation",
+        "rapidView", "quickFilter", "epics", "issueLimit", "tab",
+        "agg_m", "agg_m_source", "rlz"
     }
     filtered = {}
     for k, v in params.items():
@@ -390,6 +425,8 @@ def filter_query_params(params: dict[str, list[str]]) -> dict[str, str]:
             if len(value) > 16 and " " not in value:
                 continue
             filtered[k] = value
+    # if filtered:
+    #     logger.debug(f"{filtered=}")
     return filtered
 
 
@@ -469,12 +506,12 @@ class Node:
             return ""
         command = " ".join(words)
         if command.startswith("git clone "):
-            logger.debug(f"{len(words)} {words}")
+            # logger.debug(f"{len(words)} {words}")
             if len(words) == 4:
-                logger.debug(f"3 {words[3]}")
+                # logger.debug(f"3 {words[3]}")
                 return words[3]
             if len(words) == 3:
-                logger.debug(f"2 {words[2]}")
+                # logger.debug(f"2 {words[2]}")
                 url = words[2]
                 return re.sub(r".*/", "", url)
         if words[0] == "cd" and len(words) == 2:
@@ -584,12 +621,25 @@ def extend(*dicts: dict) -> dict:
     return base_days
 
 
+def load_jiras() -> dict[str, str]:
+    if not os.path.exists(JIRA_FILENAME):
+        return {}
+    descriptions = {}
+    with open(JIRA_FILENAME, 'r') as handle:
+        reader = csv.reader(handle)
+        for fields in reader:
+            if len(fields) < 2:
+                logger.debug("Weird jira csv line: {}", fields)
+            descriptions[fields[0]] = fields[1]
+    return descriptions
+
+
+
 class Main(cmd.Main):
     """Print a bunch of stuff that was done on a particular day."""
 
     def __init__(self):
         super().__init__()
-        easy_initialize_logging()
         self.parser.add_argument(
             "--day",
             dest="day",
@@ -597,18 +647,36 @@ class Main(cmd.Main):
             help="Just show for one day",
         )
 
+    def setup(self):
+        super().setup()
+        if self.args.verbose:
+            easy_initialize_logging("DEBUG", stream=sys.stdout, formatter=formatters.PlainTextFormatter())
+        else:
+            easy_initialize_logging("INFO", stream=sys.stdout, formatter=formatters.PlainTextFormatter())
+
     def main(self):
         super().main()
-        chrome_history = get_chrome_history(self.args.day)
+        jira_descriptions = load_jiras()
+        # logger.debug(jira_descriptions)
+        # logger.debug("Getting chrome history")
+        chrome_history = get_chrome_history(self.args.day, jira_descriptions)
+        # logger.debug(f"Got {len(chrome_history)} Chrome history days")
+        # logger.debug("Getting context history")
         context_history = get_context_history(self.args.day)
+        # logger.debug(f"Got {len(context_history)} context history days")
+        # logger.debug("Getting cli history")
         history_days = get_history(self.args.day)
+        # logger.debug(f"Got {len(history_days)} cli history days")
+        # logger.debug("Getting git history")
         git_days = get_git_history(self.args.day)
+        # logger.debug(f"Got {len(git_days)} git history days")
 
         all_days = extend(context_history, chrome_history, history_days, git_days)
-
+        if not all_days:
+            logger.debug("No days found")
         for day, entries in all_days.items():
             print(day)
-            dump_day(entries)
+            dump_day(entries, jira_descriptions)
 
 
 if __name__ == "__main__":

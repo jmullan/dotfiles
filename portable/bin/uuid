@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class Main(cmd.Main):
-    """Stream csv files in different ways."""
+    """Generate a uuid."""
 
     def __init__(self):
         super().__init__()
