@@ -124,6 +124,10 @@ if [ -e ~/.virtualenvs ]; then
     VEW=`which virtualenvwrapper.sh`
     if [ -n "${VEW}" ] ; then
         . "${VEW}"
+    else
+        if [ -e "/etc/profile.d/virtualenvwrapper.sh" ] ; then
+             . "/etc/profile.d/virtualenvwrapper.sh"
+        fi
     fi
 fi
 

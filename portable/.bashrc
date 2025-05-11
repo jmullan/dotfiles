@@ -96,8 +96,8 @@ alias gcc='gcc -Wall -O3'
 ######################################################################
 
 export LC_ALL="en_US.UTF-8"
-export LANG="en_US"
-
+export LANG="en_US.UTF-8"
+export LANGUAGE="en"
 # set a fancy prompt
 function __prompt_command() {
     . ~/bin/jmprompt
