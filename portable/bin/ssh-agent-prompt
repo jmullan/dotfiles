@@ -46,7 +46,7 @@ else
     echo -n "${COLOR_DEFAULT}"
 fi
 if [ -n "${EXPECTED_KEY}" ] && [ -e "${EXPECTED_KEY}" ]; then
-    KEY_SHA=$(ssh-keygen -lf "${EXPECTED_KEY}" )
+    KEY_SHA=$(ssh-keygen -lf "${EXPECTED_KEY}" | awk '{print $2}')
     # if there's a particular key that we need, look for it
     LEGIT_KEY=$(ssh-add -l | grep "${KEY_SHA}")
 

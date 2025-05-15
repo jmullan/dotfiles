@@ -33,7 +33,7 @@ echo "${CONTEXT}" >> "${HOME}/.context_history"
     screen_prompt
     virtualenv_prompt
     sdk-prompt
-    git prompt | tail -n 1
+    git prompt
     echo
 } | tail -n +0
 if [ $EXIT -eq 0 ]; then
@@ -48,6 +48,6 @@ PS1+="\[${COLOR_CYAN}\]${WHOAMI}@${HOSTNAME}\[${COLOR_DEFAULT}\]"
 PS1+=":\w \$ "
 PS1+='\[${PS0:$((PS0time=0, 0)):0}\]'
 
-if [ "${DEBUG_PROMPT}" == "true"  ] ; then
+if [ "${DEBUG_PROMPT}" == "true" ] ; then
    set +x
 fi
