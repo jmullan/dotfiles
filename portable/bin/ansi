@@ -1,50 +1,93 @@
-#!/usr/bin/env python-venv
-
-import colorist
-
+#!/usr/bin/env -S python-venv --virtualenv dotfiles
 from jmullan_cmd import cmd
 
-colors = {
-    'BLACK',
-    'RED',
-    'GREEN',
-    'YELLOW',
-    'BLUE',
-    'MAGENTA',
-    'CYAN',
-    'WHITE',
-    'DEFAULT',
+color_options = {
+    "BgBrightColor.BLACK": "\x1b[100m",
+    "BgBrightColor.BLUE": "\x1b[104m",
+    "BgBrightColor.CYAN": "\x1b[106m",
+    "BgBrightColor.DEFAULT": "\x1b[109m",
+    "BgBrightColor.GREEN": "\x1b[102m",
+    "BgBrightColor.MAGENTA": "\x1b[105m",
+    "BgBrightColor.OFF": "\x1b[0m",
+    "BgBrightColor.RED": "\x1b[101m",
+    "BgBrightColor.WHITE": "\x1b[107m",
+    "BgBrightColor.YELLOW": "\x1b[103m",
+    "BgColor.BLACK": "\x1b[40m",
+    "BgColor.BLUE": "\x1b[44m",
+    "BgColor.CYAN": "\x1b[46m",
+    "BgColor.DEFAULT": "\x1b[49m",
+    "BgColor.GREEN": "\x1b[42m",
+    "BgColor.MAGENTA": "\x1b[45m",
+    "BgColor.OFF": "\x1b[0m",
+    "BgColor.RED": "\x1b[41m",
+    "BgColor.WHITE": "\x1b[47m",
+    "BgColor.YELLOW": "\x1b[43m",
+    "BrightColor.BLACK": "\x1b[90m",
+    "BrightColor.BLUE": "\x1b[94m",
+    "BrightColor.CYAN": "\x1b[96m",
+    "BrightColor.DEFAULT": "\x1b[99m",
+    "BrightColor.GREEN": "\x1b[92m",
+    "BrightColor.MAGENTA": "\x1b[95m",
+    "BrightColor.OFF": "\x1b[0m",
+    "BrightColor.RED": "\x1b[91m",
+    "BrightColor.WHITE": "\x1b[97m",
+    "BrightColor.YELLOW": "\x1b[93m",
+    "Color.BLACK": "\x1b[30m",
+    "Color.BLUE": "\x1b[34m",
+    "Color.CYAN": "\x1b[36m",
+    "Color.DEFAULT": "\x1b[39m",
+    "Color.GREEN": "\x1b[32m",
+    "Color.MAGENTA": "\x1b[35m",
+    "Color.OFF": "\x1b[0m",
+    "Color.RED": "\x1b[31m",
+    "Color.WHITE": "\x1b[37m",
+    "Color.YELLOW": "\x1b[33m",
 }
-color_schemes = [
-    'Color',
-    'BrightColor'
-    'BgColor',
-    'BgBrightColor'
-]
-color_options: dict = {}
-for color_scheme in color_schemes:
-    if hasattr(colorist, color_scheme):
-        scheme = getattr(colorist, color_scheme)
-        for color in colors:
-            name = f"{color_scheme}.{color}"
-            if hasattr(scheme, color):
-                color_options[name] = getattr(scheme, color)
+
+
+def resolve_color(color: str) -> str | None:
+    if "." not in color:
+        color = f"Color.{color}"
+    upper_color = color.upper()
+    upper_options: dict[str, str] = {k.upper(): v for k, v in color_options.items()}
+    if upper_color in upper_options:
+        return upper_options[upper_color]
+    parts = upper_color.split(".")
+    if len(parts) != 2:
+        return None
+    if parts[0] == "BG":
+        parts[0] = "BgColor".upper()
+        upper_color = ".".join(parts)
+    if upper_color in upper_options:
+        return upper_options[upper_color]
+    return None
+
 
 class Main(cmd.Main):
+    """Generate ansi color sequences.
+
+    Case-insensitive: black, blue, cyan, green, magenta, red, white, yellow, off, default
+
+    Or prefixed with Color, BrightColor, BgColor, or BgBrightColor:
+
+    Color.GREEN, BgColor.RED, BG.YELLOW
+    """
+
     def __init__(self):
         super().__init__()
         self.parser.add_argument(
             "commands",
             nargs="+",
-            choices = list(color_options.keys()),
             help="what effects to run",
         )
 
     def main(self):
         super().main()
         for command in self.args.commands:
-            if command in color_options:
-                print(color_options[command], end='')
+            color = resolve_color(command)
+            if color is not None:
+                print(color, end="")
+
 
 if __name__ == "__main__":
     Main().main()

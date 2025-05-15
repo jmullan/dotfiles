@@ -1,4 +1,4 @@
-#!/usr/bin/env python-venv
+#!/usr/bin/env -S python-venv --virtualenv dotfiles dotfiles
 """Strip extra newlines from end of files, add one if there is none."""
 from jmullan_cmd import cmd
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python-venv
+#!/usr/bin/env -S python-venv --virtualenv dotfiles
 import logging
 import re
 import sys

@@ -1,4 +1,4 @@
-#!/usr/bin/env python-venv
+#!/usr/bin/env -S python-venv --virtualenv dotfiles
 """Stream through a file or files and print lines that come after a string is found or a regex is matched."""
 import re
 from typing import TextIO

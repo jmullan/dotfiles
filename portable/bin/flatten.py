@@ -1,4 +1,4 @@
-#!/usr/bin/env python-venv
+#!/usr/bin/env -S python-venv --virtualenv dotfiles
 from collections.abc import Iterable, Iterator
 from functools import wraps
 from typing import TypeVar

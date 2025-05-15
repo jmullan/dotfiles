@@ -1,13 +1,25 @@
 #!/bin/bash
-argcount=$#
-if [ $argcount -eq 0 ] ; then
-    echo "No script requested" 1>&2
-    exit 1
-fi
+function require_arg() {
+    if [ $1 == 0 ] ; then
+        echo "${2:No script requested}" 1>&2
+        exit 1
+    fi
+}
+
+require_arg $#
+
 if [ -z "${WORKON_HOME}" ] ; then
     echo "WORKON_HOME is not set" 1>&2
     exit 1
 fi
+first_arg="${1}"
+if [ "${first_arg}" == "--virtualenv" ] ; then
+    shift
+    require_arg $# "No virtualenv specified with --virtualenv arg"
+    virtualenv_name="${1}"
+    shift
+fi
+require_arg $#
 script_name="${1}"
 if [ ! -e "${script_name}" ] ; then
     echo "File not found ${script_name}" 1>&2
