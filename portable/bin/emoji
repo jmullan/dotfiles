@@ -9,6 +9,7 @@ from jmullan_logging.easy_logging import easy_initialize_logging
 
 logger = logging.getLogger(__name__)
 
+
 def add_missing_colons(string: str) -> str:
     if string is None or len(string) == 0:
         return ""
@@ -40,33 +41,33 @@ class Main(cmd.Main):
             dest="trailing_space",
             action="store_true",
             default=False,
-            help="Add a trailing space if there is output"
+            help="Add a trailing space if there is output",
         )
         self.parser.add_argument(
             "--no-newline",
             dest="no_newline",
             action="store_true",
             default=False,
-            help="Do not add a newline at end"
+            help="Do not add a newline at end",
         )
         self.parser.add_argument(
             "--colonize",
             dest="colonize",
             action="store_true",
             default=False,
-            help="Wrap words in colons if they don't have them"
+            help="Wrap words in colons if they don't have them",
         )
         self.parser.add_argument(
             "--demojize",
             dest="demojize",
             action="store_true",
             default=False,
-            help="If given an emoji, figure out its name"
+            help="If given an emoji, figure out its name",
         )
         self.parser.add_argument(
             "strings",
-            nargs='+',
-            help=f"Try to turn these strings into emojis",
+            nargs="+",
+            help="Try to turn these strings into emojis",
         )
 
     def main(self):
@@ -93,9 +94,6 @@ class Main(cmd.Main):
         if use_newline:
             output = f"{output}\n"
         print(output, end="")
-
-
-
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ from jmullan_logging.easy_logging import easy_initialize_logging
 
 logger = logging.getLogger(__name__)
 
+
 @dataclasses.dataclass
 class Interval:
     name: str
@@ -30,9 +31,7 @@ W = Interval("weeks", "wk")
 MO = Interval("months", "mo")
 YEARS = Interval("years", "yr")
 
-ALL_INTERVALS = [
-    YEARS, MO, W, D, HOURS, MIN, S, MS, US, NS
-]
+ALL_INTERVALS = [YEARS, MO, W, D, HOURS, MIN, S, MS, US, NS]
 
 # these should be in order
 INTERVAL_MULTIPLIERS = (
@@ -43,7 +42,7 @@ INTERVAL_MULTIPLIERS = (
     (1000, S),
     (1000, MS),
     (1000, US),
-    (1, NS)
+    (1, NS),
 )
 
 TO_NANOSECONDS: dict[Interval, int] = {}
@@ -66,7 +65,7 @@ def epoch_diff(now: int, since: int) -> str:
     if diff < fraction_threshold:
         diff = diff / TO_NANOSECONDS[S]
         logger.debug("short-cutting to a fraction of a second")
-        return f'{diff:.2f}s'
+        return f"{diff:.2f}s"
     logger.debug(f"{diff=}{NS.abbreviation}")
     for _, interval in INTERVAL_MULTIPLIERS:
         multiplier = TO_NANOSECONDS[interval]
@@ -79,15 +78,14 @@ def epoch_diff(now: int, since: int) -> str:
             weeks, days = divmod(days, 7)
             parts[W] = weeks
             parts[D] = days
-    logger.debug(f'{diff} {parts}')
+    logger.debug(f"{diff} {parts}")
     in_use = {interval: count for interval, count in parts.items() if count > 0}
     if not len(in_use):
         logger.debug("WTF")
         return ""
-    nice = " ".join([
-        f"{count}{interval.abbreviation}"
-        for interval, count in in_use.items()
-    ])
+    nice = " ".join(
+        [f"{count}{interval.abbreviation}" for interval, count in in_use.items()]
+    )
     return f"{nice}"
 
 
@@ -100,21 +98,20 @@ class Main(cmd.Main):
             "--prefix",
             dest="prefix",
             default=" in ",
-            help="prefix with this if there is output"
+            help="prefix with this if there is output",
         )
         self.parser.add_argument(
             "--trailing-space",
             dest="trailing_space",
             action="store_true",
             default=False,
-            help="Add a trailing space if there is output"
+            help="Add a trailing space if there is output",
         )
         self.parser.add_argument(
             "since",
-            nargs='?',
-            help=f"Calculate elapsed since this timestamp",
+            nargs="?",
+            help="Calculate elapsed since this timestamp",
         )
-
 
     def main(self):
         super().main()
@@ -135,22 +132,24 @@ class Main(cmd.Main):
         if not re.match(r"^[0-9]+$", since):
             return
         since_time = int(since)
-        logger.debug(f'{since_time}')
+        logger.debug(f"{since_time}")
         if since_time < 1740947738:
             # TODO: should this work for any epoch? Maybe the command
             #   could take an optional argumant to define the resolution
             #   of the thing
-            logger.debug(f'what is this, an epoch for ants: {since_time}')
+            logger.debug(f"what is this, an epoch for ants: {since_time}")
             return
         while since_time < 1740947555136331958:
             # multiply by 1000 until the timestamp looks nanoseconds-ish
             since_time = since_time * 1000
-            logger.debug(f'multiplied by 1000: {since_time}')
+            logger.debug(f"multiplied by 1000: {since_time}")
         if since_time > 10419050138000000000:
-            logger.debug(f'I guess your time is in the year 2300 or later? {since_time}')
+            logger.debug(
+                f"I guess your time is in the year 2300 or later? {since_time}"
+            )
             return
         now = time.time_ns()
-        logger.debug(f'{since_time} {now}')
+        logger.debug(f"{since_time} {now}")
         elapsed = epoch_diff(now, since_time)
 
         if len(elapsed):
@@ -158,7 +157,6 @@ class Main(cmd.Main):
                 print(f"{self.args.prefix}{elapsed} ")
             else:
                 print(f"{self.args.prefix}{elapsed}")
-
 
 
 if __name__ == "__main__":

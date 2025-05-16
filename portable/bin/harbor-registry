@@ -43,15 +43,22 @@ class Artifact:
             for tag in self.tags
         ]
 
+
 class UrlAction(argparse.Action):
-    def __call__(self, parser: ArgumentParser, namespace: Namespace, values: str | None, option_string: str | None = None):
+    def __call__(
+        self,
+        parser: ArgumentParser,
+        namespace: Namespace,
+        values: str | None,
+        option_string: str | None = None,
+    ):
         if values is None:
-            parser.error(f"Please enter a valid url.")
+            parser.error("Please enter a valid url.")
         values = values.lstrip()
         if not len(values):
-            parser.error(f"Please enter a valid url.")
+            parser.error("Please enter a valid url.")
         if not values.startswith("http://") and not values.startswith("https://"):
-            parser.error(f"Your url must start with http:// or https://")
+            parser.error("Your url must start with http:// or https://")
         setattr(namespace, self.dest, values)
 
 
@@ -66,7 +73,6 @@ The value of range and list can be string(enclosed by " or '), integer or time (
 """
 
 
-
 class Main(cmd.Main):
     """Check a harbor registry for docker images."""
 
@@ -78,39 +84,32 @@ class Main(cmd.Main):
             dest="url",
             default=os.environ.get("HARBOR_REGISTRY_URL"),
             action=UrlAction,
-            help="What base url to use to look for docker images in harbor"
+            help="What base url to use to look for docker images in harbor",
         )
         self.project_action = self.parser.add_argument(
             "--project",
             dest="project",
             required=True,
-            help="What project to use when searching for images"
+            help="What project to use when searching for images",
         )
         self.repository_action = self.parser.add_argument(
             "--repository",
             dest="repository",
             required=True,
-            help="What repository to use when searching for images"
+            help="What repository to use when searching for images",
         )
         self.queries_action = self.parser.add_argument(
-            "--query",
-            dest="queries",
-            nargs="*",
-            help=query_help
+            "--query", dest="queries", nargs="*", help=query_help
         )
         self.page_action = self.parser.add_argument(
-            "--page",
-            dest="page",
-            required=False,
-            default=0,
-            help="Start on this page"
+            "--page", dest="page", required=False, default=0, help="Start on this page"
         )
         self.page_action = self.parser.add_argument(
             "--page-size",
             dest="page_size",
             required=False,
             default=10,
-            help="Request this many per page"
+            help="Request this many per page",
         )
 
     def main(self):
@@ -126,7 +125,7 @@ class Main(cmd.Main):
             "page": self.args.page,
             "page_size": self.args.page_size,
             "with_tag": "true",
-            "with_label": "true"
+            "with_label": "true",
         }
         query_param = []
         if self.args.queries:
@@ -136,19 +135,24 @@ class Main(cmd.Main):
                 query = query.lstrip()
                 if len(query) == 0:
                     continue
-                if '=' not in query:
+                if "=" not in query:
                     raise ArgumentError(self.queries_action, f"Invalid query: {query}")
                 query_param.append(query)
         if query_param:
             params["q"] = ",".join(query_param)
         response = requests.get(url, params=params)
         data = response.json()
-        artifacts = [Artifact(self.args.url, self.args.project, self.args.repository, a) for a in data]
+        artifacts = [
+            Artifact(self.args.url, self.args.project, self.args.repository, a)
+            for a in data
+        ]
         print(f"{self.args.project} {self.args.repository}")
         for artifact in artifacts:
             print(f"{artifact.data['id']} {artifact.label_schemas}")
             for artifact_url in artifact.urls:
                 print(f"    {artifact_url}")
             print(f"{json.dumps(artifact.data, indent=4)}")
+
+
 if __name__ == "__main__":
     Main().main()

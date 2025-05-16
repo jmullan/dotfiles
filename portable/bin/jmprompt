@@ -7,7 +7,6 @@ fi
 [ -e ".git" ] && git sanity
 SMILEY="${SMILEY:-$(emoji :skull:)}"
 FROWNY="${FROWNY:-$(emoji :rage:)}"
-CLOUDY="${CLOUDY:-$(emoji :cloud:)}"
 COLOR_CYAN="${COLOR_CYAN:-$(ansi Color.CYAN)}"
 COLOR_DEFAULT="${COLOR_DEFAULT:-$(ansi Color.DEFAULT)}"
 WHOAMI="${WHOAMI:-$(whoami)}"
@@ -16,26 +15,8 @@ date '+# %s' >> "${HOME}/.context_history"
 CONTEXT="# $(pwd) $(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
 echo "${CONTEXT}" >> "${HOME}/.context_history"
 
-# a hack to make the entire next line show up at once
-{
-    echo -n $(date '+[%Y-%0m-%0d %H:%M:%S]')
-    ssh-agent-prompt
-    docker_prompt
-    aws-prompt
+jm-context-prompt
 
-    if [ -n "${SC_REGION}" ]; then
-      echo -n " (${CLOUDY} ${SC_REGION}"
-      if [ -n "${SC_PROJECT}" ]; then
-        echo -n "/${SC_PROJECT})"
-      fi
-      echo -n ")"
-    fi
-    screen_prompt
-    virtualenv_prompt
-    sdk-prompt
-    git prompt
-    echo
-} | tail -n +0
 if [ $EXIT -eq 0 ]; then
     _EMOJI="${SMILEY}"
 else

@@ -15,13 +15,12 @@ from jmullan_logging.easy_logging import easy_initialize_logging
 logger = logging.getLogger(__name__)
 
 
-
 class EntryStatus(str, Enum):
-    unmerged = 'unmerged'
-    untracked = 'untracked'
-    changed = 'changed'
-    ignored = 'ignored'
-    unknown = 'unknown'
+    unmerged = "unmerged"
+    untracked = "untracked"
+    changed = "changed"
+    ignored = "ignored"
+    unknown = "unknown"
 
     @property
     def color(self) -> Color | None:
@@ -30,20 +29,21 @@ class EntryStatus(str, Enum):
             self.untracked: Color.CYAN,
             self.changed: Color.YELLOW,
             self.ignored: None,
-            self.unknown: None
+            self.unknown: None,
         }
         return mappings.get(self)
 
     @property
     def short(self) -> str | None:
         mappings = {
-            self.unmerged: "\u26CC",
+            self.unmerged: "\u26cc",
             self.untracked: "+",
             self.changed: "\u0394",
             self.ignored: None,
-            self.unknown: "?"
+            self.unknown: "?",
         }
         return mappings.get(self)
+
 
 @dataclasses.dataclass
 class GitFlow:
@@ -96,7 +96,6 @@ class Branch:
             return self.refname.startswith(getattr(self.git_flow, key))
         return False
 
-
     @property
     def is_main(self) -> bool:
         return self._is_git_flow("main")
@@ -131,9 +130,15 @@ class DataclassesJsonEncoder(json.JSONEncoder):
 
 def run(command: list[str]) -> list[str]:
     logger.debug(f"{' '.join(command)}")
-    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="UTF8") as proc:
-        std_out = [x for x in [line.strip() for line in proc.stdout.readlines()] if len(x)]
-        std_err = [x for x in [line.strip() for line in proc.stderr.readlines()] if len(x)]
+    with subprocess.Popen(
+        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="UTF8"
+    ) as proc:
+        std_out = [
+            x for x in [line.strip() for line in proc.stdout.readlines()] if len(x)
+        ]
+        std_err = [
+            x for x in [line.strip() for line in proc.stderr.readlines()] if len(x)
+        ]
         if std_err:
             logger.debug(f"{std_err}")
         return std_out
@@ -152,7 +157,7 @@ def get_branches(remotes: list[str], git_flow: GitFlow) -> dict[str, Branch]:
         "push": "push:short",
         "upstream": "upstream:short",
         "remotename": "upstream:remotename",
-        "remoteref": "upstream:remoteref"
+        "remoteref": "upstream:remoteref",
     }
     fields_format = f"{s}".join(f"{x}:%({y})" for x, y in fields.items())
     git_format = f"{s} {fields_format}"
@@ -166,16 +171,17 @@ def get_branches(remotes: list[str], git_flow: GitFlow) -> dict[str, Branch]:
         sha, remainder = line.split(" ", 1)
         field_pairs = remainder.split(sha)
         fields = {
-            x: y for x, y in (
-                split_field_pair(field_pair)
-                for field_pair in field_pairs
-            )
-            if y is not None and y != ''
+            x: y
+            for x, y in (split_field_pair(field_pair) for field_pair in field_pairs)
+            if y is not None and y != ""
         }
         fields["sha"] = sha
-        fields["is_remote"] = any(fields["refname"].startswith(f"{remote}/") for remotes in remotes)
+        fields["is_remote"] = any(
+            fields["refname"].startswith(f"{remote}/") for remotes in remotes
+        )
         branches[fields["refname"]] = Branch(**fields, git_flow=git_flow)
     return branches
+
 
 def split_field_pair(field_pair: str):
     parts = field_pair.split(":", 1)
@@ -214,7 +220,12 @@ def get_config():
 def count_commits(branch_one: Branch, branch_two: Branch) -> tuple[float, float]:
     if branch_one is None or branch_two is None:
         return 0, 0
-    command = ["git", "for-each-ref", f"--format=%(ahead-behind:{branch_two.full_refname})", branch_one.full_refname]
+    command = [
+        "git",
+        "for-each-ref",
+        f"--format=%(ahead-behind:{branch_two.full_refname})",
+        branch_one.full_refname,
+    ]
     lines = run(command)
     if lines:
         value = lines[0]
@@ -232,9 +243,7 @@ def count_lines(against: Branch | str) -> tuple[float, float]:
         against = "HEAD"
     elif isinstance(against, Branch):
         against = against.full_refname
-    command = [
-        "git", "diff", "--numstat", against
-    ]
+    command = ["git", "diff", "--numstat", against]
     ahead = 0
     behind = 0
     lines = run(command)
@@ -263,7 +272,7 @@ def get_unique_short_names(remotes: list[str]) -> dict[str, str]:
 
 
 def increment(to_dict: dict[str, int], key: str):
-    if key is None or key in ['', '.']:
+    if key is None or key in ["", "."]:
         return
     if key not in to_dict:
         to_dict[key] = 0
@@ -271,13 +280,16 @@ def increment(to_dict: dict[str, int], key: str):
 
 
 def get_status():
-    command = ["git", "status", "--porcelain=2", "--ahead-behind", "--branch", "--show-stash"]
+    command = [
+        "git",
+        "status",
+        "--porcelain=2",
+        "--ahead-behind",
+        "--branch",
+        "--show-stash",
+    ]
     # print(f"running command {' '.join(command)}")
-    counts: dict[str, Any] = {
-        "index": {},
-        "tree": {},
-        "merge": {}
-    }
+    counts: dict[str, Any] = {"index": {}, "tree": {}, "merge": {}}
     status: dict[str, Any] = {}
     status["counts"] = counts
     lines = run(command)
@@ -290,13 +302,13 @@ def get_status():
                 status[key] = value
             continue
         parts = line.split(" ")
-        if parts[0] == '?':
+        if parts[0] == "?":
             entry_status = EntryStatus.untracked
             index_state = "."
             tree_state = "."
             head_state_one = "."
             head_state_two = "."
-        elif parts[0] == '!':
+        elif parts[0] == "!":
             entry_status = EntryStatus.ignored
             index_state = "."
             tree_state = "."
@@ -343,7 +355,9 @@ def get_status():
     return status
 
 
-def guess_main(branches: dict[str, Branch], remotes: list[str], head_mappings: dict[str, str]):
+def guess_main(
+    branches: dict[str, Branch], remotes: list[str], head_mappings: dict[str, str]
+):
     for branch in branches.values():
         if branch.is_main:
             return branch
@@ -369,7 +383,6 @@ def guess_main(branches: dict[str, Branch], remotes: list[str], head_mappings: d
 class Main(cmd.Main):
     def __init__(self):
         super().__init__()
-
 
     def main(self):
         super().main()
@@ -429,7 +442,10 @@ class Main(cmd.Main):
             if main_branch is not None and main_branch.refname == head_branch.refname:
                 main_branch = None
                 main_upstream_branch = None
-            if develop_branch is not None and develop_branch.refname == head_branch.refname:
+            if (
+                develop_branch is not None
+                and develop_branch.refname == head_branch.refname
+            ):
                 develop_branch = None
                 develop_upstream_branch = None
         if develop_branch is not None and main_branch is not None:
@@ -437,11 +453,15 @@ class Main(cmd.Main):
                 develop_branch = None
                 develop_upstream_branch = None
 
-        prompt_branches: list[tuple[Branch, Branch]] = [b for b in [
-            (main_upstream_branch, main_branch),
-            (develop_upstream_branch, develop_branch),
-            (head_upstream_branch, head_branch),
-        ] if b[0] is not None or b[1] is not None]
+        prompt_branches: list[tuple[Branch, Branch]] = [
+            b
+            for b in [
+                (main_upstream_branch, main_branch),
+                (develop_upstream_branch, develop_branch),
+                (head_upstream_branch, head_branch),
+            ]
+            if b[0] is not None or b[1] is not None
+        ]
 
         if len(prompt_branches) == 1:
             branch_short_names = {}
@@ -494,17 +514,24 @@ class Main(cmd.Main):
             status_color = git_status.get("color")
             short = branch_short_names.get(b.refname, b.refname)
             if b.refname == head_mappings["HEAD"] and status_color is not None:
-                print(f"{status_color}{short}{Color.DEFAULT} ", end = "")
+                print(f"{status_color}{short}{Color.DEFAULT} ", end="")
             else:
-                print(f"{short} ", end = "")
+                print(f"{short} ", end="")
             prior_b = b
 
-        non_zero_entry_statuses = [entry_status for entry_status in EntryStatus if git_status["counts"].get(entry_status)]
+        non_zero_entry_statuses = [
+            entry_status
+            for entry_status in EntryStatus
+            if git_status["counts"].get(entry_status)
+        ]
         if non_zero_entry_statuses:
             print("(f", end="")
             for entry_status in non_zero_entry_statuses:
                 count = git_status["counts"].get(entry_status)
-                print(f" {entry_status.color}{count}{entry_status.short}{Color.DEFAULT}", end = "")
+                print(
+                    f" {entry_status.color}{count}{entry_status.short}{Color.DEFAULT}",
+                    end="",
+                )
             print(")", end="")
 
         if lines_ahead or lines_behind:
@@ -516,7 +543,6 @@ class Main(cmd.Main):
             print(")", end="")
 
         print("]", end="")
-
 
 
 if __name__ == "__main__":

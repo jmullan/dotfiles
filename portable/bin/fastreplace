@@ -24,6 +24,7 @@ def process_gitignore(path: str) -> set[str]:
                     excludes.add(line)
     return excludes
 
+
 class Main(cmd.Main):
     def __init__(self):
         super().__init__()
@@ -45,7 +46,6 @@ class Main(cmd.Main):
             easy_initialize_logging("DEBUG")
         else:
             easy_initialize_logging()
-
 
     def main(self):
         super().main()

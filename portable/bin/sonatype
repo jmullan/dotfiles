@@ -239,9 +239,7 @@ def process_results(
         exit(1)
     # print(json.dumps(sonatype_body.data, indent=4))
     print(f"Total Count: {sonatype_body.total_count}")
-    repos = {
-        repo.repository_id: repo for repo in sonatype_body.repo_details or []
-    }  # type: Dict[str, RepoDetail]
+    repos = {repo.repository_id: repo for repo in sonatype_body.repo_details or []}  # type: Dict[str, RepoDetail]
     latests = {}
     artifacts = sonatype_body.artifacts or []
     for artifact in artifacts:

@@ -5,7 +5,6 @@ import re
 
 class Main(cmd.InPlaceFileProcessor):
     def process_contents(self, contents: str) -> str:
-
         pattern = r"private final ([A-Za-z]+) ([a-zA-Z_]+) ="
         replacement = r"private static final \1 \2 ="
 

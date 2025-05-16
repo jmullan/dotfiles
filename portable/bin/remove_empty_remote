@@ -5,9 +5,10 @@ from re import RegexFlag
 from jmullan_cmd import cmd
 
 REMOTE = re.escape('[remote "template"]')
-TAG =  re.escape("tagopt = --no-tags")
+TAG = re.escape("tagopt = --no-tags")
 
 EMPTY_REMOTE = f"{REMOTE}[\n\r\t\r ]+{TAG}$"
+
 
 def k_v(line: str):
     k, v = line.split("=", 1)

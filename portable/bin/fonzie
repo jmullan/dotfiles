@@ -10,6 +10,7 @@ from jmullan_logging import easy_logging
 
 logger = logging.getLogger(__name__)
 
+
 @dataclasses.dataclass
 class Duration:
     years: float
@@ -20,13 +21,13 @@ class Duration:
     minutes: float
     seconds: float
 
-  def __repr__(self):
-      pairs = ", ".join(
-          f"{k}={v!r}"
-          for k, v in dataclasses.asdict(self).items()
-          if v is not None and v != 0 and v != "" and v != "0"
-      )
-      return f"Duration({pairs})"
+    def __repr__(self):
+        pairs = ", ".join(
+            f"{k}={v!r}"
+            for k, v in dataclasses.asdict(self).items()
+            if v is not None and v != 0 and v != "" and v != "0"
+        )
+        return f"Duration({pairs})"
 
 
 def iso_to_duration(iso: str) -> Duration:
@@ -55,20 +56,7 @@ def iso_to_duration(iso: str) -> Duration:
     Duration(days=1, hours=12)
     """
     logger.info(f"{iso=}")
-    parts = {
-      'P': [
-          'Y',
-          'M',
-          'W',
-          'D',
-      ],
-      'T': [
-          'H',
-          'M',
-          'S'
-      ]
-    }
-    if 'T' in iso:
+    if "T" in iso:
         period, time = iso.split("T", 1)
     else:
         period = iso
@@ -78,13 +66,13 @@ def iso_to_duration(iso: str) -> Duration:
     period_parts = explode_iso(period)
     time_parts = explode_iso(time)
     return Duration(
-          years=to_float(period_parts.get("Y")),
-          months=to_float(period_parts.get("M")),
-          weeks=to_float(period_parts.get("W")),
-          days=to_float(period_parts.get("D")),
-          hours=to_float(time_parts.get("H")),
-          minutes=to_float(time_parts.get("M")),
-          seconds=to_float(time_parts.get("S"))
+        years=to_float(period_parts.get("Y")),
+        months=to_float(period_parts.get("M")),
+        weeks=to_float(period_parts.get("W")),
+        days=to_float(period_parts.get("D")),
+        hours=to_float(time_parts.get("H")),
+        minutes=to_float(time_parts.get("M")),
+        seconds=to_float(time_parts.get("S")),
     )
 
 
@@ -106,16 +94,16 @@ def to_float(val: str | None) -> float:
     0.5
     """
     if val is None:
-      return 0
+        return 0
     val = val.replace(",", ".")
     while val.endswith("0"):
-      val = val.removesuffix("0")
+        val = val.removesuffix("0")
     if val.endswith("."):
-      val = val.removesuffix(".")
+        val = val.removesuffix(".")
     if val == "":
-      return 0
-    if '.' in val:
-      return float(val)
+        return 0
+    if "." in val:
+        return float(val)
     return int(val)
 
 
@@ -123,91 +111,88 @@ def explode_iso(iso: str) -> dict[str, str]:
     matches = re.findall(r"([^YMWDHS]+)([YMWDHS])", iso)
     if not matches:
         return dict()
-    return {
-        match[1]: match[0] for match in matches
-    }
+    return {match[1]: match[0] for match in matches}
 
 
 def get_times(filename: str) -> tuple[datetime.datetime, datetime.datetime]:
-  if os.path.exists(filename):
-      ctime = datetime.datetime.fromtimestamp(os.path.getctime(filename))
-      mtime = datetime.datetime.fromtimestamp(os.path.getmtime(filename))
-      return ctime, mtime
-  now = datetime.datetime.now(datetime.UTC)
-  return now, now
+    if os.path.exists(filename):
+        ctime = datetime.datetime.fromtimestamp(os.path.getctime(filename))
+        mtime = datetime.datetime.fromtimestamp(os.path.getmtime(filename))
+        return ctime, mtime
+    now = datetime.datetime.now(datetime.UTC)
+    return now, now
 
 
 def adjust_time(
-  from_datetime: datetime.datetime,
-  delta: Duration | None,
-  year: str | None,
-  month: str | None,
-  day: str | None
+    from_datetime: datetime.datetime,
+    delta: Duration | None,
+    year: str | None,
+    month: str | None,
+    day: str | None,
 ) -> datetime.datetime:
-  if from_datetime is None:
-      from_datetime = datetime.datetime.now(datetime.UTC)
+    if from_datetime is None:
+        from_datetime = datetime.datetime.now(datetime.UTC)
 
+    if year is not None:
+        if year.startswith("+"):
+            pass
+    return from_datetime
 
-  if year is not None:
-      if year.startswith("+"):
-          pass
-  return from_datetime
 
 class Main(cmd.FileNameProcessor):
+    def __init__(self):
+        super().__init__()
+        self.parser.add_argument(
+            "--delta",
+            dest="delta",
+            default=None,
+            required=False,
+            help="Apply this ISO 8601 delta",
+        )
+        self.parser.add_argument(
+            "--year",
+            dest="year",
+            default=None,
+            required=False,
+            help="force this year",
+        )
+        self.parser.add_argument(
+            "--month",
+            dest="year",
+            default=None,
+            required=False,
+            help="force this year",
+        )
+        self.parser.add_argument(
+            "--day",
+            dest="year",
+            default=None,
+            required=False,
+            help="force this year",
+        )
+        self.booted = False
+        self.delta = None
 
-  def __init__(self):
-      super().__init__()
-      self.parser.add_argument(
-          "--delta",
-          dest="delta",
-          default=None,
-          required=False,
-          help="Apply this ISO 8601 delta",
-      )
-      self.parser.add_argument(
-          "--year",
-          dest="year",
-          default=None,
-          required=False,
-          help="force this year",
-      )
-      self.parser.add_argument(
-          "--month",
-          dest="year",
-          default=None,
-          required=False,
-          help="force this year",
-      )
-      self.parser.add_argument(
-          "--day",
-          dest="year",
-          default=None,
-          required=False,
-          help="force this year",
-      )
-      self.booted = False
-      self.delta = None
+    def before_filenames(self):
+        if self.args.verbose is not None:
+            easy_logging.easy_initialize_logging("DEBUG")
+        else:
+            easy_logging.easy_initialize_logging()
+        print("argh")
+        logger.info("wtf")
+        if self.args.delta is not None:
+            self.delta = iso_to_duration(self.args.delta)
 
-  def before_filenames(self):
-      if self.args.verbose is not None:
-          easy_logging.easy_initialize_logging("DEBUG")
-      else:
-          easy_logging.easy_initialize_logging()
-      print('argh')
-      logger.info("wtf")
-      if self.args.delta is not None:
-          self.delta = iso_to_duration(self.args.delta)
-
-  def process_filename(self, filename: str):
-      if not self.booted:
-          self.booted = True
-          self.before_filenames()
-      # ctime, mtime = get_times(filename)
-      #
-      # with open(filename, 'a'):
-      #     os.utime(filename, times)
-      pass
+    def process_filename(self, filename: str):
+        if not self.booted:
+            self.booted = True
+            self.before_filenames()
+        # ctime, mtime = get_times(filename)
+        #
+        # with open(filename, 'a'):
+        #     os.utime(filename, times)
+        pass
 
 
 if __name__ == "__main__":
-  Main().main()
+    Main().main()

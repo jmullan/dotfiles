@@ -6,9 +6,10 @@ from jmullan_cmd import cmd
 from jmullan_logging.easy_logging import easy_initialize_logging
 import logging
 import requests
-from jmullan_logging.helpers import logging_context, logging_context_from_args
+from jmullan_logging.helpers import logging_context_from_args
 
 logger = logging.getLogger(__name__)
+
 
 class Main(cmd.TextIoProcessor):
     bases: list[str]
@@ -24,10 +25,7 @@ class Main(cmd.TextIoProcessor):
             help="treat the find string as a regex",
         )
         self.parser.add_argument(
-            "--base",
-            dest="bases",
-            action="append",
-            help="Use these base urls"
+            "--base", dest="bases", action="append", help="Use these base urls"
         )
 
     def setup(self):
@@ -62,10 +60,7 @@ class Main(cmd.TextIoProcessor):
 
     @logging_context_from_args("full_url")
     def get(self, full_url: str):
-        headers = {
-            "User-Agent": "jmullan manual testing",
-            'Accept': 'application/json'
-        }
+        headers = {"User-Agent": "jmullan manual testing", "Accept": "application/json"}
         start = time.perf_counter()
         try:
             response = requests.get(full_url, headers=headers)
@@ -104,14 +99,9 @@ class Main(cmd.TextIoProcessor):
         else:
             logger.warning(message)
 
-def nice_duration(seconds: float) -> str:
 
-    segments = {
-        "d": 86400,
-        "h": 3600,
-        "m": 60,
-        "s": 1
-    }
+def nice_duration(seconds: float) -> str:
+    segments = {"d": 86400, "h": 3600, "m": 60, "s": 1}
 
     result = []
     for name, size in segments.items():
@@ -134,6 +124,7 @@ def nice_duration(seconds: float) -> str:
     else:
         return "0s"
 
+
 def nice_bytes(byte_count: int) -> str:
     labels = ["k", "M", "G", "T"]
     label = "b"
@@ -144,7 +135,6 @@ def nice_bytes(byte_count: int) -> str:
         else:
             break
     return f"{byte_count}{label}"
-
 
 
 if __name__ == "__main__":

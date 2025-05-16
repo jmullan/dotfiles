@@ -4,7 +4,6 @@ import os
 from argparse import ArgumentParser
 import yaml
 
-import jmullan_logging
 
 def main():
     """Merge properties files"""
@@ -86,7 +85,7 @@ def flatten_nested(data: dict, prefix: str | None = None) -> dict[str, str]:
     """
     output: dict[str, str] = {}
     if isinstance(data, dict):
-       for k, v in data.items():
+        for k, v in data.items():
             if prefix is None or not len(prefix):
                 key = f"{k}"
             else:
@@ -110,7 +109,9 @@ def get_new_contents(verbose, values):
     return new_contents
 
 
-def crush_files(verbose: bool, filenames: list[str], defaults: dict[str, str], target: str | None):
+def crush_files(
+    verbose: bool, filenames: list[str], defaults: dict[str, str], target: str | None
+):
     application_filenames = set()
     application_filename: str | None = None
     dirs = set()

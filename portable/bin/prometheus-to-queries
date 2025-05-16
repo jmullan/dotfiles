@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 
 HELP = "# HELP"
 TYPE = "# TYPE"
-FILTER_REGEX_Q = f'^([^=]+)(=|!=|=~|!~)"([^"]+)",?(.*)'
-FILTER_REGEX = f"^([^=]+)(=|!=|=~|!~)([^,]+),?(.*)"
+FILTER_REGEX_Q = '^([^=]+)(=|!=|=~|!~)"([^"]+)",?(.*)'
+FILTER_REGEX = "^([^=]+)(=|!=|=~|!~)([^,]+),?(.*)"
 LABEL_REGEX = r'^([^=]+)="([^"]+)",?(.*)'
 
 value_escapes = {
@@ -261,8 +261,11 @@ def prometheus_to_queries(
 
 
 class NullWriter(TextIO):
-    def write(self, s): pass
-    def flush(self): pass
+    def write(self, s):
+        pass
+
+    def flush(self):
+        pass
 
 
 class Main(cmd.PrintingFileProcessor):

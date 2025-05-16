@@ -1,5 +1,6 @@
 #!/usr/bin/env -S python-venv --virtualenv dotfiles
 """Yell at sonatype sometimes"""
+
 import abc
 import ast
 import dataclasses
@@ -30,8 +31,7 @@ REPOS = ["snapshots", "releases"]
 class UniqueByUrl(abc.ABC):
     @property
     @abc.abstractmethod
-    def url(self):
-        ...
+    def url(self): ...
 
     def __eq__(self, other):
         return self.url == other.url
@@ -283,7 +283,7 @@ class Main(cmd.Main):
                 self.configs[filename] = dict()
                 for item in config.items():
                     self.configs[filename][item[0]] = item[1].data
-        except Exception as ex:
+        except Exception:
             logger.exception("Oopies")
 
     def main(self):
@@ -364,7 +364,6 @@ class Main(cmd.Main):
             expected_extensions = {"pom", "jar"}
         artifact_version_extensions: set[ArtifactVersionExtension] = set()
         for artifact_version in sorted(artifact_versions, key=lambda x: x.url):
-
             with logging_context(**artifact_version.context()):
                 extension: str | None = self.args.extension
                 if extension is not None:
@@ -416,7 +415,6 @@ class Main(cmd.Main):
     def get_artifact_versions_from_properties(
         self, group, artifact_id, properties, release_properties
     ) -> list[ArtifactVersion]:
-
         with logging_context(group_id=group.group_id, artifact_id=artifact_id):
             if not group or not artifact_id:
                 logger.debug(f"Skipping {group=} {artifact_id=}")
@@ -446,7 +444,7 @@ class Main(cmd.Main):
         ):
             if artifact_id is not None:
                 return artifact_id
-        logger.debug(f"Did not find artifact_id")
+        logger.debug("Did not find artifact_id")
         return None
 
     def get_group(self, properties, release_properties) -> Group | None:
@@ -457,7 +455,7 @@ class Main(cmd.Main):
             group_id = p.get("groupId")
             if group_id is not None:
                 return Group(group_id)
-        logger.debug(f"Did not find group")
+        logger.debug("Did not find group")
         return None
 
     def get_versions(self, properties, release_properties) -> list[str]:

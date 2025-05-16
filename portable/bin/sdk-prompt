@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 OSX_JAVA_VIRTUAL_MACHINES_DIR = "/Library/Java/JavaVirtualMachines/"
 
 
-
 @dataclasses.dataclass
 class JVM:
     home: str
@@ -41,11 +40,7 @@ def osx_java_virtual_machines() -> list[JVM]:
         jdk_dir_home = f"{OSX_JAVA_VIRTUAL_MACHINES_DIR}/{jdk_dir}/Contents/Home"
         java_bin = f"{jdk_dir_home}/bin/java"
         if jdk_dir.endswith(".jdk") and os.path.exists(java_bin):
-            jvm = JVM(
-                jdk_dir_home,
-                guess_version(jdk_dir),
-                jdk_dir
-            )
+            jvm = JVM(jdk_dir_home, guess_version(jdk_dir), jdk_dir)
             jvms.append(jvm)
     return jvms
 
@@ -63,11 +58,7 @@ def get_sdk_virtual_machines() -> list[JVM]:
         jdk_dir_home = f"{get_sdk_virtual_machines}/{jdk_dir}"
         java_bin = f"{jdk_dir_home}/bin/java"
         if jdk_dir.endswith(".jdk") and os.path.exists(java_bin):
-            jvm = JVM(
-                jdk_dir_home,
-                guess_version(jdk_dir),
-                jdk_dir
-            )
+            jvm = JVM(jdk_dir_home, guess_version(jdk_dir), jdk_dir)
             jvms.append(jvm)
 
     return jvms
@@ -87,7 +78,7 @@ def find_up(filename: str) -> str | None:
         limit -= 1
         logger.debug(f"{working}")
         if os.path.exists(f"{working}/{filename}"):
-            return f'{working}/{filename}'
+            return f"{working}/{filename}"
         working = os.path.dirname(working)
 
 
@@ -172,7 +163,7 @@ class Main(cmd.Main):
         configs = load_sdk_man_rc(sdk_man_rc)
         logger.debug(f"{configs}")
         java_home = os.environ.get("JAVA_HOME")
-        resolve_java(configs.get('java'), java_home)
+        resolve_java(configs.get("java"), java_home)
 
 
 if __name__ == "__main__":

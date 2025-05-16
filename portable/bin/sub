@@ -19,25 +19,25 @@ class Main(cmd.Main):
         self.parser.add_argument(
             "find",
             nargs=1,
-            help=f"Look for this thing",
+            help="Look for this thing",
         )
         self.parser.add_argument(
             "replace",
-            nargs='?',
-            help=f"Replace it with this thing",
+            nargs="?",
+            help="Replace it with this thing",
         )
-
 
     def main(self):
         super().main()
         find = self.args.find[0]
-        replace = self.args.replace or ''
+        replace = self.args.replace or ""
         for line in sys.stdin:
             line = line.removesuffix("\n")
             if self.args.regex:
                 print(re.sub(find, replace, line))
             else:
                 print(line.replace(find, replace))
+
 
 if __name__ == "__main__":
     Main().main()

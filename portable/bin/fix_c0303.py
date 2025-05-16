@@ -1,5 +1,6 @@
 #!/usr/bin/env -S python-venv --virtualenv dotfiles dotfiles
 """Remove trailing whitespace"""
+
 import re
 
 from jmullan_cmd import cmd

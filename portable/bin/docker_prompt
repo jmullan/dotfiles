@@ -15,10 +15,11 @@ DEFAULT_DOCKER_PATH = "/var/run/docker.sock"
 
 # colorist is too slow to import
 COLORS = {
-    'Color.DEFAULT': '\x1b[39m',
-    'Color.GREEN': '\x1b[32m',
-    'Color.RED': '\x1b[31m'
+    "Color.DEFAULT": "\x1b[39m",
+    "Color.GREEN": "\x1b[32m",
+    "Color.RED": "\x1b[31m",
 }
+
 
 class DataclassesJsonEncoder(json.JSONEncoder):
     def default(self, o):
@@ -29,15 +30,18 @@ class DataclassesJsonEncoder(json.JSONEncoder):
 
 def get_remotes():
     command = ["git", "remote"]
-    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, encoding="UTF8") as proc:
+    with subprocess.Popen(
+        command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, encoding="UTF8"
+    ) as proc:
         return [x for x in [line.strip() for line in proc.stdout.readlines()] if len(x)]
 
 
 def check_docker_socket(socket_path: str) -> bool:
     import httpx
+
     transport = httpx.HTTPTransport(uds=socket_path)
     client = httpx.Client(transport=transport)
-    response = client.get('http://http/_ping', timeout=0.1)
+    response = client.get("http://http/_ping", timeout=0.1)
     return response.status_code == 200
 
 
@@ -50,10 +54,11 @@ def socket_path_from_docker_host_env() -> str | None:
 
 
 def docker_running() -> bool:
-    sockets = {x for x in {
-        DEFAULT_DOCKER_PATH,
-        socket_path_from_docker_host_env()
-    } if x is not None and os.path.exists(x)}
+    sockets = {
+        x
+        for x in {DEFAULT_DOCKER_PATH, socket_path_from_docker_host_env()}
+        if x is not None and os.path.exists(x)
+    }
     for socket in sockets:
         if check_docker_socket(socket):
             return True
@@ -95,11 +100,10 @@ class Main(cmd.Main):
 
         print_word(" ")
         if docker_running():
-            print_word(u"\U0001F6A2", COLORS["Color.GREEN"])
+            print_word("\U0001f6a2", COLORS["Color.GREEN"])
         else:
-            print_word("NO DOCKER",  COLORS["Color.RED"])
+            print_word("NO DOCKER", COLORS["Color.RED"])
         print_word("")
-
 
 
 if __name__ == "__main__":

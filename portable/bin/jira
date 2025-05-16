@@ -14,6 +14,7 @@ from jmullan_logging.easy_logging import easy_initialize_logging
 
 logger = logging.getLogger(__name__)
 
+
 def strip_or_none(value: str | None):
     if value is None:
         return None
@@ -94,7 +95,7 @@ class Main(cmd.Main):
         if jira_url_env is not None:
             jira_url_hint = f"(JIRA_URL={jira_url_env})"
         else:
-            jira_url_hint = f"(JIRA_URL is unset)"
+            jira_url_hint = "(JIRA_URL is unset)"
 
         self.parser.add_argument(
             "-j",

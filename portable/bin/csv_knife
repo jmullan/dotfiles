@@ -132,7 +132,9 @@ def unquoted_reader(chunker, delimiter):
             yield chunk.split(delimiter)
 
 
-def process(csvfile, dialect_name, has_header: bool, template=None, fields: str | None=None):
+def process(
+    csvfile, dialect_name, has_header: bool, template=None, fields: str | None = None
+):
     logger.debug(f"Processing {csvfile=} {dialect_name=} {has_header=}")
     fields = [f.strip() for f in (fields or "").split(",") if len(f.strip())]
     compiled_template = Template(template)
@@ -230,7 +232,7 @@ class Main(cmd.Main):
             "--fields",
             dest="fields",
             default=None,
-            help="for json or csv template, just use these fields. Command separated"
+            help="for json or csv template, just use these fields. Command separated",
         )
         self.logging_configured = False
 
@@ -280,7 +282,13 @@ class Main(cmd.Main):
                 raise Exception(
                     "Cannot sniff stdin and perform other actions besides sniff"
                 )
-        process(file_handle, dialect, self.args.has_header, template=template, fields=self.args.fields)
+        process(
+            file_handle,
+            dialect,
+            self.args.has_header,
+            template=template,
+            fields=self.args.fields,
+        )
 
 
 if __name__ == "__main__":

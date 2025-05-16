@@ -1,10 +1,9 @@
 #!/usr/bin/env -S python-venv --virtualenv dotfiles
 import re
 
-REGEX = r"([^ (]+).has_key\(([^)]+)\)"
-
-
 from jmullan_cmd import cmd
+
+REGEX = r"([^ (]+).has_key\(([^)]+)\)"
 
 
 class Main(cmd.InPlaceFileProcessor):

@@ -20,5 +20,6 @@ class Main(cmd.Main):
         super().main()
         print(uuid.uuid4())
 
+
 if __name__ == "__main__":
     Main().main()

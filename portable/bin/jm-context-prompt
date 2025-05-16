@@ -1,0 +1,57 @@
+#!/usr/bin/env -S python-venv --virtualenv dotfiles
+import subprocess
+import sys
+from datetime import datetime
+
+DEBUG = sys.argv and "--debug" in sys.argv
+
+start = datetime.now()
+now_string = start.strftime("[%Y-%m-%d %H:%M:%S]")
+commands = [
+    "ssh-agent-prompt",
+    "docker_prompt",
+    "aws-prompt",
+    "sc-prompt",
+    "screen_prompt",
+    "virtualenv_prompt",
+    "sdk-prompt",
+    "git-prompt",
+]
+
+
+class DurationTracked:
+    def __init__(self, item: str, timing: str):
+        self.timing = timing
+        self.item = item
+
+
+def popen(cmd: list[str]):
+    if DEBUG:
+        cmd = ["time"] + cmd
+    return subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="UTF-8", text=True
+    )
+
+
+procs: dict[str, subprocess.Popen] = {cmd: popen([cmd]) for cmd in commands}
+
+outputs: dict[str, DurationTracked] = {}
+for cmd, p in procs.items():
+    output = p.communicate()
+    d = DurationTracked(output[0], output[1])
+    outputs[cmd] = d
+
+# Combine and print as one line
+items = [o.item for o in outputs.values() if o is not None]
+items = [o.strip() for o in items]
+items = [o for o in items if len(o) > 0]
+print(" ".join([now_string] + items))
+
+if DEBUG:
+    total_elapsed = datetime.now() - start
+    outputs["total"] = DurationTracked("", f"{total_elapsed.total_seconds():.2f}")
+    max_width = max(len(cmd) for cmd in outputs)
+    for cmd, duration_tracked in outputs.items():
+        print(
+            f"{cmd:{max_width}}\t{duration_tracked.timing.strip()}\t{duration_tracked.item.strip()}"
+        )

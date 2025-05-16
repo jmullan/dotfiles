@@ -28,7 +28,9 @@ TZ = pytz.timezone("America/Los_Angeles")
 DAY_FORMAT = "%Y-%m-%d"
 TIME_FORMAT = "%H:%M:%S"
 
-CHROME_HISTORY_FILENAME = os.path.expanduser("~/Library/Application Support/Google/Chrome/Default/History")
+CHROME_HISTORY_FILENAME = os.path.expanduser(
+    "~/Library/Application Support/Google/Chrome/Default/History"
+)
 CONTEXT_HISTORY_FILENAME = os.path.expanduser("~/.context_history")
 GIT_HISTORY_FILENAME = os.path.expanduser("~/.git_history")
 JIRA_FILENAME = os.path.expanduser("~/.jiras.csv")
@@ -51,7 +53,9 @@ class Entry:
     def __lt__(self, other):
         if other is None:
             return False
-        return self.day < other.day or (self.day == other.day and self.time_of_day < other.time_of_day)
+        return self.day < other.day or (
+            self.day == other.day and self.time_of_day < other.time_of_day
+        )
 
     @property
     def rounded_time(self):
@@ -131,13 +135,19 @@ def indent(content, indentation):
         subsequent_indent_string = (indentation + 1) * INDENT
 
         lines = [
-            textwrap.fill(line, 80, initial_indent=indent_string, subsequent_indent=subsequent_indent_string)
+            textwrap.fill(
+                line,
+                80,
+                initial_indent=indent_string,
+                subsequent_indent=subsequent_indent_string,
+            )
             for line in content.split("\n")
         ]
         return "\n".join(lines)
     else:
-        return textwrap.fill(content, 80, initial_indent=indent_string, subsequent_indent=indent_string)
-
+        return textwrap.fill(
+            content, 80, initial_indent=indent_string, subsequent_indent=indent_string
+        )
 
 
 def dump_day(entries: list[Entry], jira_descriptions: dict[str, str]):
@@ -168,11 +178,15 @@ def dump_chunk(chunk: str, entries: list[Entry], jira_descriptions: dict[str, st
     if not entries:
         return
     entries = [entry for entry in entries if entry is not None]
-    repo = first(entry.repo for entry in entries) or ''
-    branches = best_branches([entry.branch for entry in entries]) or ''
+    repo = first(entry.repo for entry in entries) or ""
+    branches = best_branches([entry.branch for entry in entries]) or ""
     commands = unique(no_blanks(chop_command(entry.command) for entry in entries))
-    messages = unique(no_blanks(entry.message for entry in entries if len(entry.message)))
-    jiras = guess_jiras(*branches, *commands, *messages, jira_descriptions=jira_descriptions)
+    messages = unique(
+        no_blanks(entry.message for entry in entries if len(entry.message))
+    )
+    jiras = guess_jiras(
+        *branches, *commands, *messages, jira_descriptions=jira_descriptions
+    )
     messages = [message for message in messages if message not in jiras]
 
     chunk_parts = []
@@ -201,7 +215,7 @@ def get_git_history(args_day: str | None) -> dict[str, list[Entry]]:
     if not os.path.exists(GIT_HISTORY_FILENAME):
         logger.error("Could not find git history file")
         return {}
-    with open(GIT_HISTORY_FILENAME, 'r', encoding="UTF-8") as history_file:
+    with open(GIT_HISTORY_FILENAME, "r", encoding="UTF-8") as history_file:
         lines = history_file.readlines()
     days: dict[str, list[Entry]] = {}
 
@@ -232,7 +246,7 @@ def get_context_history(args_day: str | None) -> dict[str, list[Entry]]:
     if not os.path.exists(CONTEXT_HISTORY_FILENAME):
         logger.error("Could not find git history file")
         return {}
-    with open(CONTEXT_HISTORY_FILENAME, 'r', encoding="UTF-8") as history_file:
+    with open(CONTEXT_HISTORY_FILENAME, "r", encoding="UTF-8") as history_file:
         lines = history_file.readlines()
     days: dict[str, list[Entry]] = {}
     timestamp = time.time()
@@ -297,7 +311,7 @@ def get_history(args_day: str | None) -> dict[str, list[Entry]]:
     if not os.path.exists(HISTORY_FILENAME):
         logger.error("Could not find history file")
         return {}
-    with open(HISTORY_FILENAME, 'r', encoding="UTF-8") as history_file:
+    with open(HISTORY_FILENAME, "r", encoding="UTF-8") as history_file:
         lines = history_file.readlines()
     days: dict[str, list[Entry]] = {}
     timestamp = time.time()
@@ -322,7 +336,10 @@ def get_history(args_day: str | None) -> dict[str, list[Entry]]:
             days[day].append(entry)
     return days
 
-def get_chrome_history(args_day: str | None, jira_descriptions: dict[str, str]) -> dict[str, list[Entry]]:
+
+def get_chrome_history(
+    args_day: str | None, jira_descriptions: dict[str, str]
+) -> dict[str, list[Entry]]:
     if not os.path.exists(CHROME_HISTORY_FILENAME):
         logger.error("Could not find chrome history file")
         return {}
@@ -339,13 +356,13 @@ def get_chrome_history(args_day: str | None, jira_descriptions: dict[str, str]) 
     try:
         with closing(sqlite3.connect(uri, uri=True)) as connection:
             with closing(connection.cursor()) as cursor:
-                params = {
-                    "day": args_day
-                }
+                params = {"day": args_day}
                 result = cursor.execute(query, params)
                 data = result.fetchall()
                 for row in data:
-                    entry = url_to_entry(row[0], row[1], jira_descriptions=jira_descriptions)
+                    entry = url_to_entry(
+                        row[0], row[1], jira_descriptions=jira_descriptions
+                    )
                     if entry is not None:
                         day = entry.day
                         if day not in entries:
@@ -355,7 +372,10 @@ def get_chrome_history(args_day: str | None, jira_descriptions: dict[str, str]) 
         logger.error("Couldn't get history from chrome file", exc_info=ex)
     return entries
 
-def url_to_entry(timestamp: float, url: str, jira_descriptions: dict[str, str]) -> Entry | None:
+
+def url_to_entry(
+    timestamp: float, url: str, jira_descriptions: dict[str, str]
+) -> Entry | None:
     instant = datetime.datetime.fromtimestamp(timestamp, TZ)
     day = instant.strftime(DAY_FORMAT)
     time_of_day = instant.strftime(TIME_FORMAT)
@@ -393,7 +413,9 @@ def parse_url(url: str, jira_descriptions: dict[str, str]) -> tuple[str, str, st
     if "datadog" in url or "id.siriusxm.com" in url:
         query_params = {}
     values = set(filter_query_params(query_params).values())
-    jiras = guess_jiras(f"{parsed_url.path} {' '.join(values)}", jira_descriptions=jira_descriptions)
+    jiras = guess_jiras(
+        f"{parsed_url.path} {' '.join(values)}", jira_descriptions=jira_descriptions
+    )
     if jiras:
         return parsed_url.hostname, ", ".join(jiras), repo
     else:
@@ -412,9 +434,18 @@ def best_query_param(params: set[str]) -> str:
 
 def filter_query_params(params: dict[str, list[str]]) -> dict[str, str]:
     FORBIDDEN = {
-        "stateToken", "SAMLRequest", "RelayState", "permissionViolation",
-        "rapidView", "quickFilter", "epics", "issueLimit", "tab",
-        "agg_m", "agg_m_source", "rlz"
+        "stateToken",
+        "SAMLRequest",
+        "RelayState",
+        "permissionViolation",
+        "rapidView",
+        "quickFilter",
+        "epics",
+        "issueLimit",
+        "tab",
+        "agg_m",
+        "agg_m_source",
+        "rlz",
     }
     filtered = {}
     for k, v in params.items():
@@ -437,7 +468,7 @@ class Word:
 
     def __init__(self, ast: bashlex.ast.node):
         d = dict(ast.__dict__)
-        self.kind = d.pop('kind')
+        self.kind = d.pop("kind")
         pos = d.pop("pos", None)
         if pos:
             self.pos = pos
@@ -461,23 +492,23 @@ class Node:
 
     def __init__(self, ast: bashlex.ast.node):
         d = dict(ast.__dict__)
-        self.kind = d.pop('kind')
+        self.kind = d.pop("kind")
         fields = []
-        v = d.pop('s', None)
+        v = d.pop("s", None)
         if v:
             self.s = visit(v)
         pos = d.pop("pos", None)
         if pos:
             self.pos = pos
-        v = d.pop('parts', None)
+        v = d.pop("parts", None)
         if v:
             self.parts = visit(v)
         for k, v in sorted(d.items()):
-            if not v :
+            if not v:
                 continue
             fields.append((k, visit(v)))
-        if self.kind == 'function':
-            fields = [visit(f) for f in fields if f[0] not in ('name', 'body')]
+        if self.kind == "function":
+            fields = [visit(f) for f in fields if f[0] not in ("name", "body")]
         else:
             fields = fields
         if fields:
@@ -545,6 +576,7 @@ class Node:
 
         return ""
 
+
 class NodeEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Node | Word):
@@ -587,7 +619,16 @@ def handle_thing(day, time_of_day, thing: Any) -> list[Entry]:
         if thing.kind in ("function", "command"):
             command = thing.assemble()
             if command is not None:
-                return [Entry(day, time_of_day, thing.repo(), thing.branch(), thing.assemble(), "")]
+                return [
+                    Entry(
+                        day,
+                        time_of_day,
+                        thing.repo(),
+                        thing.branch(),
+                        thing.assemble(),
+                        "",
+                    )
+                ]
             return []
     # print(f"{thing=}")
     # print(json.dumps(thing, indent=4, cls=NodeEncoder))
@@ -599,7 +640,7 @@ def parse_history_line(day, time_of_day, line) -> list[Entry]:
         return []
     try:
         parsed_line = bashlex.parse(line)
-    except Exception as ex:
+    except Exception:
         # print(f"oh no {ex} in {line}")
         return [Entry(day, time_of_day, "", "", line, "")]
     entries = []
@@ -613,7 +654,6 @@ def extend(*dicts: dict) -> dict:
     base_days = {}
     if dicts:
         for days in dicts:
-
             for day, entries in days.items():
                 if day not in base_days:
                     base_days[day] = []
@@ -625,14 +665,13 @@ def load_jiras() -> dict[str, str]:
     if not os.path.exists(JIRA_FILENAME):
         return {}
     descriptions = {}
-    with open(JIRA_FILENAME, 'r') as handle:
+    with open(JIRA_FILENAME, "r") as handle:
         reader = csv.reader(handle)
         for fields in reader:
             if len(fields) < 2:
                 logger.debug("Weird jira csv line: {}", fields)
             descriptions[fields[0]] = fields[1]
     return descriptions
-
 
 
 class Main(cmd.Main):
@@ -650,9 +689,13 @@ class Main(cmd.Main):
     def setup(self):
         super().setup()
         if self.args.verbose:
-            easy_initialize_logging("DEBUG", stream=sys.stdout, formatter=formatters.PlainTextFormatter())
+            easy_initialize_logging(
+                "DEBUG", stream=sys.stdout, formatter=formatters.PlainTextFormatter()
+            )
         else:
-            easy_initialize_logging("INFO", stream=sys.stdout, formatter=formatters.PlainTextFormatter())
+            easy_initialize_logging(
+                "INFO", stream=sys.stdout, formatter=formatters.PlainTextFormatter()
+            )
 
     def main(self):
         super().main()

@@ -1,19 +1,26 @@
 #!/usr/bin/env -S python-venv --virtualenv dotfiles
 
+import configparser
+import datetime
 import json
 import os
 import re
 import signal
 import subprocess
 import sys
+from typing import Any
 
-CLOUD = '\u2601\ufe0f'
+CLOUD = "\u2601\ufe0f"
 # colorist is too slow to import
 COLORS = {
-    'Color.DEFAULT': '\x1b[39m',
-    'Color.GREEN': '\x1b[32m',
-    'Color.RED': '\x1b[31m'
+    "Color.DEFAULT": "\x1b[39m",
+    "Color.GREEN": "\x1b[32m",
+    "Color.RED": "\x1b[31m",
 }
+
+CREDENTIALS_PATH = os.path.expanduser("~/.aws/credentials")
+CACHED_CALLER_IDENTITY = os.path.expanduser("~/.aws/caller_identity.json")
+
 
 def get_env_or_none(key: str) -> str | None:
     value = os.environ.get(key)
@@ -23,8 +30,10 @@ def get_env_or_none(key: str) -> str | None:
         return None
     return value
 
+
 def interrupt_handler(*_, **__):
     sys.exit(0)
+
 
 def get_aws_command() -> str | None:
     result = subprocess.run(["which", "aws"], text=True, stdout=subprocess.PIPE)
@@ -33,19 +42,39 @@ def get_aws_command() -> str | None:
         return found
     return None
 
+
 def get_arn() -> str | None:
-    aws_command = get_aws_command()
-    if aws_command is None:
+    keys = unexpired_access_keys()
+    if not keys:
         return None
-    result = subprocess.run([aws_command, 'sts', 'get-caller-identity'], text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    json_string = result.stdout.strip()
-    if not len(json_string):
+    if os.path.exists(CACHED_CALLER_IDENTITY):
+        with open(CACHED_CALLER_IDENTITY, "r") as h:
+            cached_identity: dict[str, Any] = json.load(h)
+            if cached_identity:
+                access_key = cached_identity.get("access_key")
+                caller_identity = cached_identity.get("caller_identity")
+                if access_key in keys:
+                    return caller_identity.get("Arn")
+    import boto3
+
+    session = boto3.Session()
+    credentials = session.get_credentials().get_frozen_credentials()
+    access_key = credentials.access_key
+    sts = boto3.client("sts")
+    caller_identity = sts.get_caller_identity()
+    arn = caller_identity.get("Arn")
+    if arn is None:
         return None
-    try:
-        caller_identity = json.loads(json_string)
-    except json.JSONDecodeError:
-        return None
-    return caller_identity.get('Arn')
+    cache_dir = os.path.dirname(CACHED_CALLER_IDENTITY)
+    if os.path.exists(cache_dir):
+        with open(CACHED_CALLER_IDENTITY, "w") as h:
+            cached_identity = {
+                "access_key": access_key,
+                "caller_identity": caller_identity,
+            }
+            json.dump(cached_identity, h, indent=4)
+    return arn
+
 
 def get_assumed_role(aws_workload_prefix: str | None) -> str | None:
     user_arn = get_arn()
@@ -54,10 +83,34 @@ def get_assumed_role(aws_workload_prefix: str | None) -> str | None:
     assumed_role = re.sub(r".*assumed-role/SAML-", "", user_arn)
     if aws_workload_prefix is not None:
         assumed_role = assumed_role.removeprefix(aws_workload_prefix)
-    assumed_role = re.sub(r"/[-_.a-zA-Z]+@[-_.a-zA-Z]+$", '', assumed_role).strip()
+    assumed_role = re.sub(r"/[-_.a-zA-Z]+@[-_.a-zA-Z]+$", "", assumed_role).strip()
     if len(assumed_role) > 0:
         return assumed_role
     return None
+
+
+def unexpired_access_keys() -> list[str]:
+    now = datetime.datetime.now(datetime.UTC)
+    access_keys: list[str] = []
+    if os.path.exists(CREDENTIALS_PATH):
+        config = configparser.ConfigParser()
+        config.read(CREDENTIALS_PATH)
+        for label, values in config.items():
+            try:
+                x_security_token_expires = values.get("x_security_token_expires")
+                if x_security_token_expires is None:
+                    continue
+                access_key = values.get("aws_access_key_id")
+                if access_key is None:
+                    continue
+                expiration = datetime.datetime.fromisoformat(x_security_token_expires)
+                if expiration < now:
+                    continue
+                access_keys.append(access_key)
+            except Exception:
+                pass
+    return access_keys
+
 
 def main():
     parts = []
@@ -85,7 +138,8 @@ def main():
     if parts:
         parts = [CLOUD] + parts
         prompt = ":".join(parts)
-        print(f" ({prompt})", end='')
+        print(f"({prompt})", end="")
+
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, interrupt_handler)

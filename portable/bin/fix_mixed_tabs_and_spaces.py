@@ -1,5 +1,6 @@
 #!/usr/bin/env -S python-venv --virtualenv dotfiles
 """Fix mixed tabs and spaces"""
+
 import re
 from argparse import Namespace
 

@@ -1,0 +1,8 @@
+#!/bin/bash
+if [ -n "${SC_REGION}" ]; then
+    echo -n " (${CLOUDY:-$(emoji :cloud:)} ${SC_REGION}"
+    if [ -n "${SC_PROJECT}" ]; then
+        echo -n "/${SC_PROJECT})"
+    fi
+    echo -n ")"
+fi

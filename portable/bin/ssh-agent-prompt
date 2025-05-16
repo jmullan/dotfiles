@@ -18,8 +18,7 @@ COLOR_RED="${COLOR_RED:-$(ansi Color.RED)}"
 COLOR_WHITE="${COLOR_WHITE:-$(ansi Color.WHITE)}"
 COLOR_YELLOW="${COLOR_YELLOW:-$(ansi Color.YELLOW)}"
 
-echo -n "${COLOR_DEFAULT}"
-echo -n " ("
+echo -n "${COLOR_DEFAULT}("
 LEGIT_SOCK=$(echo "${SSH_AUTH_SOCK}" | egrep "ssh.*agent")
 LEGIT_PID=$([ -n "${SSH_AGENT_PID}" ] && [ "${SSH_AGENT_PID}" != "1" ] && echo "${SSH_AGENT_PID}")
 if [ -z "${LEGIT_SOCK}" ] || [ -z "${LEGIT_PID}" ] ; then
