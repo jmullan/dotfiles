@@ -1,0 +1,43 @@
+#!/usr/bin/env -S python-venv --virtualenv dotfiles
+import json
+import os
+import sys
+import tomllib
+
+
+def main():
+    if not sys.argv or len(sys.argv) < 3:
+        print(f'usage: {sys.argv[0]} [TOML_FILE] [TOML_VAR]', file=sys.stderr)
+        exit(1)
+    filename = sys.argv[1]
+    if not os.path.exists(filename):
+        print(f'file {filename} not found', file=sys.stderr)
+        exit(1)
+    variable = sys.argv[2]
+    variable = variable.strip()
+    if '.' not in variable:
+        print(f"{variable} must be a full path (at least one dot)", file=sys.stderr)
+        exit(1)
+    try:
+        with open(filename, 'rb') as f:
+            data = tomllib.load(f)
+            parts = variable.split('.')
+            for part in parts:
+                data = data.get(part)
+                if data is None:
+                    break
+            if data is None:
+                print(f"{variable} not found in {filename}", file=sys.stderr)
+                exit(1)
+            elif isinstance(data, str | int | float):
+                print(data)
+            else:
+                print(json.dumps(data))
+
+    except Exception:
+        print(f'Error reading value from {filename}', file=sys.stderr)
+
+
+
+if __name__ == '__main__':
+    main()
