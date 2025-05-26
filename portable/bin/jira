@@ -9,8 +9,8 @@ import time
 
 import requests
 from typing import Any
-from jmullan_cmd import cmd
-from jmullan_logging.easy_logging import easy_initialize_logging
+from jmullan.cmd import cmd
+from jmullan.logging.easy_logging import easy_initialize_logging
 
 logger = logging.getLogger(__name__)
 

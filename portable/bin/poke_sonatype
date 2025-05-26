@@ -14,9 +14,9 @@ from xml.etree import ElementTree
 import jproperties
 import requests
 
-from jmullan_cmd import cmd
-from jmullan_logging import easy_logging
-from jmullan_logging.helpers import logging_context
+from jmullan.cmd import cmd
+from jmullan.logging import easy_logging
+from jmullan.logging.helpers import logging_context
 
 logger = logging.getLogger(__name__)
 

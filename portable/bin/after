@@ -4,7 +4,7 @@
 import re
 from typing import TextIO
 
-from jmullan_cmd import cmd
+from jmullan.cmd import cmd
 
 
 def search(pattern: re.Pattern, file_handle: TextIO, inclusive: bool):

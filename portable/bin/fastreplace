@@ -5,9 +5,9 @@ import os.path
 import pathlib
 import re
 
-from jmullan_cmd import cmd
-from jmullan_cmd.cmd import Jmullan
-from jmullan_logging.easy_logging import easy_initialize_logging
+from jmullan.cmd import cmd
+from jmullan.cmd.cmd import Jmullan
+from jmullan.logging.easy_logging import easy_initialize_logging
 
 logger = logging.getLogger(__name__)
 

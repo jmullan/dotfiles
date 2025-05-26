@@ -8,8 +8,8 @@ httpx
 ipython
 isort
 jira
-jmullan_cmd@git+https://github.com/jmullan/jmullan_cmd
-jmullan_logging@git+https://github.com/jmullan/jmullan_logging
+jmullan.cmd@git+https://github.com/jmullan/jmullan.cmd
+jmullan.logging@git+https://github.com/jmullan/jmullan.logging
 jproperties
 jsonlines
 pip

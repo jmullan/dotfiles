@@ -1,5 +1,5 @@
 #!/usr/bin/env -S python-venv --virtualenv dotfiles
-from jmullan_cmd import cmd
+from jmullan.cmd import cmd
 import re
 
 

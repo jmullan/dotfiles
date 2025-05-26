@@ -4,7 +4,7 @@
 import re
 from argparse import Namespace
 
-from jmullan_cmd import cmd
+from jmullan.cmd import cmd
 
 
 def munge(contents: str, args: Namespace) -> str:

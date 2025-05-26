@@ -2,11 +2,11 @@
 import time
 from typing import TextIO
 
-from jmullan_cmd import cmd
-from jmullan_logging.easy_logging import easy_initialize_logging
+from jmullan.cmd import cmd
+from jmullan.logging.easy_logging import easy_initialize_logging
 import logging
 import requests
-from jmullan_logging.helpers import logging_context_from_args
+from jmullan.logging.helpers import logging_context_from_args
 
 logger = logging.getLogger(__name__)
 

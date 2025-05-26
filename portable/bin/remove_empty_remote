@@ -2,7 +2,7 @@
 import re
 from re import RegexFlag
 
-from jmullan_cmd import cmd
+from jmullan.cmd import cmd
 
 REMOTE = re.escape('[remote "template"]')
 TAG = re.escape("tagopt = --no-tags")

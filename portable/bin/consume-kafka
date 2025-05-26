@@ -8,7 +8,7 @@ from kafka.consumer.fetcher import ConsumerRecord
 import kafka
 import msgpack
 
-from jmullan_cmd import cmd
+from jmullan.cmd import cmd
 
 logger = logging.getLogger(__name__)
 

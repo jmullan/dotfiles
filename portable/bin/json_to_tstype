@@ -2,7 +2,7 @@
 import json
 from typing import TextIO
 
-from jmullan_cmd import cmd
+from jmullan.cmd import cmd
 
 L = "{"
 R = "}"

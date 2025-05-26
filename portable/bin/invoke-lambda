@@ -4,8 +4,8 @@
 # dependencies = [
 #     "boto3",
 #     "jsonlines",
-#     "jmullan_cmd@git+https://github.com/jmullan/jmullan_cmd",
-#     "jmullan_logging@git+https://github.com/jmullan/jmullan_logging"
+#     "jmullan.cmd@git+https://github.com/jmullan/jmullan.cmd",
+#     "jmullan.logging@git+https://github.com/jmullan/jmullan.logging"
 # ]
 # ///
 import sys
@@ -16,8 +16,8 @@ import json
 import logging
 import time
 
-from jmullan_cmd import cmd
-from jmullan_logging.easy_logging import easy_initialize_logging
+from jmullan.cmd import cmd
+from jmullan.logging.easy_logging import easy_initialize_logging
 
 logger = logging.getLogger(__name__)
 

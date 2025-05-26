@@ -5,8 +5,8 @@ import sys
 from string import Template
 from typing import TextIO
 
-from jmullan_cmd import cmd
-from jmullan_logging.easy_logging import easy_initialize_logging
+from jmullan.cmd import cmd
+from jmullan.logging.easy_logging import easy_initialize_logging
 import logging
 
 logger = logging.getLogger(__name__)

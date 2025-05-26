@@ -18,9 +18,9 @@ from urllib.parse import urlparse, parse_qs
 import bashlex
 import bashlex.ast
 import pytz
-from jmullan_cmd import cmd
-from jmullan_logging import formatters
-from jmullan_logging.easy_logging import easy_initialize_logging
+from jmullan.cmd import cmd
+from jmullan.logging import formatters
+from jmullan.logging.easy_logging import easy_initialize_logging
 
 logger = logging.getLogger(__name__)
 

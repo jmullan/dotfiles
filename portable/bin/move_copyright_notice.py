@@ -3,7 +3,7 @@ import datetime
 import os
 import re
 from argparse import ArgumentParser
-from jmullan_cmd import cmd
+from jmullan.cmd import cmd
 
 DESIRED = "// Copyright {date_stuff} {who}"
 STAR_COMMENT_COPYRIGHT_REGEX = r"(?:^|\n)\s*\*\s*(Copyright[^\n]*)(?:$|\n)"

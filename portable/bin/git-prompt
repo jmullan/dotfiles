@@ -9,8 +9,8 @@ from enum import Enum
 from typing import Any
 
 from colorist import Color
-from jmullan_cmd import cmd
-from jmullan_logging.easy_logging import easy_initialize_logging
+from jmullan.cmd import cmd
+from jmullan.logging.easy_logging import easy_initialize_logging
 
 logger = logging.getLogger(__name__)
 

@@ -3,7 +3,7 @@
 
 import re
 
-from jmullan_cmd import cmd
+from jmullan.cmd import cmd
 
 
 def blank(line: str | None) -> str | None:
