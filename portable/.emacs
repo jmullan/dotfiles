@@ -161,7 +161,8 @@
  '(package-selected-packages
       '(dash flycheck gnu-elpa-keyring-update json-mode lsp-mode lua-mode
            markdown-mode php-mode python-mode rust-mode sql-indent toml-mode
-           yaml-mode)))
+           yaml-mode))
+ '(safe-local-variable-values '((smie-indent-basic . 4))))
 
 (add-to-list 'auto-mode-alist '("\\.pyi\\'" . python-mode))
 
