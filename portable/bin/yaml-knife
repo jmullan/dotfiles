@@ -1,0 +1,155 @@
+#!/usr/bin/env -S uv --quiet run --script
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "pyyaml",
+#     "jmullan.cmd@git+https://github.com/jmullan/jmullan.cmd",
+#     "jmullan.logging@git+https://github.com/jmullan/jmullan.logging"
+# ]
+# ///
+import io
+import json
+import logging
+import sys
+from typing import TextIO, Any
+
+import yaml
+from jmullan.cmd import cmd
+from jmullan.logging.easy_logging import easy_initialize_logging
+
+logger = logging.getLogger(__name__)
+
+
+def flatten_nested(data: Any, prefix: str | None = None) -> dict[str, str]:
+    """Adds dots to all nested fields in dictionaries.
+
+    Entries with different forms of nesting update.
+    {"a": {"b": {"c": 4}} -> {"a.b.c": 4}
+    {"a": {"b": 1}, "a.b": 2} -> {"a.b": 2}
+    """
+    output: dict[str, str] = {}
+    if isinstance(data, dict):
+        for k, v in data.items():
+            if prefix is None or not len(prefix):
+                key = f"{k}"
+            else:
+                key = f"{prefix}.{k}"
+            subdata = flatten_nested(v, key)
+            if subdata:
+                output.update(subdata)
+    else:
+        if prefix is not None and len(prefix):
+            output[prefix] = data
+    return {k: v for k, v in sorted(output.items(), key=lambda k: f'{k[0]}={k[1]}')}
+
+
+def un_flatten(data: Any) -> dict[str, str]:
+    """Turns dots into a nested structure"""
+    if data is None:
+        return {}
+    output = {}
+    for key, value in data.items():
+        if "." in key:
+            parts = key.split(".")
+            sub_output = output
+            while len(parts) > 1:
+                part = parts.pop(0)
+                if part not in sub_output:
+                    sub_output[part] = {}
+                sub_output = sub_output[part]
+            part = parts[0]
+            sub_output[part] = value
+        else:
+            output[key] = value
+    return output
+
+
+class Main(cmd.ContentsProcessor):
+
+    def process_contents(self, file_handle: TextIO) -> None:
+        data: list[dict[str, Any]] | None = None
+        try:
+            data = list(yaml.safe_load_all(file_handle) or [])
+        except Exception:
+            pass
+        if data is None:
+            # fall back to json
+            try:
+                data = json.load(file_handle)
+            except Exception:
+                pass
+        if data is None:
+            data = []
+            document = {}
+            lines = file_handle.readlines()
+            lines.append("!---")
+            for line in lines:
+                line = line.strip()
+                if not len(line):
+                    continue
+                if line in ("!---", "#---", "---"):
+                    if document:
+                        data.append(flatten_nested(document))
+                    document = {}
+                    continue
+                parts = line.split("=", 1)
+                if len(parts) > 1:
+                    document[parts[0]] = parts[1]
+            if document:
+                data.append(document)
+        if not data:
+            logger.debug("No data was loaded.")
+            return
+
+        documents = [flatten_nested(document) for document in data if document]
+
+        if self.args.output_format == "properties":
+            logger.debug("Making a properties file")
+            logger.debug(f"Found {len(data)} documents")
+            if len(documents) > 1:
+                print("!---")
+            for document in documents:
+                if document is None:
+                    logger.debug("Document is None")
+                    continue
+                flattened = document
+                if flattened is None:
+                    logger.warning("Flattened document is None")
+                logger.debug(f"Found {len(flattened)} items")
+                for k, v in flattened.items():
+                    print(f"{k}={v}")
+        elif self.args.output_format == "yaml":
+            logger.debug("Making a yaml file")
+            if len(data) > 1:
+                print("---")
+            for document in data:
+                flattened = un_flatten(document)
+                if flattened is not None:
+                    print(flattened)
+
+    def process_filename(self, filename: str):
+        with cmd.open_file_or_stdin(filename) as handle:
+            self.process_contents(handle)
+
+
+    def __init__(self):
+        super().__init__()
+        self.parser.add_argument(
+            "--output-format",
+            dest="output_format",
+            required=False,
+            default="yaml",
+            choices=["yaml", "properties", "json"],
+            help=""
+        )
+
+    def setup(self):
+        super().setup()
+        if self.args.verbose:
+            easy_initialize_logging("DEBUG", stream=sys.stderr)
+        else:
+            easy_initialize_logging("INFO", stream=sys.stderr)
+
+
+if __name__ == "__main__":
+    Main().main()
