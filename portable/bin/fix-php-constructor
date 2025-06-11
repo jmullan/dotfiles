@@ -1,0 +1,22 @@
+#!/usr/bin/env -S python-venv --virtualenv dotfiles
+"""Fix bad indentation"""
+
+import re
+
+from jmullan.cmd import cmd
+
+
+class Main(cmd.InPlaceFileProcessor):
+
+    def process_contents(self, contents: str) -> str:
+        matches = re.findall(r"class ([_A-Za-z]+)", contents)
+        if not matches:
+            return contents
+        for match in matches:
+            find = f'function {match}('
+            replace = f"function __construct("
+            contents = contents.replace(find, replace)
+        return contents
+
+if __name__ == "__main__":
+    Main().main()
