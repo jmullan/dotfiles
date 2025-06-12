@@ -80,9 +80,19 @@ class Main(cmd.Main):
             nargs="+",
             help="what effects to run",
         )
+        self.parser.add_argument(
+            "--demo",
+            action="store_true",
+            default=False,
+            help="Print out an array of colors."
+        )
 
     def main(self):
         super().main()
+        off = resolve_color("off")
+        if self.args.demo:
+            for name, sequence in color_options.items():
+                print(f'{sequence}{name}{off}')
         for command in self.args.commands:
             color = resolve_color(command)
             if color is not None:
