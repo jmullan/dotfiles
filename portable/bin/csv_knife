@@ -165,10 +165,9 @@ def process(
     else:
         writer = None
     for csv_row in reader:
-        if csv_row is None:
-            break
+        if csv_row is None or csv_row == []:
+            continue
         d = zip_header(header, csv_row, fields)
-
         if template is None:
             print(d)
         elif template == "json":
