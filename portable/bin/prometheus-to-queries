@@ -1,4 +1,5 @@
 #!/usr/bin/env -S python-venv --virtualenv dotfiles
+import json
 import logging
 import re
 import sys
@@ -14,7 +15,7 @@ HELP = "# HELP"
 TYPE = "# TYPE"
 FILTER_REGEX_Q = '^([^=]+)(=|!=|=~|!~)"([^"]+)",?(.*)'
 FILTER_REGEX = "^([^=]+)(=|!=|=~|!~)([^,]+),?(.*)"
-LABEL_REGEX = r'^([^=]+)="([^"]+)",?(.*)'
+LABEL_REGEX = r'^\s*([^=]+)="([^"]+)",?(.*)'
 
 value_escapes = {
     "\n": "\\n",
@@ -48,11 +49,11 @@ def parse_raw_filter(line: str) -> dict[str, Filter]:
         if not match:
             break
 
-        key = match.groups()[0]
-        operator = match.groups()[1]
-        value = match.groups()[2]
+        key = match.group(1).strip()
+        operator = match.group(2).strip()
+        value = match.group(3).strip()
         pairs[key] = Filter(key, operator, value)
-        line = match.groups()[3]
+        line = match.group(4).strip()
     return pairs
 
 
@@ -71,7 +72,7 @@ def make_filter_string(filters: dict[str, Filter] | None) -> str:
         return ""
     parts = []
     for f in filters.values():
-        parts.append(f'{f.key}{f.operator}"{f.value}"')
+        parts.append(f'{f.key.strip()}{f.operator}"{f.value}"')
     if parts:
         return "{" + ", ".join(parts) + "}"
     else:
@@ -120,14 +121,21 @@ def parse_labels(line: str) -> set[str] | None:
         return None
     pairs = {}
     while match := re.match(LABEL_REGEX, line):
-        key = match.groups()[0]
-        value = match.groups()[1]
+        key = match.group(1)
+        value = match.group(2)
         pairs[key] = value
-        line = match.groups()[2]
+        line = match.group(3)
     return set(pairs.keys())
 
 
 def get_stat(line: str) -> tuple[str | None, dict[str, str] | None]:
+    matches = re.match(r"^\s*([^{]+)\s*({[^[}]+})\s*$", line.strip())
+    if matches:
+        stat = matches.group(1)
+        labels = parse_labels(matches.group(2))
+        if stat:
+            return stat, labels
+
     stat, _ = twain(line)
     if stat is None:
         return None, None
@@ -152,7 +160,7 @@ def guess_stat_type(stat_name, stat_types):
     stat_type = stat_types.get(stat_name)
     if stat_type is not None:
         return stat_type
-    if stat_name.endswith("_count") or stat_name.endswith("_count"):
+    if stat_name.endswith("_count") or stat_name.endswith("_total"):
         return "counter"
     return "gauge"
 
@@ -171,7 +179,10 @@ def get_dimensions(labels: dict) -> str | None:
 
 
 def prometheus_to_queries(
-    contents: str, filters: dict[str, Filter] | None = None
+    contents: str,
+    filters: dict[str, Filter] | None = None,
+    as_grafana: bool = False,
+    grafana_first_letter: str = "A"
 ) -> str | None:
     if filters is None:
         filters = dict()
@@ -225,6 +236,13 @@ def prometheus_to_queries(
                 stat_name, ["count", "sum"], stat_helps.get(stat_name)
             )
             update_dict_if_not_set(sub_helps, stat_helps)
+    if not as_grafana:
+        return dump_list(stat_names, stat_types, filters, stat_labels, filter_string, summaries)
+    else:
+        return dump_grafana(stat_names, stat_types, filters, stat_labels, filter_string, summaries, grafana_first_letter)
+
+
+def dump_list(stat_names: set[str], stat_types: dict[str, str], filters: dict[str, dict[str, str]], stat_labels: dict[str, dict[str, str]], filter_string: str, summaries: set[str]):
     output = []
     # sum(genie_archive_item_priority{project=~"$project", env=~"$env"}) by (project, env, lag_project, item_type, queued_priority) > 0
     stat_defs = {}
@@ -260,6 +278,102 @@ def prometheus_to_queries(
     return "\n".join(output)
 
 
+def dump_grafana(
+    stat_names: set[str],
+    stat_types: dict[str, str],
+    filters: dict[str, dict[str, str]],
+    stat_labels: dict[str, dict[str, str]],
+    filter_string: str,
+    summaries: set[str],
+    grafana_first_letter: str
+):
+    targets = []
+    # sum(genie_archive_item_priority{project=~"$project", env=~"$env"}) by (project, env, lag_project, item_type, queued_priority) > 0
+    ref_int = ord(grafana_first_letter) - ord('A')
+    stat_defs = {}
+    for stat_name in sorted(stat_names):
+        ref_id = to_letter_label(ref_int)
+        stat_type = guess_stat_type(stat_name, stat_types)
+        labels = dict()
+        labels.update(filters or dict())
+        labels.update(stat_labels.get(stat_name) or dict())
+        name_filtered = f"{stat_name}{filter_string}"
+
+        if "counter" == stat_type:
+            name_filtered = f"rate({name_filtered}[$__rate_interval])"
+        if labels:
+            label_string = ", ".join(labels.keys())
+            if "max" in name_filtered:
+                stat_def = f"max by ({label_string}) ({name_filtered})"
+            else:
+                stat_def = f"sum by ({label_string}) ({name_filtered})"
+        else:
+            stat_def = f"{name_filtered}"
+        stat_name = stat_name.removesuffix("_total")
+        stat_name = stat_name.removesuffix("_count")
+        stat_name = stat_name.removesuffix("_sum")
+        dimensions = get_dimensions(labels)
+        if dimensions:
+            as_legend = f"{stat_name} {dimensions}"
+        else:
+            as_legend = stat_name
+        target = grafana_entry(stat_def, as_legend, ref_id)
+        targets.append(target)
+        stat_defs[stat_name] = stat_def
+        ref_int += 1
+    for summary in summaries:
+        sum_name = f"{summary}_sum"
+        ref_id = to_letter_label(ref_int)
+        seconds_def = stat_defs.get(sum_name)
+        count_def = stat_defs.get(f"{summary}_count")
+        labels = dict()
+        labels.update(filters or dict())
+        labels.update(stat_labels.get(sum_name) or dict())
+        if seconds_def is not None and count_def is not None:
+            dimensions = get_dimensions(labels)
+            if dimensions:
+                as_legend = f"{summary} {dimensions}"
+            else:
+                as_legend = summary
+            expression = f"{seconds_def} / {count_def}"
+            ref_int += 1
+            target = grafana_entry(expression, as_legend, ref_id)
+            targets.append(target)
+
+    return json.dumps(targets, indent=4)
+
+
+def to_letter_label(n: int) -> str:
+    label = ""
+    while n >= 0:
+        label = chr(n % 26 + ord('A')) + label
+        n = n // 26 - 1
+    return label
+
+
+
+def grafana_entry(
+    expression: str,
+    legend_format: str,
+    ref_id: str
+):
+    return {
+        "datasource": {
+            "type": "prometheus",
+            "uid": "-O-XQmcGz"
+        },
+        "editorMode": "code",
+        "expr": f"{expression} != 0",
+        "hide": False,
+        "instant": False,
+        "interval": "1m",
+        "legendFormat": legend_format,
+        "range": True,
+        "refId": ref_id
+    }
+
+
+
 class NullWriter(TextIO):
     def write(self, s):
         pass
@@ -279,11 +393,32 @@ class Main(cmd.PrintingFileProcessor):
             help="what to call a top-level item",
         )
         self.parser.add_argument(
+            "--matching",
+            dest="matching",
+            default=None,
+            required=False,
+            help="Only include items that match this word",
+        )
+        self.parser.add_argument(
             "--filters",
             metavar="FILTERS",
             type=str,
             nargs="*",
             help="""Any filters to add to every query: '{env="$env",project="foo"}' "bar=baz" a=b,c=d""",
+        )
+        self.parser.add_argument(
+            "--as-grafana-panels",
+            dest="as_grafana",
+            action="store_true",
+            default=False,
+            help="Output JSON appropriate to insert into panels"
+        )
+        self.parser.add_argument(
+            "--grafana-first-letter",
+            dest="grafana_first_letter",
+            default="A",
+            help="If making json for grafana, start with this letter"
+
         )
 
     def setup(self):
@@ -297,7 +432,9 @@ class Main(cmd.PrintingFileProcessor):
 
     def process_contents(self, contents: str) -> str:
         raw_filters = self.args.filters
-        return prometheus_to_queries(contents, parse_raw_filters(raw_filters))
+        if self.args.matching is not None:
+            contents =  "\n".join(line for line in contents.split("\n") if self.args.matching in line)
+        return prometheus_to_queries(contents, parse_raw_filters(raw_filters), self.args.as_grafana, self.args.grafana_first_letter)
 
 
 if __name__ == "__main__":

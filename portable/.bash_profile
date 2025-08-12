@@ -3,7 +3,6 @@
 # the files are located in the bash-doc package.
 umask 022
 
-
 if [ -f ~/.bashrc ]; then
     source ~/.bashrc
 fi
@@ -160,6 +159,14 @@ export COLOR_YELLOW="$(ansi Color.YELLOW)"
 
 if [ -e "${HOME}/.cargo/env" ] ; then
     . "${HOME}/.cargo/env"
+fi
+
+if [ -e "${HOME}/.nvm" ] ; then
+    export NVM_DIR="${HOME}/.nvm"
+    if [ -e "/opt/homebrew/opt/nvm/nvm.sh" ] ; then
+        [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"  # This loads nvm
+        [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
+    fi
 fi
 
 if [ -f ~/.bash_profile_local ]; then

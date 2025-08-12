@@ -5,6 +5,8 @@ chardet
 colorist
 emoji
 httpx
+ics
+icalevents
 ipython
 isort
 jira

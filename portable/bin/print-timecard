@@ -3,10 +3,12 @@
 import csv
 import dataclasses
 import datetime
+from icalevents import icalparser
 import json
 import logging
 import os.path
 import re
+import requests
 import sqlite3
 import sys
 import textwrap
@@ -182,7 +184,7 @@ def dump_chunk(chunk: str, entries: list[Entry], jira_descriptions: dict[str, st
     branches = best_branches([entry.branch for entry in entries]) or ""
     commands = unique(no_blanks(chop_command(entry.command) for entry in entries))
     messages = unique(
-        no_blanks(entry.message for entry in entries if len(entry.message))
+        no_blanks(entry.message for entry in entries if entry.message is not None and len(entry.message))
     )
     jiras = guess_jiras(
         *branches, *commands, *messages, jira_descriptions=jira_descriptions
@@ -371,6 +373,89 @@ def get_chrome_history(
     except Exception as ex:
         logger.error("Couldn't get history from chrome file", exc_info=ex)
     return entries
+
+
+def start_of_day(day: str):
+    naive_date = datetime.datetime.strptime(day, "%Y%m%d")
+    return naive_date.replace(tzinfo=TZ)
+
+def end_of_day(day: str):
+    naive_date = datetime.datetime.strptime(day, "%Y%m%d")
+    return naive_date.replace(hour=23, minute=59, second=59, microsecond=999999, tzinfo=TZ)
+
+def format_duration(delta: datetime.timedelta):
+    if delta is None:
+        return ''
+    total_minutes = round(delta.total_seconds() / 60 / 15) * 15
+    if total_minutes < 1:
+        return ''
+    hours = total_minutes // 60
+    minutes = total_minutes % 60
+    parts = []
+    if hours:
+        parts.append(f"{hours}h")
+    if minutes:
+        parts.append(f"{minutes}m")
+    if parts:
+        return ''.join(parts)
+
+
+def get_calendar_history(args_day: str | None) -> dict[str, list[Entry]]:
+    calendar_url = os.environ.get('CALENDER_ICS_URL')
+    if calendar_url is None:
+        return {}
+    headers = {"User-Agent": "jmullan manual testing", "Accept": "application/json"}
+    try:
+        response = requests.get(calendar_url, headers=headers)
+    except Exception:
+        logger.exception("oh no")
+        return {}
+    if response is None:
+        logger.warning("Got None calendar response.")
+        return {}
+    text = response.text
+    if text is None or text == '':
+        return {}
+    range_start = start_of_day('20250101')
+    range_end = end_of_day('20251231')
+    for line in text.split("\n"):
+        matches = re.match(r"DT(START|END);VALUE=DATE([0-9]+)$", line)
+        if matches:
+            match_type = matches.group(1)
+            if match_type == "START":
+                match_day = start_of_day(matches.group(2))
+                if match_day < range_start:
+                    range_start = match_day
+            else:
+                match_day = end_of_day(matches.group(2))
+                if match_day > range_end:
+                    range_end = match_day
+
+    events: list[icalparser.Event] = icalparser.parse_events(
+        text,
+        start=range_start,
+        end=range_end,
+        tzinfo=TZ,
+        sort=True
+    )
+    entries = {}
+    for event in events:
+        day = event.start.strftime(DAY_FORMAT)
+        if args_day and args_day != day:
+            continue
+        time_of_day = event.start.strftime(TIME_FORMAT)
+        duration = format_duration(event.end - event.start)
+        repo = ""
+        branch = f"Meeting {event.status} {event.summary} {duration}".strip()
+        command = ''
+        message = event.description or ''
+        entry = Entry(day, time_of_day, repo, branch, command, message)
+        if day not in entries:
+            entries[day] = []
+        entries[day].append(entry)
+    return entries
+
+
 
 
 def url_to_entry(
@@ -713,8 +798,9 @@ class Main(cmd.Main):
         # logger.debug("Getting git history")
         git_days = get_git_history(self.args.day)
         # logger.debug(f"Got {len(git_days)} git history days")
+        calendar_history = get_calendar_history(self.args.day)
 
-        all_days = extend(context_history, chrome_history, history_days, git_days)
+        all_days = extend(context_history, chrome_history, history_days, git_days, calendar_history)
         if not all_days:
             logger.debug("No days found")
         for day, entries in all_days.items():

@@ -11,14 +11,14 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-DIALECT_OPTIONS = csv.list_dialects() + ["sniff", "presto", "rovi"]
+DIALECT_OPTIONS = csv.list_dialects() + ["sniff", "presto", "rovi", "taxon"]
 
 
 class PrestoDialect(csv.Dialect):
     delimiter = ","
     doublequote = True
     escapechar = None
-    lineterminator = "\r\n"
+    lineterminator = "\n"
     quotechar = '"'
     quoting = csv.QUOTE_ALL
     skipinitialspace = True
@@ -40,6 +40,20 @@ class RoviDialect(csv.Dialect):
 
 
 csv.register_dialect("rovi", RoviDialect)
+
+
+class TaxonDialect(csv.Dialect):
+    delimiter = "\t"
+    doublequote = False
+    escapechar = None
+    lineterminator = "\n"
+    quotechar = "'"
+    quoting = csv.QUOTE_NONE
+    skipinitialspace = False
+    strict = False
+
+
+csv.register_dialect("taxon", TaxonDialect)
 
 
 def zip_header(header: list, row: list, fields: list[str] | None = None):
