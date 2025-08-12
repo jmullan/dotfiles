@@ -1,0 +1,335 @@
+#!/usr/bin/env -S python-venv --virtualenv dotfiles
+"""Yell at sonatype sometimes"""
+
+import abc
+import dataclasses
+import logging
+import os
+import sys
+import typing
+from xml.etree import ElementTree
+from packaging.version import Version
+import requests
+from jmullan.cmd import cmd
+from jmullan.logging.easy_logging import easy_initialize_logging
+from jmullan.logging.helpers import logging_context
+from unified_range.api import filter_versions
+logger = logging.getLogger(__name__)
+
+
+T = typing.TypeVar("T")
+
+
+class UniqueByUrl(abc.ABC):
+    @property
+    @abc.abstractmethod
+    def url(self): ...
+
+    def __eq__(self, other):
+        return self.url == other.url
+
+    def __hash__(self):
+        return hash(self.url)
+
+
+
+@dataclasses.dataclass(frozen=True)
+class Group:
+    group_id: str
+
+    @property
+    def group_path(self):
+        return self.group_id.replace(".", "/")
+
+    def context(self) -> dict[str, typing.Any]:
+        return {"group_id": self.group_id}
+
+
+@dataclasses.dataclass(frozen=True)
+class RepoArtifact(UniqueByUrl):
+    maven_repo: str
+    group: Group
+    artifact_id: str
+
+    @property
+    def url(self) -> str:
+        return f"{self.maven_repo}/{self.group.group_path}/{self.artifact_id}"
+
+    @property
+    def metadata_url(self) -> str:
+        return f"{self.url}/maven-metadata.xml"
+
+    @property
+    def metadata_sha_url(self) -> str:
+        return f"{self.metadata_url}.sha1"
+
+    def context(self) -> dict[str, typing.Any]:
+        context = {"maven_repo": self.maven_repo}
+        context.update(self.group.context())
+        context["artifact_id"] = self.artifact_id
+        return context
+
+
+@dataclasses.dataclass(frozen=True)
+class ArtifactVersion(UniqueByUrl):
+    repo_artifact: RepoArtifact
+    version: str
+
+    @property
+    def url(self) -> str:
+        return f"{self.repo_artifact.url}/{self.version}"
+
+    @property
+    def metadata_url(self) -> str:
+        return f"{self.url}/maven-metadata.xml"
+
+    @property
+    def metadata_sha_url(self) -> str:
+        return f"{self.metadata_url}.sha1"
+
+    @property
+    def artifact_id(self):
+        return self.repo_artifact.artifact_id
+
+    def context(self) -> dict[str, typing.Any]:
+        context = self.repo_artifact.context()
+        context["version"] = self.version
+        return context
+
+    def __lt__(self, other: "ArtifactVersion"):
+        if self.version is None:
+            return False
+        if other is None or other.version is None:
+            return True
+        try:
+            return Version(self.version) < Version(other.version)
+        except Exception:
+            dots = min(self.version.count("."), other.version.count("."))
+            if dots > 0:
+                return self.version.split(".", dots) < other.version.split(".", dots)
+            return self.version < other.version
+
+
+@dataclasses.dataclass(frozen=True)
+class ArtifactVersionExtension(UniqueByUrl):
+    artifact_version: ArtifactVersion
+    extension: str
+    sub_version: str
+
+    @property
+    def url(self) -> str:
+        return f"{self.artifact_version.url}/{self.artifact_id}-{self.sub_version}.{self.extension}"
+
+    @property
+    def sha_url(self) -> str:
+        return f"{self.url}.sha1"
+
+    @property
+    def artifact_id(self):
+        return self.artifact_version.artifact_id
+
+    def context(self) -> dict[str, typing.Any]:
+        context = self.artifact_version.context()
+        context["extension"] = self.sub_version
+        context["sub_version"] = self.sub_version
+        return context
+
+
+def version_satisfies(found_version: str | None, desired_version: str | None):
+    if found_version is None:
+        return False
+    if desired_version is None:
+        return True
+    desired_version = desired_version.strip()
+    if "latest" in desired_version:
+        desired_version = desired_version.replace("latest", "").strip(".")
+    if not len(desired_version):
+        return True
+    if found_version == desired_version:
+        return True
+    if "release" in desired_version:
+        if "SNAPSHOT" in found_version:
+            return False
+        desired_version = desired_version.replace("release", "").strip(".")
+    if not len(desired_version):
+        return True
+    try:
+        filtered = filter_versions([found_version], [desired_version])
+        return len(filtered) > 0
+    except Exception:
+        logger.exception("Error using maven filter")
+        return False
+
+
+
+class Main(cmd.Main):
+    def __init__(self):
+        super().__init__()
+        self.parser.add_argument(
+            "--version",
+            dest="version",
+            default=None,
+            help="Force this version",
+        )
+        self.parser.add_argument(
+            "--group",
+            dest="group_id",
+            default=None,
+            help="Force this group",
+        )
+        self.parser.add_argument(
+            "--artifact",
+            dest="artifact_id",
+            default=None,
+            help="Force this artifact",
+        )
+        self.parser.add_argument(
+            "--extension",
+            dest="extension",
+            default=None,
+            help="Force this artifact",
+        )
+        self.parser.add_argument(
+            "--nexus-repo",
+            dest="maven_repos",
+            nargs="*",
+            default=None,
+        )
+        self.parser.add_argument(
+            "modules",
+            nargs="*",
+            help="Group + Artifact + optional version, like foo:bar or baz:pirate:1,2,3"
+        )
+        self.configs = dict()
+        self.gets = dict()
+        self.maven_repos: list[str] = []
+
+    def get(self, url) -> requests.Response:
+        if url not in self.gets:
+            try:
+                self.gets[url] = requests.get(url)
+                if self.gets[url].status_code >= 400:
+                    logger.warning("GET %s %s", self.gets[url].status_code, url)
+                else:
+                    logger.debug("GET %s %s", self.gets[url].status_code, url)
+            except Exception:
+                logger.exception("Error fetching %s", url)
+        return self.gets.get(url)
+
+    def setup(self):
+        super().setup()
+        if self.args.verbose:
+            easy_initialize_logging("DEBUG", stream=sys.stderr)
+        else:
+            easy_initialize_logging("INFO", stream=sys.stderr)
+
+    def main(self):
+        super().main()
+        self.maven_repos = self.args.maven_repos
+        if not self.maven_repos:
+            default_maven_repo = os.environ.get("DEFAULT_MAVEN_REPO")
+            if default_maven_repo:
+                self.maven_repos = [default_maven_repo]
+        if not self.maven_repos:
+            logger.error("No repos specified")
+            exit(1)
+        artifacts: list[tuple[Group, str, str | None]] = []
+        group_id = self.args.group_id
+        artifact_id = self.args.artifact_id
+        version = self.args.version
+        if group_id and artifact_id:
+            artifact = Group(group_id), artifact_id, version
+            artifacts.append(artifact)
+        for module in self.args.modules or []:
+            if not ':' in module:
+                logger.warning(f"Ignoring weird {module=}")
+                continue
+            parts = module.split(":", 2)
+            group_id = parts[0]
+            artifact_id = parts[1]
+            if len(parts) > 2:
+                version = parts[2]
+            else:
+                version = None
+            artifact = Group(group_id), artifact_id, version
+            artifacts.append(artifact)
+
+        if not artifacts:
+            logger.error("No artifacts provided to search for.")
+            exit(1)
+
+        for artifact in artifacts:
+            self.get_artifact_versions(artifact[0], artifact[1], artifact[2])
+
+    def get_artifact_versions(self, group: Group, artifact_id: str, desired_version: str | None):
+        artifact_versions = self.get_artifact_versions_from_sonatype(group, artifact_id, desired_version)
+        for artifact_version in artifact_versions:
+            artifact = artifact_version.repo_artifact
+            group_id = artifact.group.group_id
+            print(f"{group_id}:{artifact.artifact_id}:{artifact_version.version}")
+
+
+    def get_artifact_versions_from_sonatype(
+        self, group: Group, artifact_id: str, desired_version: str | None
+    ) -> list[ArtifactVersion]:
+        if desired_version is not None:
+            desired_version = desired_version.strip()
+            if not len(desired_version):
+                desired_version = None
+        with logging_context(artifact_id=artifact_id, **group.context()):
+            version_strings = set()
+            for maven_repo in self.maven_repos:
+                with logging_context(maven_repo=maven_repo):
+                    repo_artifact = RepoArtifact(maven_repo, group, artifact_id)
+                    self.get(repo_artifact.metadata_sha_url)
+
+                    artifact_response = self.get(repo_artifact.metadata_url)
+                    if artifact_response.status_code < 400:
+                        artifact_content = artifact_response.content
+                        try:
+                            tree = ElementTree.fromstring(artifact_content)
+                        except Exception:
+                            logger.exception("Could not parse xml")
+                            continue
+                        versioning = tree.find("versioning")
+                        latest = versioning.find("latest").text.strip()
+                        if desired_version == "latest" and len(latest):
+                            return [ArtifactVersion(repo_artifact, latest)]
+
+                        release = versioning.find("release").text.strip()
+                        if desired_version == "release":
+                            version_strings.add(release)
+
+                        for versions in versioning.iter("versions"):
+                            for version_tag in versions.iter("version"):
+                                version_tag_value = version_tag.text.strip()
+                                version_strings.add(version_tag_value)
+
+                        for version_tag in versioning.iter("version"):
+                            version_tag_value = version_tag.text.strip()
+                            version_strings.add(version_tag_value)
+        if not version_strings:
+            return []
+        artifact_versions: set[ArtifactVersion]
+        if desired_version is None:
+            artifact_versions = set(
+                ArtifactVersion(repo_artifact, version) for version in version_strings
+            )
+        else:
+            artifact_versions = set()
+            for version_string in version_strings:
+                if version_satisfies(version_string, desired_version):
+                    artifact_version = ArtifactVersion(
+                        repo_artifact, version_string
+                    )
+                    artifact_versions.add(artifact_version)
+
+        sorted_versions = list(sorted(artifact_versions))
+        if desired_version is not None and "latest" in desired_version:
+            return sorted_versions[-1:]
+        return sorted_versions
+
+
+
+if __name__ == "__main__":
+    Main().main()

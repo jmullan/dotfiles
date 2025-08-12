@@ -1,5 +1,6 @@
 #!/usr/bin/env -S python-venv --virtualenv dotfiles
 
+import json
 import logging
 import sys
 
@@ -64,6 +65,21 @@ class Main(cmd.Main):
             default=False,
             help="If given an emoji, figure out its name",
         )
+        format_group = self.parser.add_mutually_exclusive_group()
+        format_group.add_argument(
+            "--as-python",
+            dest="as_python",
+            action="store_true",
+            default=False,
+            help="Print everything as an escaped string (slash u number)",
+        )
+        format_group.add_argument(
+            "--as-json",
+            dest="as_json",
+            action="store_true",
+            default=False,
+            help="Print everything as an escaped string (slash u number)",
+        )
         self.parser.add_argument(
             "strings",
             nargs="+",
@@ -93,7 +109,12 @@ class Main(cmd.Main):
             output = f"{output} "
         if use_newline:
             output = f"{output}\n"
-        print(output, end="")
+        if self.args.as_python:
+            print(ascii(output), end="")
+        elif self.args.as_json:
+            print(json.dumps(output, ensure_ascii=True), end="")
+        else:
+            print(output, end="")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,60 @@
+#!/usr/bin/env -S python-venv --virtualenv dotfiles
+
+import os
+import signal
+import subprocess
+import sys
+
+TURTLE = u"\U0001f422"
+# HEXAGON = u"\u2B22"
+# colorist is too slow to import
+COLORS = {
+    "Color.DEFAULT": "\x1b[39m",
+    "Color.GREEN": "\x1b[32m",
+    "Color.RED": "\x1b[31m",
+}
+
+def get_env_or_none(key: str) -> str | None:
+    value = os.environ.get(key)
+    if value is None:
+        return None
+    if len(value) == 0:
+        return None
+    return value
+
+
+def interrupt_handler(*_, **__):
+    sys.exit(0)
+
+
+def run_if_installed(command: str, *args: str) -> str | None:
+    result = subprocess.run(["which", command], text=True, stdout=subprocess.PIPE)
+    found = result.stdout.strip()
+    if len(found) == 0:
+        return None
+    full_args = [command] + list(args or [])
+    result = subprocess.run(full_args, text=True, stdout=subprocess.PIPE)
+    found = result.stdout.strip()
+    if len(found):
+        return found
+    return None
+
+
+def main():
+    parts = []
+    node_version = run_if_installed("node", "--version")
+    if node_version:
+        parts.extend([COLORS["Color.GREEN"], TURTLE, COLORS["Color.DEFAULT"]])
+        parts.append(node_version.removeprefix("v"))
+    npm_version = run_if_installed("npm", "--version")
+    if npm_version:
+        parts.extend([COLORS["Color.GREEN"], "n", COLORS["Color.DEFAULT"]])
+        parts.append(npm_version)
+    if len(parts) > 1:
+        prompt = "".join(parts)
+        print(f"({prompt})", end="")
+
+
+if __name__ == "__main__":
+    signal.signal(signal.SIGINT, interrupt_handler)
+    main()

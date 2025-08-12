@@ -12,6 +12,7 @@ commands = [
     "docker_prompt",
     "aws-prompt",
     "sc-prompt",
+    "nvm-prompt",
     "screen_prompt",
     "virtualenv_prompt",
     "sdk-prompt",
