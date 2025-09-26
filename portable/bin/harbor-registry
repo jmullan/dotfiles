@@ -1,11 +1,11 @@
 #!/usr/bin/env -S python-venv --virtualenv dotfiles
 import argparse
 import dataclasses
-import json
 import logging
 import os.path
+import re
 from argparse import Namespace, ArgumentParser, ArgumentError
-
+from datetime import datetime, timezone
 import requests
 from jmullan.cmd import cmd
 from jmullan.logging.easy_logging import easy_initialize_logging
@@ -13,12 +13,58 @@ from jmullan.logging.easy_logging import easy_initialize_logging
 logger = logging.getLogger(__name__)
 
 
+DEBIAN_VERSION_PREFIXES = {
+    "duke": "15.",
+    "forky": "14.",
+    "trixie": "13.",
+    "bookworm": "12.",
+    "bullseye": "11.",
+    "buster": "10.",
+    "stretch": "9.",
+    "jessie": "8.",
+    "wheezy": "7.",
+    "squeeze": "6.",
+    "lenny": "5.",
+    "etch": "4.",
+    "sarge": "3.1.",
+    "woody": "3.0.",
+    "potato": "2.2..",
+    "slink": "2.1.",
+    "hamm": "2.0.",
+    "bo": "1.3.",
+    "rex": "1.2.",
+    "buzz": "1.1.",
+}
+
+def get_debian_version_name(version_string: str | None) -> str | None:
+    if version_string is None:
+        return None
+    for name, prefix in DEBIAN_VERSION_PREFIXES.items():
+        if name.lower() == version_string or version_string.startswith(prefix):
+            return name.capitalize()
+    return None
+
 @dataclasses.dataclass
 class Artifact:
     base_url: str
     project: str
     repository: str
     data: dict
+
+    @property
+    def artifact_id(self) -> int:
+        return self.data["id"]
+
+    @property
+    def date(self) -> str:
+        build_date = self.label_schemas.get("build-date")
+        try:
+            if build_date is not None:
+                build_datetime = datetime.strptime(build_date, "%Y%m%d-%H%M%S").replace(tzinfo=timezone.utc)
+                return build_datetime.isoformat(timespec="milliseconds").replace("+00:00", "Z")
+        except Exception:
+            pass
+        return self.data.get("push_time", self.data.get("pull_time")) or ""
 
     @property
     def tags(self) -> list[str]:
@@ -36,12 +82,16 @@ class Artifact:
         }
 
     @property
-    def urls(self) -> list[str]:
+    def version(self) -> str | None:
+        return self.label_schemas.get("version")
+
+    @property
+    def urls(self) -> set[str]:
         # harbor-registry.savagebeast.com/savagebase/python-sb:3.6.5-stretch-sb0.0.5
-        return [
+        return set([
             f"{self.base_url}/{self.project}/{self.repository}:{tag}"
             for tag in self.tags
-        ]
+        ])
 
 
 class UrlAction(argparse.Action):
@@ -68,6 +118,16 @@ key=~value: fuzzy match
 k=[min~max]: range match
 k={v1 v2 v3}: match all? of the values (union)
 k=(v1 v2 v3): match any? of the values (intersection)
+
+The value of range and list can be string(enclosed by " or '), integer or time (in format "2020-04-09 02:36:00").
+"""
+
+label_help = """org.label-schema.[KEY][OPERATOR][VALUE]
+Supported query patterns are:
+key=value: exact match
+key=~regex: regex match
+k=[min~max]: range match
+k=(v1 v2 v3): match any of the values
 
 The value of range and list can be string(enclosed by " or '), integer or time (in format "2020-04-09 02:36:00").
 """
@@ -99,17 +159,13 @@ class Main(cmd.Main):
             help="What repository to use when searching for images",
         )
         self.queries_action = self.parser.add_argument(
-            "--query", dest="queries", nargs="*", help=query_help
+            "--query", dest="queries", action="append", help=query_help
         )
-        self.page_action = self.parser.add_argument(
-            "--page", dest="page", required=False, default=0, help="Start on this page"
+        self.queries_action = self.parser.add_argument(
+            "--label", dest="labels", action="append", help=label_help
         )
-        self.page_action = self.parser.add_argument(
-            "--page-size",
-            dest="page_size",
-            required=False,
-            default=10,
-            help="Request this many per page",
+        self.limit_action = self.parser.add_argument(
+            "--limit", dest="limit", required=False, default=None, help="only show this many results"
         )
 
     def main(self):
@@ -120,10 +176,62 @@ class Main(cmd.Main):
             raise ArgumentError(self.project_action, "Missing project")
         if not self.args.repository:
             raise ArgumentError(self.repository_action, "Missing repository")
+
+        print(f"{self.args.project} {self.args.repository}")
+        page = 0
+        page_size = 10
+        artifacts: dict[int, Artifact] = {}
+        max_page = 1000
+        while page < max_page:
+            artifacts_page = self.request_page(page, page_size)
+            if not artifacts_page:
+                break
+            artifacts.update({a.artifact_id: a for a in artifacts_page})
+            page += 1
+        matchers = get_matchers(self.args.labels)
+
+        artifacts_by_version: dict[str, Artifact] = {}
+        for artifact in artifacts.values():
+            if artifact.version is not None:
+                for artifact_url in artifact.urls:
+                    if artifact_url.endswith(f":{artifact.version}"):
+                        # if we find the canonical version as a tag, use
+                        # this artifact for the version
+                        artifacts_by_version[artifact.version] = artifact
+
+        for artifact in sorted(artifacts.values(), key=lambda a: a.date):
+            if matchers and not all_match(matchers, artifact.label_schemas):
+                continue
+
+            if artifact.version is not None and artifact.version in artifacts_by_version:
+                # we have a canonical artifact for this version
+                if artifact == artifacts_by_version[artifact.version]:
+                    # if this is that canonical artifact, use it, otherwise ignore it
+                    for artifact_url in artifact.urls:
+                        if artifact_url.endswith(f":{artifact.version}"):
+                            # only print the canonical version's canonical url
+                            self.print_artifact_url(artifact_url, artifact)
+            else:
+                # there is no canonical artifact, so just print all the urls
+                for artifact_url in artifact.urls:
+                    self.print_artifact_url(artifact_url, artifact)
+            #  print(f"{json.dumps(artifact.data, indent=4)}")
+
+    def print_artifact_url(self, url: str, artifact: Artifact) -> None:
+        debian_version = artifact.label_schemas.get("debian-version")
+        debian_version_name = get_debian_version_name(debian_version)
+        if debian_version_name is not None:
+            print(f"    {url} {artifact.date} Debian {debian_version} ({debian_version_name})")
+        elif debian_version is not None:
+            print(f"    {url} {artifact.date} Debian {debian_version}")
+        else:
+            print(f"    {url} {artifact.date}")
+
+    def request_page(self, page: int, page_size: int) -> list[Artifact]:
         url = f"{self.args.url}/api/v2.0/projects/{self.args.project}/repositories/{self.args.repository}/artifacts"
         params = {
-            "page": self.args.page,
-            "page_size": self.args.page_size,
+            "page": page,
+            "page_size": page_size,
             "with_tag": "true",
             "with_label": "true",
         }
@@ -142,16 +250,68 @@ class Main(cmd.Main):
             params["q"] = ",".join(query_param)
         response = requests.get(url, params=params)
         data = response.json()
-        artifacts = [
+        return [
             Artifact(self.args.url, self.args.project, self.args.repository, a)
             for a in data
         ]
-        print(f"{self.args.project} {self.args.repository}")
-        for artifact in artifacts:
-            print(f"{artifact.data['id']} {artifact.label_schemas}")
-            for artifact_url in artifact.urls:
-                print(f"    {artifact_url}")
-            print(f"{json.dumps(artifact.data, indent=4)}")
+
+
+@dataclasses.dataclass()
+class Matcher:
+    key: str
+    is_regex: bool
+    value: str
+
+    def matches(self, value: str) -> bool:
+        if self.value.startswith("(") and self.value.endswith(")"):
+            values = self.value.removeprefix("(").removesuffix(")").split(" ")
+            if not self.is_regex:
+                return value in values
+            else:
+                regexes = [re.compile(x) for x in values]
+                return any(r.search(value) for r in regexes)
+        if self.value.startswith("[") and self.value.endswith("]") and "-" in self.value:
+            values = self.value.removeprefix("[").removesuffix("]").split("-", 1)
+            first = int(values[0])
+            second = int(values[1])
+            int_value = int(value)
+            return int_value >= min(first, second) and int_value < max(first, second)
+        if not self.is_regex:
+            return value == self.value
+        else:
+            return bool(re.compile(self.value).search(value))
+
+
+def get_matchers(labels: list[str | None] | None) -> list[Matcher]:
+    if labels is None or not labels:
+        return []
+    matchers = []
+    for label in labels:
+        if label is None or not len(label) or "=" not in label:
+            continue
+        key, value = label.split("=", 1)
+        if len(value) and value.startswith("~"):
+            value = value.removeprefix("~")
+            fuzzy = True
+        else:
+            fuzzy = False
+        matchers.append(Matcher(key, fuzzy, value))
+    return matchers
+
+
+def all_match(matchers: list[Matcher], label_schemas: dict[str, str]) -> bool:
+    if not matchers:
+        return True
+    if not label_schemas:
+        return False
+    for matcher in matchers:
+        if matcher.key not in label_schemas:
+            return False
+        value = label_schemas[matcher.key]
+        if not matcher.matches(value):
+            return False
+    return True
+
 
 
 if __name__ == "__main__":

@@ -1,0 +1,94 @@
+#!/usr/bin/env -S python-venv --virtualenv dotfiles
+"""Yell at sonatype sometimes"""
+
+import logging
+import os
+import subprocess
+
+from jmullan.cmd import cmd
+from jmullan.logging import easy_logging
+
+logger = logging.getLogger(__name__)
+
+
+
+def run_if_installed(command: str, *args: str) -> str | None:
+    result = subprocess.run(["which", command], text=True, stdout=subprocess.PIPE)
+    found = result.stdout.strip()
+    if len(found) == 0:
+        return None
+    full_args = [command] + list(args or [])
+    result = subprocess.run(full_args, text=True, stdout=subprocess.PIPE)
+    found = result.stdout.strip()
+    if len(found):
+        return found
+    return None
+
+
+def get_git_branch():
+    branch_name = run_if_installed("git", "branch", "--show-current")
+    if branch_name is None:
+        return "main"
+    return branch_name
+
+
+def render(consul_address: str, var_file: str, branch_name: str, hcl_file: str):
+    args = [
+        "render",
+        f"-consul-address={consul_address}",
+        f"-var-file={var_file}",
+        "-var",
+        f"BRANCH_NAME_CLEAN={branch_name}",
+        "-var",
+        f"BRANCH_NAME={branch_name}",
+        hcl_file
+    ]
+    return run_if_installed("levant", *args)
+
+
+class Main(cmd.Main):
+    def __init__(self):
+        super().__init__()
+        self.parser.add_argument(
+            "--consul-address",
+            dest="consul_address",
+            help="Tell levant this is the consul address",
+            default=os.environ.get("CONSUL_ADDRESS")
+        )
+        self.parser.add_argument(
+            "--hcl-file",
+            dest="hcl_file",
+            help="Render this hcl file",
+            default="deployment/nomad-jobs/nomad.hcl"
+        )
+        self.parser.add_argument(
+            "--branch-name",
+            dest="branch_name",
+            help="what is the current branch name",
+            default=get_git_branch()
+        )
+        self.parser.add_argument(
+            "--var-file",
+            dest="var_file",
+            help="what is the current branch name",
+            default="./deployment/nomad-jobs/prod.yml"
+        )
+
+    def setup(self) -> None:
+        super().setup()
+        if self.args.verbose:
+            easy_logging.easy_initialize_logging(log_level="DEBUG")
+        else:
+            easy_logging.easy_initialize_logging(log_level="INFO")
+
+    def main(self):
+        super().main()
+        consul_address = self.args.consul_address
+        var_file = self.args.var_file
+        branch_name = self.args.branch_name
+        hcl_file = self.args.hcl_file
+        print(render(consul_address, var_file, branch_name, hcl_file))
+
+
+if __name__ == "__main__":
+    Main().main()

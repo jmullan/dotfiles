@@ -79,7 +79,8 @@ class Generator(object):
         if special < self.options.get("minimum_special"):
             logger.debug("Not enough special characters.")
             return True
-        if special > self.options.get("maximum_special"):
+        maximum_special = self.options.get("maximum_special")
+        if maximum_special is not None and special > self.options.get("maximum_special"):
             logger.debug("Too many special characters.")
             return True
         return False
@@ -370,7 +371,7 @@ def main():
         raise ValueError(
             f"Password length ({minimum_password_length}-{maximum_password_length}) must be 1 or more"
         )
-    if minimum_special > maximum_special:
+    if maximum_special is not None and minimum_special > maximum_special:
         raise ValueError(
             f"Minimum special {minimum_special} must be less than or equal to the maximum {maximum_special}"
         )

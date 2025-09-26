@@ -13,7 +13,6 @@ from xml.etree import ElementTree
 
 import jproperties
 import requests
-
 from jmullan.cmd import cmd
 from jmullan.logging import easy_logging
 from jmullan.logging.helpers import logging_context
@@ -25,8 +24,12 @@ easy_logging.easy_initialize_logging()
 
 T = typing.TypeVar("T")
 
-REPOS = ["snapshots", "releases"]
-
+REPOS = {
+    "snapshots": "repositories/snapshots",
+    "releases": "repositories/releases",
+    "public": "groups/public"
+}
+POM_NAMESPACE = {"pom": "http://maven.apache.org/POM/4.0.0"}
 
 class UniqueByUrl(abc.ABC):
     @property
@@ -43,11 +46,17 @@ class UniqueByUrl(abc.ABC):
 @dataclasses.dataclass(frozen=True)
 class Repo(UniqueByUrl):
     sonatype_path: str
+    subpath: str
     name: str
+
+    def __post_init__(self):
+        assert self.sonatype_path is not None
+        assert self.subpath is not None
+        assert self.name is not None
 
     @property
     def url(self) -> str:
-        return f"{self.sonatype_path}/{self.name}"
+        return f"{self.sonatype_path}/{self.subpath}"
 
     def context(self) -> dict[str, typing.Any]:
         return {"nexus_repo": self.name}
@@ -56,6 +65,9 @@ class Repo(UniqueByUrl):
 @dataclasses.dataclass(frozen=True)
 class Group:
     group_id: str
+
+    def __post_init__(self):
+        assert self.group_id is not None
 
     @property
     def group_path(self):
@@ -70,6 +82,11 @@ class RepoArtifact(UniqueByUrl):
     nexus_repo: Repo
     group: Group
     artifact_id: str
+
+    def __post_init__(self):
+        assert self.nexus_repo is not None
+        assert self.group is not None
+        assert self.artifact_id is not None
 
     @property
     def url(self) -> str:
@@ -94,6 +111,10 @@ class RepoArtifact(UniqueByUrl):
 class ArtifactVersion(UniqueByUrl):
     repo_artifact: RepoArtifact
     version: str
+
+    def __post_init__(self):
+        assert self.repo_artifact is not None
+        assert self.version is not None
 
     @property
     def url(self) -> str:
@@ -123,6 +144,11 @@ class ArtifactVersionExtension(UniqueByUrl):
     extension: str
     sub_version: str
 
+    def __post_init__(self):
+        assert self.artifact_version is not None
+        assert self.extension is not None
+        assert self.sub_version is not None
+
     @property
     def url(self) -> str:
         return f"{self.artifact_version.url}/{self.artifact_id}-{self.sub_version}.{self.extension}"
@@ -146,6 +172,17 @@ class ArtifactVersionExtension(UniqueByUrl):
 class GradleSettings:
     root_project_name: str | None
     includes: list[str]
+
+    def __post_init__(self):
+        assert self.root_project_name is not None
+        assert self.includes is not None
+
+
+def find_poms():
+    for root, dirs, files in os.walk("./", topdown=True):
+        for filename in files:
+            if filename in ["pom.xml"]:
+                yield os.path.join(root, filename)
 
 
 def find_properties():
@@ -218,6 +255,14 @@ def read_gradle_settings() -> GradleSettings | None:
     return None
 
 
+def text_of(element: ElementTree.Element, path: str) -> str | None:
+    maybe = element.find(path, POM_NAMESPACE)
+    if maybe is not None:
+        return maybe.text.strip()
+    else:
+        return None
+
+
 class Main(cmd.Main):
     def __init__(self):
         super().__init__()
@@ -256,10 +301,11 @@ class Main(cmd.Main):
         self.parser.add_argument(
             "--nexus-repo",
             dest="nexus_repo",
-            choices=REPOS,
+            choices=list(REPOS.keys()),
             default=None,
         )
-        self.configs = dict()
+        self.configs: dict[str, dict] = dict()
+        self.poms: dict[str, ElementTree.Element] = dict()
         self.gets = dict()
         self.repos: dict[str, Repo] = dict()
 
@@ -286,82 +332,117 @@ class Main(cmd.Main):
         except Exception:
             logger.exception("Oopies")
 
+    def load_pom_xml_into_configs(self, filename):
+        try:
+            with open(filename, "rb") as config_file:
+                tree = ElementTree.parse(config_file)
+                root = tree.getroot()
+                self.poms[filename] = root
+        except Exception:
+            logger.exception("Oopies")
+
     def main(self):
         super().main()
-        sonatype_path = f"{self.args.sonatype_base_url}/nexus/content/repositories"
-        for nexus_repo in REPOS:
-            self.repos[nexus_repo] = Repo(sonatype_path, nexus_repo)
+
+        self.expected_extensions: set[str]
+        if self.args.extension:
+            self.expected_extensions = {self.args.extension}
+        else:
+            self.expected_extensions = {"pom", "jar"}
+
+        sonatype_path = f"{self.args.sonatype_base_url}/nexus/content"
+        for nexus_repo_name, nexus_repo_path in REPOS.items():
+            self.repos[nexus_repo_name] = Repo(sonatype_path, nexus_repo_path, nexus_repo_name)
 
         for path in find_properties():
             self.load_properties_into_configs(path)
+        for path in find_poms():
+            self.load_pom_xml_into_configs(path)
         gradle_settings = read_gradle_settings()
 
         artifact_versions: set[ArtifactVersion] = set()
 
         properties = {}
-        properties.update(self.configs.get("./gradle.properties") or {})
-        release_properties = {}
-        release_properties.update(properties)
-        release_properties.update(self.configs.get("./release.properties") or {})
-        base_artifact_id = self.get_artifact_id(properties, release_properties)
-        base_group = self.get_group(properties, release_properties)
-
         sonatype_artifact_versions: set[ArtifactVersion] = set()
-        if base_group and base_artifact_id:
+
+        if self.configs:
+            properties.update(self.configs.get("./gradle.properties") or {})
+            release_properties = {}
+            release_properties.update(properties)
+            release_properties.update(self.configs.get("./release.properties") or {})
+            base_artifact_id = self.get_artifact_id(properties, release_properties)
+            base_group = self.get_group(properties, release_properties)
+            if base_group and base_artifact_id:
+                assert base_artifact_id is not None
+                artifact_versions.update(
+                    self.get_artifact_versions_from_properties(
+                        base_group, base_artifact_id, properties, release_properties
+                    )
+                )
+                sonatype_artifact_versions.update(
+                    self.get_artifact_versions_from_sonatype(base_group, base_artifact_id)
+                )
+
+            if gradle_settings:
+                includes = gradle_settings.includes or []
+            else:
+                includes = []
+            if includes:
+                for include in includes:
+                    include_properties = {}
+                    include_properties.update(properties)
+                    include_properties.update(
+                        self.configs.get(f"./{include}/gradle.properties") or {}
+                    )
+                    include_release_properties = {}
+                    include_release_properties.update(include_properties)
+                    include_release_properties.update(release_properties)
+                    include_release_properties.update(
+                        self.configs.get(f"./{include}/release.properties") or {}
+                    )
+
+                    include_group = self.get_group(
+                        include_properties, include_release_properties
+                    )
+                    include_artifact_id = self.get_artifact_id(
+                        include_properties, include_release_properties
+                    )
+                    if include_group and include_artifact_id:
+                        sonatype_artifact_versions.update(
+                            self.get_artifact_versions_from_sonatype(
+                                include_group, include_artifact_id
+                            )
+                        )
+
+                        artifact_versions.update(
+                            self.get_artifact_versions_from_properties(
+                                include_group,
+                                include_artifact_id,
+                                include_properties,
+                                include_release_properties,
+                            )
+                    )
+        elif self.poms:
             artifact_versions.update(
-                self.get_artifact_versions_from_properties(
-                    base_group, base_artifact_id, properties, release_properties
-                )
+                self.get_artifact_versions_from_poms()
             )
-            sonatype_artifact_versions.update(
-                self.get_artifact_versions_from_sonatype(base_group, base_artifact_id)
-            )
-
-        includes = gradle_settings.includes or []
-        if includes:
-            for include in includes:
-                include_properties = {}
-                include_properties.update(properties)
-                include_properties.update(
-                    self.configs.get(f"./{include}/gradle.properties") or {}
-                )
-                include_release_properties = {}
-                include_release_properties.update(include_properties)
-                include_release_properties.update(release_properties)
-                include_release_properties.update(
-                    self.configs.get(f"./{include}/release.properties") or {}
-                )
-
-                include_group = self.get_group(
-                    include_properties, include_release_properties
-                )
-                include_artifact_id = self.get_artifact_id(
-                    include_properties, include_release_properties
-                )
-                if include_group and include_artifact_id:
+            got_metadata: set[str] = set()
+            for artifact_version in artifact_versions:
+                artifact_group = artifact_version.repo_artifact.group
+                artifact_id = artifact_version.repo_artifact.artifact_id
+                assert artifact_id is not None
+                artifact_stub = f"{artifact_group.group_id}:{artifact_id}"
+                if artifact_stub not in got_metadata:
                     sonatype_artifact_versions.update(
                         self.get_artifact_versions_from_sonatype(
-                            include_group, include_artifact_id
+                            artifact_group, artifact_id
                         )
                     )
-
-                    artifact_versions.update(
-                        self.get_artifact_versions_from_properties(
-                            include_group,
-                            include_artifact_id,
-                            include_properties,
-                            include_release_properties,
-                        )
-                    )
+                    got_metadata.add(artifact_stub)
 
         if self.args.thorough:
             artifact_versions.update(sonatype_artifact_versions)
 
-        expected_extensions: set[str]
-        if self.args.extension:
-            expected_extensions = {self.args.extension}
-        else:
-            expected_extensions = {"pom", "jar"}
         artifact_version_extensions: set[ArtifactVersionExtension] = set()
         for artifact_version in sorted(artifact_versions, key=lambda x: x.url):
             with logging_context(**artifact_version.context()):
@@ -371,49 +452,57 @@ class Main(cmd.Main):
                         artifact_version, extension, artifact_version.version
                     )
                     artifact_version_extensions.add(artifact_version_extension)
-                if artifact_version.repo_artifact.nexus_repo.name == "releases":
-                    for extension in expected_extensions:
+                if artifact_version.repo_artifact.nexus_repo.name in ("releases", "public"):
+                    for extension in self.expected_extensions:
                         artifact_sub_version = ArtifactVersionExtension(
                             artifact_version, extension, artifact_version.version
                         )
                         artifact_version_extensions.add(artifact_sub_version)
                 if artifact_version.repo_artifact.nexus_repo.name == "snapshots":
-                    self.get(artifact_version.metadata_sha_url)
-                    artifact_version_response = self.get(artifact_version.metadata_url)
-                    artifact_version_content = artifact_version_response.content
-                    try:
-                        tree = ElementTree.fromstring(artifact_version_content)
-                    except Exception:
-                        logger.warning(
-                            "Could not load %s", artifact_version.metadata_url
-                        )
-                        continue
-                    versioning = tree.find("versioning")
-                    if not versioning:
-                        continue
-                    snapshot_versions = versioning.find("snapshotVersions")
-                    if snapshot_versions:
-                        for snapshot_version in snapshot_versions.iter(
-                            "snapshotVersion"
-                        ):
-                            extension = snapshot_version.find("extension").text
-                            if (
-                                self.args.thorough
-                                or self.args.extension is None
-                                or self.args.extension == extension
-                            ):
-                                expected_extensions.add(extension)
-                                sub_version = snapshot_version.find("value").text
-                                artifact_sub_version = ArtifactVersionExtension(
-                                    artifact_version, extension, sub_version
-                                )
-                                artifact_version_extensions.add(artifact_sub_version)
+                    artifact_version_extensions.update(self.get_artifact_version_extensions(artifact_version))
 
         for artifact_version_extension in artifact_version_extensions:
             self.get(artifact_version_extension.sha_url)
 
+    def get_artifact_version_extensions(self, artifact_version: ArtifactVersion) -> set[ArtifactVersionExtension]:
+        artifact_version_extensions: set[ArtifactVersionExtension] = set()
+        metadata_sha_response = self.get(artifact_version.metadata_sha_url)
+        if metadata_sha_response is not None and metadata_sha_response.status_code == 200:
+            artifact_version_response = self.get(artifact_version.metadata_url)
+            if artifact_version_response is not None and artifact_version_response.status_code == 200:
+                artifact_version_content = artifact_version_response.content
+                try:
+                    tree = ElementTree.fromstring(artifact_version_content)
+                except Exception:
+                    logger.warning(
+                        "Could not load %s", artifact_version.metadata_url
+                    )
+                    return artifact_version_extensions
+                versioning = tree.find("versioning")
+                if versioning is None or not len(versioning):
+                    return artifact_version_extensions
+
+                snapshot_versions = versioning.find("snapshotVersions")
+                if snapshot_versions is not None and len(snapshot_versions):
+                    for snapshot_version in snapshot_versions.iter(
+                        "snapshotVersion"
+                    ):
+                        extension = snapshot_version.find("extension").text
+                        if (
+                            self.args.thorough
+                            or self.args.extension is None
+                            or self.args.extension == extension
+                        ):
+                            self.expected_extensions.add(extension)
+                            sub_version = snapshot_version.find("value").text
+                            artifact_sub_version = ArtifactVersionExtension(
+                                artifact_version, extension, sub_version
+                            )
+                            artifact_version_extensions.add(artifact_sub_version)
+        return artifact_version_extensions
+
     def get_artifact_versions_from_properties(
-        self, group, artifact_id, properties, release_properties
+        self, group: Group, artifact_id: str, properties, release_properties
     ) -> list[ArtifactVersion]:
         with logging_context(group_id=group.group_id, artifact_id=artifact_id):
             if not group or not artifact_id:
@@ -428,10 +517,37 @@ class Main(cmd.Main):
                 forced_repo = self.args.nexus_repo
                 if forced_repo is None or forced_repo == guessed_repo:
                     repo = self.repos.get(guessed_repo)
-                    repo_artifact = RepoArtifact(repo, group, artifact_id)
-                    artifact_version = ArtifactVersion(repo_artifact, version)
-                    artifact_versions.append(artifact_version)
+                else:
+                    repo = self.repos.get(forced_repo)
+                repo_artifact = RepoArtifact(repo, group, artifact_id)
+                artifact_version = ArtifactVersion(repo_artifact, version)
+                artifact_versions.append(artifact_version)
             return artifact_versions
+
+    def get_artifact_versions_from_poms(self) -> set[ArtifactVersion]:
+        artifact_versions: set[ArtifactVersion] = set()
+        for config_path, config in self.poms.items():
+            artifact_id = text_of(config, "pom:artifactId")
+            version = text_of(config, "pom:version")
+            group_id = text_of(config, "pom:groupId")
+
+            parent_tag = config.find("pom:parent", POM_NAMESPACE)
+            if parent_tag is not None:
+                if version is None:
+                    version = text_of(parent_tag, "pom:version")
+                if group_id is None:
+                    group_id = text_of(parent_tag, "pom:groupId")
+            if group_id is not None and version is not None and artifact_id is not None:
+                guessed_repo = self.guess_repo(version)
+                forced_repo = self.args.nexus_repo
+                if forced_repo is None or forced_repo == guessed_repo:
+                    repo = self.repos.get(guessed_repo)
+                else:
+                    repo = self.repos.get(forced_repo)
+                repo_artifact = RepoArtifact(repo, Group(group_id), artifact_id)
+                artifact_version = ArtifactVersion(repo_artifact, version)
+                artifact_versions.add(artifact_version)
+        return artifact_versions
 
     def get_artifact_id(self, properties, release_properties) -> str | None:
         args_artifact_id = self.args.artifact
@@ -484,17 +600,21 @@ class Main(cmd.Main):
     def get_artifact_versions_from_sonatype(
         self, group: Group, artifact_id: str
     ) -> set[ArtifactVersion]:
+        assert artifact_id is not None
         with logging_context(artifact_id=artifact_id, **group.context()):
             if self.args.nexus_repo:
                 nexus_repos = [self.args.nexus_repo]
             else:
-                nexus_repos = REPOS
+                nexus_repos = list(REPOS.keys())
             artifact_versions: set[ArtifactVersion] = set()
             for nexus_repo in nexus_repos:
                 repo = self.repos[nexus_repo]
                 with logging_context(**repo.context()):
                     repo_artifact = RepoArtifact(repo, group, artifact_id)
-                    self.get(repo_artifact.metadata_sha_url)
+                    sha_response = self.get(repo_artifact.metadata_sha_url)
+                    if sha_response is None or sha_response.status_code != 200:
+                        logger.debug("No metadata sha available.")
+                        continue
 
                     artifact_response = self.get(repo_artifact.metadata_url)
                     if artifact_response.status_code < 400:
@@ -512,6 +632,17 @@ class Main(cmd.Main):
                                         repo_artifact, version_tag_value
                                     )
                                     artifact_versions.add(artifact_version)
+                            versions = versioning.find("versions")
+                            if versions is not None:
+                                for version_tag in versions.iter("version"):
+                                    if version_tag is not None:
+                                        version_tag_value = version_tag.text.strip()
+                                        if version_tag_value and version_tag != version:
+                                            artifact_version = ArtifactVersion(
+                                                repo_artifact, version_tag_value
+                                            )
+                                            artifact_versions.add(artifact_version)
+
                         except Exception:
                             logger.error("Could not parse xml")
         return artifact_versions

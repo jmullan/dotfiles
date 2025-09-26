@@ -3,10 +3,9 @@ trap exit SIGHUP SIGINT SIGTERM
 
 for x in $(ls -1d */.git | sed 's/.git$//'); do
     pushd "$x";
-
     echo "$x";
-
-    rebase-all
-
+    git fetch --all
+    git main --refresh
+    git pull --ff-only
     popd
 done

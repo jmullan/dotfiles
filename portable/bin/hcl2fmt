@@ -1,0 +1,38 @@
+#!/usr/bin/env -S python-venv --virtualenv dotfiles
+"""Yell at sonatype sometimes"""
+
+import logging
+import os
+import subprocess
+from typing import TextIO
+
+from jmullan.cmd import cmd
+from jmullan.logging import easy_logging
+
+import hcl2
+
+logger = logging.getLogger(__name__)
+
+
+
+
+
+
+class Main(cmd.PrintingFileProcessor):
+    def __init__(self):
+        super().__init__()
+
+    def setup(self) -> None:
+        super().setup()
+        if self.args.verbose:
+            easy_logging.easy_initialize_logging(log_level="DEBUG")
+        else:
+            easy_logging.easy_initialize_logging(log_level="INFO")
+
+    def process_contents(self, contents: str) -> str:
+
+
+
+
+if __name__ == "__main__":
+    Main().main()

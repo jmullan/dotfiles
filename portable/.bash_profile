@@ -89,6 +89,12 @@ if [ -e "${HOME}/.pyenv" ] ; then
     export PYENV_ROOT="${HOME}/.pyenv"
 fi
 
+if which go > /dev/null; then
+    if [ -e "${HOME}/.local/bin" ] ; then
+        go env -w GOBIN="${HOME}/.local/bin"
+    fi
+fi
+
 test -r /sw/bin/init.sh && . /sw/bin/init.sh
 
 alias nodeunit=node_modules/nodeunit/bin/nodeunit
