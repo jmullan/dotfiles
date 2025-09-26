@@ -158,11 +158,17 @@
            default))
  '(help-at-pt-display-when-idle '(flymake-overlay) nil (help-at-pt))
  '(help-at-pt-timer-delay 0.25)
- '(package-selected-packages
-      '(dash flycheck gnu-elpa-keyring-update json-mode lsp-mode lua-mode
-           markdown-mode php-mode python-mode rust-mode sql-indent toml-mode
-           yaml-mode))
- '(safe-local-variable-values '((smie-indent-basic . 4))))
+; '(package-selected-packages
+;      '(dash flycheck gnu-elpa-keyring-update json-mode lsp-mode lua-mode
+;           markdown-mode php-mode python-mode rust-mode sql-indent toml-mode
+;           yaml-mode))
+; '(package-selected-packages
+;      '(dash flycheck gnu-elpa-keyring-update json-mode lsp-mode lua-mode
+;           markdown-mode php-mode python-mode rust-mode sql-indent toml-mode
+;           yaml-mode)))
+
+'(package-selected-packages nil))
+'(safe-local-variable-values '((smie-indent-basic . 4))))
 
 (add-to-list 'auto-mode-alist '("\\.pyi\\'" . python-mode))
 

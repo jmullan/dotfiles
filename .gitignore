@@ -11,3 +11,4 @@ portable/bin/gitflow
 .idea
 dotfiles.iml
 \#*\#
+portable/.emacs.d/eln-cache/

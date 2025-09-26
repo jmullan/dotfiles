@@ -22,6 +22,7 @@ install: submodules portable/.dircolors portable/bin/back
 	git submodule foreach 'git main --refresh'
 	git submodule foreach 'git checkout main 2>/dev/null || git checkout master'
 	git submodule foreach git rebase
+	locale -a | grep en_US.utf8 || echo "sudo locale-gen en_US.UTF-8"
 
 portable/bin/back:
 	ln -s '../../submodules/back' 'portable/bin/back'
