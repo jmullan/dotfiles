@@ -1,10 +1,22 @@
 #!/usr/bin/env -S python-venv --virtualenv dotfiles dotfiles
 """Strip extra newlines from end of files, add one if there is none."""
 
+import logging
 from jmullan.cmd import cmd
+from jmullan.logging.easy_logging import easy_initialize_logging
+
+logger = logging.getLogger(__name__)
 
 
 class Main(cmd.InPlaceFileProcessor):
+
+    def setup(self):
+        super().setup()
+        if self.args.verbose:
+            easy_initialize_logging("DEBUG", stream=sys.stderr)
+        else:
+            easy_initialize_logging("INFO", stream=sys.stderr)
+
     def process_contents(self, contents: str) -> str:
         return process_contents(contents)
 

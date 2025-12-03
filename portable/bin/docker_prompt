@@ -86,12 +86,16 @@ class Main(cmd.Main):
             help="Set REQUIRE_DOCKER=true to enable this part of the prompt",
         )
 
-    def main(self):
-        super().main()
+    def setup(self):
+        super().setup()
         if self.args.verbose:
             easy_initialize_logging("DEBUG", stream=sys.stderr)
         else:
             easy_initialize_logging("INFO", stream=sys.stderr)
+
+
+    def main(self):
+        super().main()
         if not self.args.require_docker:
             logger.debug("Docker is not enabled")
             exit(0)

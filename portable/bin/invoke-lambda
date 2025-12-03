@@ -39,7 +39,7 @@ class Main(cmd.TextIoProcessor):
                     self.invoke_with(data)
                     chunk = ""
             except json.decoder.JSONDecodeError:
-                logger.warning("Skipping chunk")
+                logger.debug("Skipping chunk")
                 continue
         logger.info(f"Sent {sent} messages")
 
@@ -97,10 +97,13 @@ class Main(cmd.TextIoProcessor):
 
     def setup(self):
         super().setup()
+        levels = {
+            "botocore.credentials": "WARNING"
+        }
         if self.args.verbose:
-            easy_initialize_logging("DEBUG", stream=sys.stderr)
+            easy_initialize_logging("DEBUG", stream=sys.stderr, log_levels=levels)
         else:
-            easy_initialize_logging("INFO", stream=sys.stderr)
+            easy_initialize_logging("INFO", stream=sys.stderr, log_levels=levels)
         self.client = boto3.client('lambda')
 
 

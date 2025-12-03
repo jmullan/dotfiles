@@ -7,16 +7,6 @@ from jmullan.cmd import cmd
 class Main(cmd.InPlaceFileProcessor):
     """Clean a bunch of different java weirdness"""
 
-    def __init__(self):
-        super().__init__()
-        self.parser.add_argument(
-            "--only-blank-lines",
-            dest="only_blank_lines",
-            action="store_true",
-            default=False,
-            help="Only trim blank lines",
-        )
-
     def process_contents(self, contents: str) -> str:
         replace_patterns = [
             (r"[\n\r]+\spackage", "\npackage"),
@@ -28,9 +18,16 @@ class Main(cmd.InPlaceFileProcessor):
             contents = re.sub(pattern, replacement, contents)
 
         plaintext_replacements = [
+            (r"final public", "public final"),
+            (r"final private", "private final"),
+            (r"final protected", "private protected"),
+            (r"static public", "public static"),
+            (r"static protected", "protected static"),
+            (r"static private", "private static"),
+            (r"final static", "static final"),
+            (r"synchronized static", "static synchronized"),
             (r"public final static", "public static final"),
             (r"private final static", "private static final"),
-            (r"static public", "public static"),
             (r"final private static", "private static final"),
             (r"public final static", "public static final"),
             (r"static private", "private static"),

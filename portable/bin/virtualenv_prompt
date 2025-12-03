@@ -83,6 +83,10 @@ else
     if [ -n "${EXPECTED_VENV}" ] ; then
         if [ -n "${ACTUAL_VENV}" ] ; then
             if [ "${ACTUAL_VENV}" == "${EXPECTED_VENV}" ] ; then
+                cwd="$(pwd)"
+                if [[ "${ACTUAL_VENV}" == "${cwd}"* ]]; then
+                    ACTUAL_VENV="${ACTUAL_VENV#${cwd}/}"
+                fi
                 echo -n "${SNAKE}${ACTUAL_VENV}:${PYTHON_VERSION}"
             else
                 if [ -n "${AVAILABLE_VENV}" ] ; then
