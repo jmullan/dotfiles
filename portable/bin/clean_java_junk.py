@@ -11,8 +11,8 @@ class Main(cmd.InPlaceFileProcessor):
         replace_patterns = [
             (r"[\n\r]+\spackage", "\npackage"),
             (r"^\spackage", "\npackage"),
-            (r" += +", " = "),
-            (r" +;", ";"),
+            # (r" += +", " = "),
+            # (r" +;", ";"),
         ]
         for pattern, replacement in replace_patterns:
             contents = re.sub(pattern, replacement, contents)
@@ -79,8 +79,8 @@ class Main(cmd.InPlaceFileProcessor):
             (r"new Vector(", "new Vector<>("),
             (r"new Vector()", "new Vector<>()"),
             (r"new Vector();", "new Vector<>();"),
-            (r"Maps.newHashMap", "new HashMap<>"),
-            (r"Maps.newTreeMap", "new TreeMap<>"),
+            (r"Maps.newHashMap(", "new HashMap<>("),
+            (r"Maps.newTreeMap(", "new TreeMap<>("),
         ]
 
         for find, replace in type_replacements:
