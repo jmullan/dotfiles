@@ -1,4 +1,4 @@
-#!/usr/bin/env -S python-venv --virtualenv dotfiles dotfiles
+#!/usr/bin/env -S python-venv --virtualenv dotfiles
 """Strip extra newlines from end of files, add one if there is none."""
 
 import logging

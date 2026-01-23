@@ -1,4 +1,4 @@
-#!/usr/bin/env -S python-venv --virtualenv dotfiles dotfiles
+#!/usr/bin/env -S python-venv --virtualenv dotfiles
 """Fix bad indentation"""
 
 import re
