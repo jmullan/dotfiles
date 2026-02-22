@@ -1,0 +1,120 @@
+#!/usr/bin/env -S python-venv --virtualenv dotfiles
+from jmullan.cmd import cmd
+from packaging.specifiers import SpecifierSet, InvalidSpecifier
+from packaging.version import Version, InvalidVersion
+import pathlib
+import os
+import sys
+
+
+def get_version(version: str | None) -> Version | None:
+    if version is None:
+        return None
+    try:
+        return Version(version)
+    except InvalidVersion:
+        pass
+    return None
+
+
+class PythonBuilds:
+    possible_versions: set[Version] = set()
+    likely_versions: set[Version] = set()
+
+    @classmethod
+    def populate_versions(cls):
+        version_tuple = sys.version_info[:3]
+        version_str = f"{version_tuple[0]}.{version_tuple[1]}.{version_tuple[2]}"
+        version = get_version(version_str)
+        if version is not None:
+            cls.possible_versions.add(version)
+            cls.likely_versions.add(version)
+        roots = [os.environ.get("PYENV_ROOT"), "~/.pyenv", "/usr/share/pyenv"]
+        pyenv_roots = set(x for x in roots if x is not None)
+        for root in pyenv_roots:
+            path = pathlib.Path(root).expanduser()
+            if path.exists():
+                path = pathlib.Path.expanduser(path / "plugins/python-build/share/python-build/")
+                if path.exists():
+                    maybe_versions = [get_version(f.name) for f in path.iterdir() if f.is_file()]
+                    versions = [v for v in maybe_versions if v is not None]
+                    if versions:
+                        cls.possible_versions.update(versions)
+        roots = [os.environ.get("PYENV_ROOT"), "~/.pyenv", "/usr/share/pyenv"]
+        pyenv_roots = set(x for x in roots if x is not None)
+        for root in pyenv_roots:
+            path = pathlib.Path(root).expanduser()
+            if path.exists():
+                path = pathlib.Path.expanduser(path / "versions")
+                if path.exists():
+                    version_dirs = [f for f in path.iterdir() if f.is_dir()]
+                    for version_dir in version_dirs:
+                        executable = version_dir / "bin/python"
+                        if executable.is_file():
+                            version = get_version(version_dir.name)
+                            if version is not None:
+                                cls.possible_versions.add(version)
+                                cls.likely_versions.add(version)
+
+
+def version_in_specifier(version: str, specifier: SpecifierSet) -> bool:
+    if version is None or specifier is None:
+        return False
+    blessed_version = get_version(version)
+    return blessed_version is not None and blessed_version in specifier
+
+
+def get_matching_version(restriction: str, pick: str | None = None) -> str | None:
+    """Get the minimum version from a restriction."""
+    backwards = pick == "max"
+    if not PythonBuilds.possible_versions:
+        PythonBuilds.populate_versions()
+    try:
+        specifier = SpecifierSet(restriction)
+    except InvalidSpecifier:
+        specifier = SpecifierSet(f"=={restriction}")
+    for version in sorted(PythonBuilds.likely_versions, reverse=backwards):
+        if version in specifier:
+            return f'{version}'
+    for version in sorted(PythonBuilds.possible_versions, reverse=backwards):
+        if version in specifier:
+            return f'{version}'
+
+    return None
+
+
+class Main(cmd.Main):
+    """Figure out a python version based on restrictions and available python
+    versions.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.parser.add_argument(
+            "restriction",
+            help="Figure out a version from this string"
+        )
+        ordering = self.parser.add_mutually_exclusive_group()
+        ordering.add_argument("--max", dest="pick", action="store_const", default="max", const="max", help="Pick Maximum version")
+        ordering.add_argument(
+            "--min", dest="pick", action="store_const", const="min", help="Pick Minimum version")
+
+    def main(self):
+        super().main()
+        if self.args.restriction is None:
+            self.parser.print_usage()
+            exit(1)
+
+        restriction = self.args.restriction.strip()
+        if not len(restriction):
+            self.parser.print_usage()
+            exit(1)
+        matching_version = get_matching_version(restriction, pick=self.args.pick)
+        if matching_version is not None:
+            print(matching_version)
+            exit(0)
+        exit(1)
+
+
+if __name__ == "__main__":
+    Main().main()

@@ -21,6 +21,10 @@ else
     PYPROJECT=$(find_up pyproject.toml)
     if [ -n "${PYPROJECT}" ] && [ -e "${PYPROJECT}" ] ; then
         EXPECTED_VENV=$(toml-var "${PYPROJECT}" "project.name")
+        if [ -z "${EXPECTED_PYTHON}" ] ; then
+            REQUIRES_PYTHON=$(toml-var "${PYPROJECT}" "project.requires-python")
+            EXPECTED_PYTHON=$(chomp-version ${REQUIRES_PYTHON})
+        fi
     fi
 fi
 if [ -n "${EXPECTED_PYTHON}" ] ; then
