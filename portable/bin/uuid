@@ -1,10 +1,12 @@
 #!/usr/bin/env -S python-venv --virtualenv dotfiles
 
 import logging
+import sys
 import uuid
 
 from jmullan.cmd import cmd
 from jmullan.logging.easy_logging import easy_initialize_logging
+from jmullan.logging import formatters
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +16,17 @@ class Main(cmd.Main):
 
     def __init__(self):
         super().__init__()
-        easy_initialize_logging()
+
+    def setup(self):
+        super().setup()
+        if self.args.verbose:
+            easy_initialize_logging(
+                "DEBUG", stream=sys.stdout, formatter=formatters.PlainTextFormatter()
+            )
+        else:
+            easy_initialize_logging(
+                "INFO", stream=sys.stdout, formatter=formatters.PlainTextFormatter()
+            )
 
     def main(self):
         super().main()

@@ -1,42 +1,75 @@
 #!/usr/bin/env -S python-venv --virtualenv dotfiles
 import json
-import os
+import logging
 import sys
 import tomllib
+from jmullan.cmd import cmd
+from jmullan.logging.easy_logging import easy_initialize_logging
+from jmullan.logging import formatters
+logger = logging.getLogger(__name__)
+
+
+class Main(cmd.Main):
+    """Generate a uuid."""
+
+    def __init__(self):
+        super().__init__()
+        self.parser.add_argument(
+            "filename",
+            nargs=1,
+            help=(
+                "A toml file; - for stdin; separate arguments from"
+                " files with an optional --"
+            ),
+        )
+        self.parser.add_argument(
+            "var",
+            type=str,
+            nargs=1,
+            help="load the var at this path",
+        )
+        easy_initialize_logging()
+
+    def setup(self):
+        super().setup()
+        if self.args.verbose:
+            easy_initialize_logging(
+                "DEBUG", stream=sys.stdout, formatter=formatters.PlainTextFormatter()
+            )
+        else:
+            easy_initialize_logging(
+                "INFO", stream=sys.stdout, formatter=formatters.PlainTextFormatter()
+            )
+
+    def main(self):
+        super().main()
+        filename = self.args.filename
+        variable = self.args.var.strip()
+        if '.' not in variable:
+            print(f"{variable} must be a full path (at least one dot)", file=sys.stderr)
+            exit(1)
+        try:
+            with open(filename, 'rb') as f:
+                data = tomllib.load(f)
+                parts = variable.split('.')
+                for part in parts:
+                    data = data.get(part)
+                    if data is None:
+                        break
+                if data is None:
+                    print(f"{variable} not found in {filename}", file=sys.stderr)
+                    exit(1)
+                elif isinstance(data, str | int | float):
+                    print(data)
+                else:
+                    print(json.dumps(data))
+
+        except Exception:
+            print(f'Error reading value from {filename}', file=sys.stderr)
 
 
 def main():
-    if not sys.argv or len(sys.argv) < 3:
-        print(f'usage: {sys.argv[0]} [TOML_FILE] [TOML_VAR]', file=sys.stderr)
-        exit(1)
-    filename = sys.argv[1]
-    if not os.path.exists(filename):
-        print(f'file {filename} not found', file=sys.stderr)
-        exit(1)
-    variable = sys.argv[2]
-    variable = variable.strip()
-    if '.' not in variable:
-        print(f"{variable} must be a full path (at least one dot)", file=sys.stderr)
-        exit(1)
-    try:
-        with open(filename, 'rb') as f:
-            data = tomllib.load(f)
-            parts = variable.split('.')
-            for part in parts:
-                data = data.get(part)
-                if data is None:
-                    break
-            if data is None:
-                print(f"{variable} not found in {filename}", file=sys.stderr)
-                exit(1)
-            elif isinstance(data, str | int | float):
-                print(data)
-            else:
-                print(json.dumps(data))
-
-    except Exception:
-        print(f'Error reading value from {filename}', file=sys.stderr)
-
+    Main().main()
 
 
 if __name__ == '__main__':

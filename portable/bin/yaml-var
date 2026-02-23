@@ -1,0 +1,129 @@
+#!/usr/bin/env -S python-venv --virtualenv dotfiles
+import json
+import logging
+import re
+import sys
+from typing import Any
+
+import yaml
+from jmullan.cmd import cmd
+from jmullan.logging import formatters
+from jmullan.logging.easy_logging import easy_initialize_logging
+
+logger = logging.getLogger(__name__)
+
+
+def flatten_nested(data: Any, prefix: str | None = None) -> dict[str, str]:
+    """Adds dots to all nested fields in dictionaries.
+
+    Entries with different forms of nesting update.
+    {"a": {"b": {"c": 4}} -> {"a.b.c": 4}
+    {"a": {"b": 1}, "a.b": 2} -> {"a.b": 2}
+    """
+    output: dict[str, str] = {}
+    if isinstance(data, dict):
+        for k, v in data.items():
+            if v is None:
+                continue
+            elif v == 'True':
+                v = True
+            elif v == 'False':
+                v = False
+            elif isinstance(v, str) and re.match(r"^(0|-?[1-9]+[0-9]*)$", v):
+                v = int(v)
+            elif isinstance(v, str) and re.match(r"^((0|[1-9]+[0-9]*)\.[0-9]+)$", v):
+                v = float(v)
+
+            if prefix is None or not len(prefix):
+                key = f"{k}"
+            else:
+                key = f"{prefix}.{k}"
+            subdata = flatten_nested(v, key)
+            if subdata:
+                output.update(subdata)
+    else:
+        if prefix is not None and len(prefix) and data is not None:
+            output[prefix] = data
+    return {k: v for k, v in sorted(output.items(), key=lambda k: f'{k[0]}={k[1]!s}')}
+
+
+class Main(cmd.Main):
+    """Generate a uuid."""
+
+    def __init__(self):
+        super().__init__()
+        self.parser.add_argument(
+            "filename",
+            help=(
+                "A yaml file; - for stdin; separate arguments from"
+                " files with an optional --"
+            ),
+        )
+        self.parser.add_argument(
+            "var",
+            type=str,
+            help="load the var at this path",
+        )
+        easy_initialize_logging()
+
+    def setup(self):
+        super().setup()
+        if self.args.verbose:
+            easy_initialize_logging(
+                "DEBUG", stream=sys.stderr, formatter=formatters.PlainTextFormatter()
+            )
+        else:
+            easy_initialize_logging(
+                "INFO", stream=sys.stderr, formatter=formatters.PlainTextFormatter()
+            )
+
+    def main(self):
+        super().main()
+        filename = self.args.filename
+        variable = self.args.var.strip()
+        try:
+            with open(filename, 'rb') as f:
+                data = yaml.safe_load_all(f)
+                documents = [flatten_nested(document) for document in data if document]
+                for document in documents:
+                    value = find_var(document, variable)
+                    if value is not None:
+                        print(f"{value}")
+                        exit(0)
+                if value is None:
+                    logger.error(f"{variable} not found in {filename}")
+                    exit(1)
+                elif isinstance(value, str | int | float):
+                    print(value)
+                else:
+                    print(json.dumps(value))
+
+        except Exception:
+            logger.exception(f'Error reading value from {filename}')
+
+
+def find_var(data: dict, variable: str) -> str | None:
+    if data is None:
+        return None
+    variable = re.sub(r'\.+', '.', variable)
+    variable = variable.removeprefix('.').removesuffix('.')
+    if variable in data:
+        return data[variable]
+    parts = variable.split('.')
+    print(data.keys())
+    try:
+        for part in parts:
+            data = data.get(part)
+            if data is None:
+                return None
+        return data
+    except Exception:
+        logger.debug("Error getting %s", variable, exc_info=True)
+
+
+def main():
+    Main().main()
+
+
+if __name__ == '__main__':
+    main()
