@@ -42,3 +42,13 @@ if [ -e ~/Library/ ] ; then
         fi
     fi
 fi
+mkdir -p ~/.virtualenvs
+mkdir -p ~/.pyenv
+if [ ! -e ~/.pyenv/.git ] ; then
+    cd ~/.pyenv/
+    git init
+    git remote add origin https://github.com/pyenv/pyenv.git
+    git fetch
+    git checkuot master
+    git status
+fi
