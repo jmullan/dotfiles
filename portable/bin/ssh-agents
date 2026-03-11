@@ -1,10 +1,8 @@
 #!/usr/bin/env -S python-venv --virtualenv dotfiles
 import dataclasses
-import json
 import logging
 import os
 import pathlib
-import pwd
 import re
 import shlex
 import subprocess
@@ -116,11 +114,18 @@ def list_keys(socket_path: pathlib.Path) -> list[FlatKey]:
 
 
 def list_agent_sockets() -> dict[pathlib.Path, AgentSocket]:
-    agent_dir = (pathlib.Path("~") / ".ssh" / "agent").expanduser()
-    if not agent_dir.is_dir():
-        return dict()
     results: dict[pathlib.Path, AgentSocket] = dict()
-    for file_path in agent_dir.glob("**/*"):
+
+    agent_dir = (pathlib.Path("~") / ".ssh" / "agent").expanduser()
+    if agent_dir.is_dir():
+        for file_path in agent_dir.glob("**/*"):
+            if file_path.is_socket():
+                owners = processes_with_file_open(file_path)
+                keys = list_keys(file_path)
+                results[file_path] = AgentSocket(file_path, owners, keys)
+        if results:
+            return results
+    for file_path in pathlib.Path("/tmp").glob("ssh-*/agent.*"):
         if file_path.is_socket():
             owners = processes_with_file_open(file_path)
             keys = list_keys(file_path)
@@ -185,10 +190,10 @@ class Main(cmd.Main):
         agent_sockets_by_process: dict[int, list[AgentSocket]] = dict()
         for pid in processes:
             agent_sockets_by_process[pid] = []
-        loose_sockets = []
+        loose_socket_paths = []
         for socket_path, agent_socket in agent_sockets.items():
             if not agent_socket.owners:
-                loose_sockets.append(socket_path)
+                loose_socket_paths.append(socket_path)
             for owner in agent_socket.owners:
                 if not owner:
                     continue
@@ -208,11 +213,8 @@ class Main(cmd.Main):
                     joined.append(AgentCorrelationRow(pid, agent_socket.path, None))
                 for key in agent_socket.keys:
                     joined.append(AgentCorrelationRow(pid, agent_socket.path, key))
-        for agent_socket in loose_sockets:
-            if not agent_socket.keys:
-                joined.append(AgentCorrelationRow(None, agent_socket.path, None))
-            for key in agent_socket.keys:
-                joined.append(AgentCorrelationRow(None, agent_socket.path, key))
+        for agent_socket_path in loose_socket_paths:
+            joined.append(AgentCorrelationRow(None, agent_socket_path, None))
         filtered: list[AgentCorrelationRow] = []
         if self.args.select == "best":
             have_pids = [row for row in joined if row.pid is not None]
