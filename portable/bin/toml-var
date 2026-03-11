@@ -42,8 +42,8 @@ class Main(cmd.Main):
 
     def main(self):
         super().main()
-        filename = self.args.filename
-        variable = self.args.var.strip()
+        filename = self.args.filename[0]
+        variable = self.args.var[0].strip()
         if '.' not in variable:
             logger.error(f"{variable} must be a full path (at least one dot)")
             exit(1)
