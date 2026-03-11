@@ -2,10 +2,6 @@
 	path = submodules/dircolors-solarized
 	url = https://github.com/seebi/dircolors-solarized.git
         branch = master
-[submodule "submodules/back"]
-	path = submodules/back
-	url = https://github.com/jmullan/back
-	branch = main
 [submodule "submodules/solarized"]
 	path = submodules/solarized
 	url = https://github.com/altercation/solarized.git
@@ -14,17 +10,9 @@
 	path = submodules/pycharm-solarized
 	url = https://gist.github.com/7933924.git
         branch = master
-[submodule "submodules/git-helpers"]
-	path = submodules/git-helpers
-	url = https://github.com/jmullan/git-helpers.git
-        branch = main
 [submodule "GitFlowAVH"]
 	path = submodules/gitflow
 	url = https://github.com/petervanderdoes/gitflow-avh.git
-        branch = master
-[submodule "submodules/ssh-find-agent"]
-	path = submodules/ssh-find-agent
-	url = https://github.com/wwalker/ssh-find-agent.git
         branch = master
 [submodule "submodules/git-toolbelt"]
 	path = submodules/git-toolbelt
