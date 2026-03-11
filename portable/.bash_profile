@@ -141,10 +141,8 @@ alias bwd='pwd | sed -e "s:/:🥖:g"'
 GZIP=-9
 XZ_OPT=-9
 
-if [ -e "${HOME}/dotfiles/submodules/ssh-find-agent/ssh-find-agent.sh" ] ; then
-    source "${HOME}/dotfiles/submodules/ssh-find-agent/ssh-find-agent.sh"
-    ssh-add -l >&/dev/null || ssh-find-agent -a || eval $(ssh-agent) > /dev/null
-fi
+eval "$(ssh-agents --blessed --exports --unsets)"
+ssh-add -l >&/dev/null || ssh-agents --blessed --if || eval $(ssh-agent) > /dev/null
 
 if [ -e "${HOME}/.sdkman" ] ; then
     #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!

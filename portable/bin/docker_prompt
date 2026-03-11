@@ -27,15 +27,6 @@ class DataclassesJsonEncoder(json.JSONEncoder):
             return {x: y for x, y in dataclasses.asdict(o).items() if y is not None}
         return super().default(o)
 
-
-def get_remotes():
-    command = ["git", "remote"]
-    with subprocess.Popen(
-        command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, encoding="UTF8"
-    ) as proc:
-        return [x for x in [line.strip() for line in proc.stdout.readlines()] if len(x)]
-
-
 def check_docker_socket(socket_path: str) -> bool:
     import httpx
 

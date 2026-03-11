@@ -6,8 +6,8 @@ chardet
 colorist
 emoji
 httpx
-ics
 icalevents
+ics
 ipython
 isort
 jira
@@ -15,12 +15,14 @@ jmullan.cmd@git+https://github.com/jmullan/jmullan.cmd
 jmullan.logging@git+https://github.com/jmullan/jmullan.logging
 jproperties
 jsonlines
+paramiko
 pip
+psutil
 python-dateutil
+python-hcl2
 pytz
 pyyaml
 requests
 rich
 ruff
 uv
-python-hcl2
