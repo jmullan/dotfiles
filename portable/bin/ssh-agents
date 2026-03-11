@@ -193,7 +193,21 @@ class Main(cmd.Main):
         loose_socket_paths = []
         for socket_path, agent_socket in agent_sockets.items():
             if not agent_socket.owners:
-                loose_socket_paths.append(socket_path)
+                matches = re.match(r".*/agent\.([0-9]+)$", str(agent_socket.path))
+                if matches:
+                    pid = int(matches.group(1))
+                    if pid not in processes and (pid + 1) in processes:
+                        # hack: if we cannot find pid via lsof, and we are
+                        # looking at the filename, sometimes it has been created
+                        # by the parent of the pid, so the filename is off by
+                        # one
+                        pid = pid + 1
+
+                    if pid not in agent_sockets_by_process:
+                        agent_sockets_by_process[pid] = []
+                    agent_sockets_by_process[pid].append(agent_socket)
+                else:
+                    loose_socket_paths.append(socket_path)
             for owner in agent_socket.owners:
                 if not owner:
                     continue
