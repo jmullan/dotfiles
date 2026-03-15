@@ -1,0 +1,55 @@
+#!/bin/bash
+
+dedup_words() {
+  tr ' ' '\n' | awk '!seen[$0]++' | paste -sd' ' -
+}
+
+
+FILENAME="${1}"
+
+if [ ! -e "${FILENAME}" ] ; then
+    echo "${FILENAME} does not exist"
+    echo
+    exit 1
+fi
+
+FONT_NAME=$(fc-scan --format "%{fullname[0]}" "${FILENAME}")
+FONT_NAME="${FONT_NAME%.ttf}"
+FONT_NAME="${FONT_NAME%.TTF}"
+
+if [ -z "${FONT_NAME}" ] ; then
+    echo "${FILENAME}"
+    echo "Could not get font name, exiting"
+    echo
+    exit 1
+fi
+FAMILY_NAME=$(fc-scan --format "%{family[0]}" "${FILENAME}" | dedup_words)
+if [ -z "${FAMILY_NAME}" ] ; then
+    echo "${FILENAME}"
+    echo "Could not get family name, exiting"
+    echo
+    exit 1
+fi
+FONT_NAME="${FONT_NAME//${FAMILY_NAME}/}"
+FONT_NAME=$(echo "${FONT_NAME}" | sed 's/  */ /g')
+FONT_NAME=$(echo "${FONT_NAME}" | dedup_words)
+
+NEW_FONT_NAME=$(echo "${FAMILY_NAME} ${FONT_NAME}" | dedup_words)
+NEW_FONT_PATH="${FAMILY_NAME}/${NEW_FONT_NAME}.ttf"
+NEW_FONT_PATH=$(echo "${NEW_FONT_PATH}" | sed 's/  */ /g')
+NEW_FONT_PATH=$(echo "${NEW_FONT_PATH}" | sed 's/ .ttf/.ttf/')
+
+if [ ! -e "${NEW_FONT_PATH}" ] ; then
+
+    if [ ! -e "${FAMILY_NAME}" ] ; then
+        mkdir "${FAMILY_NAME}"
+    fi
+
+    echo "${FILENAME}"
+    echo "${NEW_FONT_PATH}"
+    mv "${FILENAME}" "${NEW_FONT_PATH}"
+    echo
+fi
+
+
+# POSTSCRIPT_NAME=$(fc-scan --format "%{postscriptname[0]}" "${FILENAME}")
