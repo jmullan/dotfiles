@@ -16,7 +16,7 @@ class Main(cmd.Main):
         super().__init__()
         self.parser.add_argument(
             "filename",
-            nargs=1,
+            type=str,
             help=(
                 "A toml file; - for stdin; separate arguments from"
                 " files with an optional --"
@@ -25,7 +25,6 @@ class Main(cmd.Main):
         self.parser.add_argument(
             "var",
             type=str,
-            nargs=1,
             help="load the var at this path",
         )
         easy_initialize_logging()
@@ -34,11 +33,11 @@ class Main(cmd.Main):
         super().setup()
         if self.args.verbose:
             easy_initialize_logging(
-                "DEBUG", stream=sys.stdout, formatter=formatters.PlainTextFormatter()
+                "DEBUG", stream=sys.stderr, formatter=formatters.PlainTextFormatter()
             )
         else:
             easy_initialize_logging(
-                "INFO", stream=sys.stdout, formatter=formatters.PlainTextFormatter()
+                "INFO", stream=sys.stderr, formatter=formatters.PlainTextFormatter()
             )
 
     def main(self):
@@ -46,7 +45,7 @@ class Main(cmd.Main):
         filename = self.args.filename
         variable = self.args.var.strip()
         if '.' not in variable:
-            print(f"{variable} must be a full path (at least one dot)", file=sys.stderr)
+            logger.error(f"{variable} must be a full path (at least one dot)")
             exit(1)
         try:
             with open(filename, 'rb') as f:
@@ -57,7 +56,7 @@ class Main(cmd.Main):
                     if data is None:
                         break
                 if data is None:
-                    print(f"{variable} not found in {filename}", file=sys.stderr)
+                    logger.error(f"{variable} not found in {filename}")
                     exit(1)
                 elif isinstance(data, str | int | float):
                     print(data)
@@ -65,7 +64,7 @@ class Main(cmd.Main):
                     print(json.dumps(data))
 
         except Exception:
-            print(f'Error reading value from {filename}', file=sys.stderr)
+            logger.exception(f'Error reading value from {filename}')
 
 
 def main():
