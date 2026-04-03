@@ -7,7 +7,6 @@ import re
 import shlex
 import subprocess
 import sys
-from concurrent import futures
 
 import paramiko
 import psutil
@@ -72,6 +71,7 @@ def processes_with_file_open(file_path: pathlib.Path) -> list[dict]:
                 continue
             fields["filename"] = str(file_path)
             results.append(fields)
+    logger.debug("done with lsof")
     return results
 
 
@@ -100,17 +100,22 @@ def flatten_key(agent_key: paramiko.AgentKey) -> FlatKey:
         agent_key.comment
     )
 
+
+
 def _list_keys(socket_path: pathlib.Path) -> list[FlatKey]:
     """Running _list_keys in a new process to not have to manage the
     environment.
     """
+    logger.debug(f"listing keys in %s", socket_path)
     os.environ["SSH_AUTH_SOCK"] = str(socket_path)
     return [flatten_key(key) for key in paramiko.Agent().get_keys()]
 
 
+@cmd.forked(2)
 def list_keys(socket_path: pathlib.Path) -> list[FlatKey]:
-    with futures.ProcessPoolExecutor(max_workers=1) as ex:
-        return ex.submit(_list_keys, socket_path).result()
+    logger.debug("listing keys in %s", socket_path)
+    os.environ["SSH_AUTH_SOCK"] = str(socket_path)
+    return [flatten_key(key) for key in paramiko.Agent().get_keys()]
 
 
 def list_agent_sockets() -> dict[pathlib.Path, AgentSocket]:
@@ -118,14 +123,21 @@ def list_agent_sockets() -> dict[pathlib.Path, AgentSocket]:
 
     agent_dir = (pathlib.Path("~") / ".ssh" / "agent").expanduser()
     if agent_dir.is_dir():
+        logger.debug("looking for agent sockets")
         for file_path in agent_dir.glob("**/*"):
             if file_path.is_socket():
                 owners = processes_with_file_open(file_path)
-                keys = list_keys(file_path)
+                try:
+                    keys = list_keys(file_path)
+                except TimeoutError:
+                    logger.warning("timeout finding keys from %s", file_path)
+                    keys = []
                 results[file_path] = AgentSocket(file_path, owners, keys)
         if results:
             return results
+    logger.debug("looking for agent sockets in /tmp")
     for file_path in pathlib.Path("/tmp").glob("ssh-*/agent.*"):
+        logger.debug("checking socket %s", file_path)
         if file_path.is_socket():
             owners = processes_with_file_open(file_path)
             keys = list_keys(file_path)
@@ -185,13 +197,16 @@ class Main(cmd.Main):
 
     def main(self):
         super().main()
+        logger.debug("getting processes")
         processes = ssh_agent_processes()
+        logger.debug("getting sockets")
         agent_sockets = list_agent_sockets()
         agent_sockets_by_process: dict[int, list[AgentSocket]] = dict()
         for pid in processes:
             agent_sockets_by_process[pid] = []
         loose_socket_paths = []
         for socket_path, agent_socket in agent_sockets.items():
+            logger.debug("Found socket path %s", socket_path)
             if not agent_socket.owners:
                 matches = re.match(r".*/agent\.([0-9]+)$", str(agent_socket.path))
                 if matches:
@@ -220,6 +235,7 @@ class Main(cmd.Main):
                 agent_sockets_by_process[pid].append(agent_socket)
         joined: list[AgentCorrelationRow] = []
         for pid, agent_sockets in agent_sockets_by_process.items():
+            logger.debug("Found agent pid %s", pid)
             if not agent_sockets:
                 joined.append(AgentCorrelationRow(pid, None, None))
             for agent_socket in agent_sockets:

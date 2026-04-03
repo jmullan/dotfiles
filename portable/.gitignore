@@ -3,3 +3,14 @@
 *.bak
 *.pyc
 .sdkmanrc
+!.github
+!.github/**
+.mypy_cache
+__pycache__
+Caches
+.cache
+*dist-info
+lib/*/site-packages/
+.virtualenvs*
+tmp
+*.sqlite-wal
