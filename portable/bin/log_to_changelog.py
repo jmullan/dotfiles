@@ -62,7 +62,7 @@ def make_notes(release_version, release_commits, commits):
 
 
 def main():
-    """Turn a pandora git release log into a changelog"""
+    """Turn a example git release log into a changelog"""
     parser = ArgumentParser()
     parser.add_argument(
         "-v",

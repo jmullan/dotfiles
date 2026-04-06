@@ -211,7 +211,7 @@ def lucene_search(
         print_error("Nothing to search for?")
         exit(1)
     # curl -s -H "Accept: application/json" \
-    # 'https://sonatype.savagebeast.com/nexus/service/local/lucene/search?g=com.pandora.eds&a=importer' \
+    # 'https://sonatype.example.com/nexus/service/local/lucene/search?g=com.example.eds&a=importer' \
     #   | json_pp \
     #   | more
     url = f"{sonatype_base_url}/nexus/service/local/lucene/search"
@@ -298,9 +298,9 @@ def process_results(
                     #   content_class='maven2',
                     #   kind='proxy',
                     #   policy='SNAPSHOT',
-                    #   url='https://sonatype.savagebeast.com/nexus/service/local/repositories/snapshots'
+                    #   url='https://sonatype.example.com/nexus/service/local/repositories/snapshots'
                     #   )
-                    # https://sonatype.savagebeast.com/nexus/content/repositories/snapshots/com/pandora/musicops/musicops-rest-api/1.9.89-SNAPSHOT/maven-metadata.xml
+                    # https://sonatype.example.com/nexus/content/repositories/snapshots/com/example/musicops/musicops-rest-api/1.9.89-SNAPSHOT/maven-metadata.xml
 
                     artifact_path = f"{sonatype_base_url}{path}/{repo.repository_id}/{group_path}/{artifact.artifact_id}/{artifact.version}"
 
@@ -320,7 +320,7 @@ def main():
     )
     parser.add_argument("-q", "--query", dest="query", help="query for this string")
     parser.add_argument(
-        "-g", "--group-id", dest="group_id", help="group id, like com.pandora.eds"
+        "-g", "--group-id", dest="group_id", help="group id, like com.example.eds"
     )
     parser.add_argument("-a", "--artifact-id", dest="artifact_id")
     parser.add_argument("--version", dest="version")

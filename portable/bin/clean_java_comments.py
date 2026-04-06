@@ -35,7 +35,7 @@ def clean_block_comment(comment):
     groups = matches.groups()
     if not groups:
         return comment
-    # ('', '/*', '\n * Copyright (c) 2016 Pandora Media, Inc.\n * @version $Id:  $\n ', '*/')
+    # ('', '/*', '\n * Copyright (c) 2016 Example, Inc.\n * @version $Id:  $\n ', '*/')
     newlines, indent, opener, body, closer = groups
     while body.endswith("*") or body.endswith(" "):
         # remove any extra * characters from the body

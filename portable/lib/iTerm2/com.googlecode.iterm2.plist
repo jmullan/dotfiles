@@ -3037,7 +3037,7 @@
 	</dict>
 	<key>NoSyncSearchHistory</key>
 	<array>
-		<string>ag pandoraIdFromMusicIdOrPandoraIdString </string>
+		<string>ag exampleIdFromMusicIdOrExampleIdString </string>
 		<string>getGenre(</string>
 	</array>
 	<key>NoSyncSuppressAnnyoingBellOffer</key>
