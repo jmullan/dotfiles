@@ -1,7 +1,15 @@
 #!/bin/bash
 trap exit SIGHUP SIGINT SIGTERM
 
-for x in $(ls -1d */.git | sed 's/.git$//'); do
+if [ "$#" -gt 0 ]; then
+  items=("$@")
+else
+  while IFS= read -r line; do
+    items+=("${line}")
+  done < <(ls -1d */.git/config | sed 's#/.git/config##')
+fi
+
+for x in "${items[@]}" ; do
     pushd "$x";
     echo "$x";
     git-ff

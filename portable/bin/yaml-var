@@ -47,6 +47,7 @@ def flatten_nested(data: Any, prefix: str | None = None) -> dict[str, str]:
     return {k: v for k, v in sorted(output.items(), key=lambda k: f'{k[0]}={k[1]!s}')}
 
 
+
 class Main(cmd.Main):
     """Generate a uuid."""
 
@@ -84,19 +85,15 @@ class Main(cmd.Main):
         try:
             with open(filename, 'rb') as f:
                 data = yaml.safe_load_all(f)
-                documents = [flatten_nested(document) for document in data if document]
+                documents = [document for document in data if document]
                 for document in documents:
                     value = find_var(document, variable)
-                    if value is not None:
-                        print(f"{value}")
-                        exit(0)
-                if value is None:
-                    logger.error(f"{variable} not found in {filename}")
-                    exit(1)
-                elif isinstance(value, str | int | float):
-                    print(value)
-                else:
-                    print(json.dumps(value))
+                    if value is None:
+                        logger.error(f"{variable} not found in {filename}")
+                    elif isinstance(value, str | int | float):
+                        print(value)
+                    else:
+                        print(json.dumps(value))
 
         except Exception:
             logger.exception(f'Error reading value from {filename}')
@@ -107,12 +104,13 @@ def find_var(data: dict, variable: str) -> str | None:
         return None
     variable = re.sub(r'\.+', '.', variable)
     variable = variable.removeprefix('.').removesuffix('.')
-    if variable in data:
-        return data[variable]
+    flattened = flatten_nested(data)
+    if variable in flattened:
+        return flattened[variable]
     parts = variable.split('.')
-    print(data.keys())
     try:
         for part in parts:
+
             data = data.get(part)
             if data is None:
                 return None
