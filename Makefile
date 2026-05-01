@@ -3,6 +3,7 @@ PWD = $(shell pwd)
 all: install
 
 submodules: portable/bin/git-toolbelt portable/bin/gitflow
+	git fetch --all
 	git submodule sync
 	git submodule update --init --recursive
 	git submodule update --recursive

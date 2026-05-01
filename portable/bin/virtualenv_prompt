@@ -9,6 +9,7 @@ VENV_FILE=$(find_up .venv)
 PYTHON_VERSION=$(python --version | sed 's/Python //' | sed 's/\.[0-9]*$//' || echo 'v')
 EXPECTED_PYTHON=$(guess-project-python)
 SNAKE=$(echo -e "\xf0\x9f\x90\x8d")
+WARNING=
 if [ -n "${VENV_FILE}" ] ; then
     if [ -d "${VENV_FILE}" ] ; then
         EXPECTED_VENV=${VENV_FILE}
@@ -26,6 +27,9 @@ if [ -n "${EXPECTED_PYTHON}" ] ; then
         VERSION="${HOME}/.pyenv/versions/${EXPECTED_PYTHON}/bin/python"
     else
         VERSION=$(glob "${HOME}/.pyenv/versions/${EXPECTED_PYTHON}*/bin/python" | sort -Vr | head -n 1)
+    fi
+    if [ -n "${VERSION}" ] ; then
+        WARNING="no ${EXPECTED_PYTHON}"
     fi
 fi
 COMMAND="mkvirtualenv ${EXPECTED_VENV}"
@@ -138,6 +142,11 @@ else
             fi
         fi
     fi
+fi
+if [ -z "${WARNING}" ] ; then
+    echo -n "$(tput setaf 1)"
+    echo -n " ${WARNING}"
+    echo -n "$(tput sgr0)"
 fi
 echo -n ') '
 
