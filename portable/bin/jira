@@ -31,6 +31,7 @@ class Issue:
     self: str | None
     key: str | None
     fields: dict[str, Any] | None
+    renderedFields: dict[str, Any] | None
 
     def get(self, field: str) -> str | None:
         if self.fields and field in self.fields:
@@ -185,7 +186,12 @@ class Main(cmd.Main):
         except Exception:
             logger.exception("Could not decode json from %s", response.content)
             return None
-        return Issue(**data)
+        try:
+            return Issue(**data)
+        except Exception:
+            logger.exception("Could not turn data into an Issue %s", data)
+            raise
+
 
     def dump(self, jira_url: str, headers: dict[str, str], ticket: str, forward: bool):
         issue = self.fetch(jira_url, headers, ticket)

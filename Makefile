@@ -21,6 +21,7 @@ install: submodules portable/.dircolors
 	portable/bin/update_dotfiles_venv
 	uv tool install 'jmullan.git@git+https://github.com/jmullan/git-helpers'
 	uv tool install 'jmullan.artificer@git+https://github.com/jmullan/jmullan.artificer'
+	uv tool install 'jmullan-regexrename@git+https://github.com/jmullan/jmullan.regex_rename.git'
 	git submodule foreach 'git main --refresh'
 	git submodule foreach 'git checkout main 2>/dev/null || git checkout master'
 	git submodule foreach git rebase
