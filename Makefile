@@ -20,8 +20,11 @@ install: submodules portable/.dircolors
 	emacs -batch -f batch-byte-compile portable/lib/emacs/lisp/*.el >/dev/null 2>&1 || true
 	portable/bin/update_dotfiles_venv
 	uv tool install 'jmullan.git@git+https://github.com/jmullan/git-helpers'
+	uv tool upgrade jmullan.git
 	uv tool install 'jmullan.artificer@git+https://github.com/jmullan/jmullan.artificer'
-	uv tool install 'jmullan-regexrename@git+https://github.com/jmullan/jmullan.regex_rename.git'
+	uv tool upgrade jmullan.artificer
+	uv tool install 'jmullan.regexrename@git+https://github.com/jmullan/jmullan.regex_rename.git'
+	uv tool upgrade jmullan.regexrename
 	git submodule foreach 'git main --refresh'
 	git submodule foreach 'git checkout main 2>/dev/null || git checkout master'
 	git submodule foreach git rebase
