@@ -37,7 +37,7 @@ def main():
     start = datetime.now()
     now_string = start.strftime("[%Y-%m-%d %H:%M:%S]")
     commands = [
-        # "ssh-agent-prompt",
+        "ssh-agent-prompt",
         "docker_prompt",
         "aws-prompt",
         "sc-prompt",
