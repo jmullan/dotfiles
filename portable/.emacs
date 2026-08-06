@@ -2,7 +2,7 @@
 ;;; Commentary: oh no
 ;;; dot emacs -- emacs configs
 ;; (setq package-check-signature nil)
-
+(setq package-archives nil)
 (defun add-search-dir (path)
   (setq load-path (cons (expand-file-name path) load-path)))
 (add-search-dir "~/lib/emacs/lisp")

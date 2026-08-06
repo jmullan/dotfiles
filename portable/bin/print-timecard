@@ -290,11 +290,13 @@ def extract_location_and_branch(line: str) -> tuple[str, str]:
     parts = line.split(" ")
     line = ""
     while len(parts):
-        part = parts.pop(0)
+        part = parts[0]
         candidate = f"{line} {part}".strip()
         if not os.path.exists(candidate):
             return line, "".join(parts)
-        line = candidate
+        else:
+            part = parts.pop(0)
+            line = f"{line} {part}".strip()
     return line, "".join(parts)
 
 

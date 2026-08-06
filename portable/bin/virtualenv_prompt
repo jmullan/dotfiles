@@ -23,6 +23,9 @@ else
     fi
 fi
 if [ -n "${EXPECTED_PYTHON}" ] ; then
+    if [ -z "${EXPECTED_VENV}" ] ; then
+        EXPECTED_VENV="${PWD##*/}"
+    fi
     if [ -e "${HOME}/.pyenv/versions/${EXPECTED_PYTHON}/bin/python" ] ; then
         VERSION="${HOME}/.pyenv/versions/${EXPECTED_PYTHON}/bin/python"
     else

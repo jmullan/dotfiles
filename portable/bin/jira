@@ -6,6 +6,7 @@ import logging
 import os
 import sys
 import time
+import typing
 
 import requests
 from typing import Any
@@ -54,6 +55,17 @@ class Issue:
     def description(self) -> str | None:
         return strip_or_none(self.get("description"))
 
+    def raw(self, ticket_number: str | None = None) -> dict:
+        key = ticket_number if ticket_number is not None else self.key
+        return no_empties({
+                "id": self.id,
+                "expand": self.expand,
+                "self": self.self,
+                "key": key,
+                "fields": self.fields,
+                "renderedFields": self.renderedFields,
+        })
+
     def simplified(self, ticket_number: str | None = None) -> dict:
         key = ticket_number if ticket_number is not None else self.key
         return {
@@ -67,6 +79,32 @@ class Issue:
             }.items()
             if v is not None and v != ""
         }
+
+
+def no_empties(value: typing.Any) -> typing.Any:
+    if value is None:
+        return None
+    if isinstance(value, list):
+        stripped = [x for x in [no_empties(v) for v in value] if x is not None]
+        if stripped:
+            return stripped
+        else:
+            return None
+    elif isinstance(value, dict):
+        stripped = {k: v for k, v in {k: no_empties(v) for k, v in value.items()}.items() if v is not None}
+        if stripped:
+            return stripped
+        else:
+            return None
+    elif isinstance(value, str):
+        stripped = value.strip()
+        if len(stripped) > 0:
+            return stripped
+        else:
+            return None
+    return value
+
+
 
 
 @dataclasses.dataclass
@@ -128,10 +166,16 @@ class Main(cmd.Main):
             help="Dump everything from this project",
         )
         self.parser.add_argument(
+            "--min",
+            type=int,
+            default=10,
+            help="Dump starting at this id",
+        )
+        self.parser.add_argument(
             "--max",
             type=int,
             default=10,
-            help="Dump zero through this id",
+            help="Dump through this id",
         )
         self.parser.add_argument(
             "--ticket",
@@ -148,7 +192,7 @@ class Main(cmd.Main):
             help="Use the original ticket if possible",
         )
         self.parser.add_argument(
-            "--format", dest="format", type=str, choices=["csv", "dump"], default="dump"
+            "--format", dest="format", type=str, choices=["csv", "dump", "raw"], default="dump"
         )
 
     def search(self, jira_url: str, headers: dict[str, str]):
@@ -193,6 +237,14 @@ class Main(cmd.Main):
             raise
 
 
+    def raw(self, jira_url: str, headers: dict[str, str], ticket: str, forward: bool):
+        issue = self.fetch(jira_url, headers, ticket)
+        if issue is not None:
+            key = None if forward else ticket
+            issue_raw = issue.raw(key)
+            if issue is not None and len(issue_raw) > 0:
+                print(json.dumps(issue.raw(key), sort_keys=True))
+
     def dump(self, jira_url: str, headers: dict[str, str], ticket: str, forward: bool):
         issue = self.fetch(jira_url, headers, ticket)
         if issue is not None:
@@ -221,14 +273,19 @@ class Main(cmd.Main):
         }
 
         project = self.args.project
+        project_min = self.args.min
         project_max = self.args.max
         if project is not None:
-            for ticket_number in range(1, project_max + 1):
+            for ticket_number in range(project_min, project_max + 1):
                 ticket = f"{project}-{ticket_number}"
                 if self.args.format == "dump":
                     self.dump(jira_url, headers, ticket, forward)
+                elif self.args.format == "raw":
+                    self.raw(jira_url, headers, ticket, forward)
                 else:
                     self.csv(jira_url, headers, ticket, forward)
+                if ticket_number % 100 == 0:
+                    logger.info("Fetched: %s", ticket)
                 time.sleep(1)
             exit(0)
         ticket = self.args.jira_ticket
