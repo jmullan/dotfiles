@@ -89,8 +89,8 @@ if [ -e "${HOME}/.pyenv" ] ; then
     export PYENV_ROOT="${HOME}/.pyenv"
 fi
 
-if which go > /dev/null; then
-    if [ -e "${HOME}/.local/bin" ] ; then
+if command -v go >/dev/null 2>&1; then
+    if [ -e "${HOME}/.local/bin" ]; then
         go env -w GOBIN="${HOME}/.local/bin"
     fi
 fi
@@ -99,7 +99,7 @@ test -r /sw/bin/init.sh && . /sw/bin/init.sh
 
 alias nodeunit=node_modules/nodeunit/bin/nodeunit
 alias idea-all='xargs -L 10 -P 1 idea .'
-if which ruby >/dev/null && which gem >/dev/null; then
+if command -v ruby >/dev/null && command -v  gem >/dev/null; then
     RUBYPATH="$(ruby -rrubygems -e 'puts Gem.user_dir')/bin"
     if [ -e "${RUBYPATH}" ] ; then
         export PATH="${RUBYPATH}:${PATH}"
@@ -112,7 +112,7 @@ if [ -e "${HOME}/.opam/opam-init/init.sh" ] ; then
 fi
 
 export PIP_REQUIRE_VIRTUALENV=true
-if which pip3 >/dev/null; then
+if command -v pip3 >/dev/null; then
     export STANDARD_CACHE_DIR="${XDG_CACHE_HOME:-${HOME}/.cache}/pip"
     export WHEELHOUSE="${STANDARD_CACHE_DIR}/wheelhouse"
     mkdir -p "${WHEELHOUSE}"
@@ -126,16 +126,16 @@ fi
 if [ -e ~/.virtualenvs ]; then
     export POETRY_VIRTUALENVS_PATH=~/.virtualenvs
     export WORKON_HOME=~/.virtualenvs
-    VEW=`which virtualenvwrapper.sh`
-    if [ -n "${VEW}" ] ; then
+    VEW="$(command -v virtualenvwrapper.sh 2>/dev/null)"
+    if [ -n "${VEW}" ]; then
         . "${VEW}"
-    else
-        if [ -e "/etc/profile.d/virtualenvwrapper.sh" ] ; then
-             . "/etc/profile.d/virtualenvwrapper.sh"
-        fi
+    elif [ -e "/etc/profile.d/virtualenvwrapper.sh" ]; then
+        . "/etc/profile.d/virtualenvwrapper.sh"
     fi
 fi
-
+if command -v bat >/dev/null 2>&1; then
+    export PAGER="${HOME}/bin/bat-pager"
+fi
 export LESS="-XFRK"
 alias bwd='pwd | sed -e "s:/:🥖:g"'
 GZIP=-9
