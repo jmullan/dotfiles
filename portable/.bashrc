@@ -115,7 +115,7 @@ if [ "$TERM" != "dumb" ]; then
 fi
 alias bc='bc -lq .bcrc'
 alias gcc='gcc -Wall -O3'
-if command -v tree 2>/dev/null ; then
+if command -v tree >/dev/null 2>/dev/null ; then
     if command tree --help 2>&1 | grep -q -- '--condense'; then
         alias tree='tree -F --dirsfirst --condense --compress 2'
     else
