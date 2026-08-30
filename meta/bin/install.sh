@@ -11,20 +11,20 @@ if [ ! -e "${PORTABLE_DIR}" ] ; then
 fi
 
 function soft_link() {
-    FROM=$1
-    TO=$2
+    local FROM="${1}"
+    local TO="${2}"
 
-    TO_DIR="$(dirname "${TO}")"
+    local TO_DIR="$(dirname "${TO}")"
     # echo "Checking ${FULL_FILE} to ${TO} in ${TO_DIR}"
     if [ -L "${TO}" ] && [ ! -e "${TO}" ]; then
-        "${TO}"
+        rm "${TO}"
     fi
     if [ -e "${FROM}" ] ; then
         if [ ! -e "${TO_DIR}" ] ; then
             mkdir -p "${TO_DIR}"
         fi
         if [ ! -e "${TO}" ] ; then
-            echo "Linking ${FULL_FILE} to ${TO}"
+            echo "Linking ${FROM} to ${TO}"
             ln -s "${FROM}" "${TO}"
         else
             ls -lAd "${TO}"

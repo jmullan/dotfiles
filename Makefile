@@ -15,7 +15,7 @@ portable/.dircolors: submodules
 
 install: submodules portable/.dircolors
 	find . -name '*.bak' -delete
-	sh meta/bin/install.sh "$(PWD)"
+	bash meta/bin/install.sh "$(PWD)"
 	fastreplace 's-base03    "#002b36"' 's-base03    "#000000"' portable/.emacs.d/elpa/solarized-theme-20180621.1407/solarized.el
 	emacs -batch -f batch-byte-compile portable/lib/emacs/lisp/*.el >/dev/null 2>&1 || true
 	portable/bin/update_dotfiles_venv
