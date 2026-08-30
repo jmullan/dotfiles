@@ -1,0 +1,9 @@
+bn=33  # byte offset
+cx=39  # entire context line
+fn=32  # filename
+ln=33  # line number
+mc=31  # matching text in context lines
+ms=01;30;43  # matching text in selected lines
+# mt=31  # the actual matched text
+se=31  # separator
+sl=01;39;100  # entire selected/matching line

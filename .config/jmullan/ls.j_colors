@@ -1,0 +1,382 @@
+#############################################################################
+# Below are the color init strings for the basic file types. A color init
+# string consists of one or more of the following numeric codes:
+#
+# Attribute codes:
+#   00=none 01=bold 04=underscore 05=blink 07=reverse 08=concealed
+# Text color codes:
+#   30=black 31=red 32=green 33=yellow 34=blue 35=magenta 36=cyan 37=white
+# Background color codes:
+#   40=black 41=red 42=green 43=yellow 44=blue 45=magenta 46=cyan 47=white
+#
+# NOTES:
+# - See http://www.oreilly.com/catalog/wdnut/excerpt/color_names.html
+# - Color combinations
+#   ANSI Color code       Solarized  Notes                Universal             SolDark              SolLight
+#   ~~~~~~~~~~~~~~~       ~~~~~~~~~  ~~~~~                ~~~~~~~~~             ~~~~~~~              ~~~~~~~~
+#   00    none                                            NORMAL, FILE          <SAME>               <SAME>
+#   30    black           base02
+#   01;30 bright black    base03     bg of SolDark
+#   31    red             red                             docs & mm src         <SAME>               <SAME>
+#   01;31 bright red      orange                          EXEC                  <SAME>               <SAME>
+#   32    green           green                           editable text         <SAME>               <SAME>
+#   01;32 bright green    base01                          unimportant text      <SAME>
+#   33    yellow          yellow     unclear in light bg  multimedia            <SAME>               <SAME>
+#   01;33 bright yellow   base00     fg of SolLight                             unimportant non-text
+#   34    blue            blue       unclear in dark bg   user customized       <SAME>               <SAME>
+#   01;34 bright blue     base0      fg in SolDark                                                   unimportant text
+#   35    magenta         magenta                         LINK                  <SAME>               <SAME>
+#   01;35 bright magenta  violet                          archive/compressed    <SAME>               <SAME>
+#   36    cyan            cyan                            DIR                   <SAME>               <SAME>
+#   01;36 bright cyan     base1                           unimportant non-text                       <SAME>
+#   37    white           base2
+#   01;37 bright white    base3      bg in SolLight
+#   05;37;41                         unclear in Putty dark
+
+# SGR (Select Graphic Rendition) parameters
+# 00 = reset all attributes
+# 01 = bold/intense
+
+# 30 = black foreground
+# 31 = red foreground
+# 32 = green foreground
+# 33 = yellow foreground
+# 34 = blue foreground
+# 35 = magenta foreground
+# 36 = cyan foreground
+# 37 = white foreground
+
+# 40 = black background
+
+no=00       # normal/default
+fi=00       # regular file
+di=01;34    # directory
+ln=01;36    # symbolic link
+pi=40;33    # named pipe (FIFO)
+so=01;35    # socket
+do=01;35    # A door is an IPC mechanism primarily associated with Solaris/illumos.
+bd=40;33;01 # block device
+cd=40;33;01 # character device
+or=40;31;01 # orphaned symbolic link
+ex=01;31   # executable file
+
+# files with execute permission
+$executable=01;31
+*.cmd=$executable  # Win
+*.exe=$executable  # Win
+*.com=$executable  # Win
+*.bat=$executable  # Win
+*.reg=$executable  # Win
+*.app=$executable  # OSX
+*.sh=$executable
+*.bash=$executable
+*.csh=$executable
+*.zsh=$executable
+
+# List any file extensions like '.gz' or '.tar' that you would like ls
+# to colorize below. Put the extension, a space, and the color init string.
+# (and any comments you want to add after a '#')
+
+### Text formats
+
+# Text that we can edit with a regular editor
+$text=00;36
+*.txt=$text
+*.org=$text
+*.md=$text
+*.mkd=$text
+*LICENSE=$text
+*README=$text
+
+
+# Source text
+$source=00;32
+*.h=$source
+*.hpp=$source
+*.c=$source
+*.C=$source
+*.cc=$source
+*.cpp=$source
+*.cxx=$source
+*.objc=$source
+*.cl=$source
+*.el=$source
+*.vim=$source
+*.java=$source
+*.lua=$source
+*.pl=$source
+*.pm=$source
+*.py=$source
+*.rb=$source
+*.hs=$source
+*.php=$source
+*.htm=$source
+*.html=$source
+*.shtml=$source
+*.erb=$source
+*.haml=$source
+*.xml=$source
+*.rdf=$source
+*.css=$source
+*.sass=$source
+*.scss=$source
+*.less=$source
+*.js=$source
+*.coffee=$source
+*.man=$source
+*.l=$source
+*.n=$source
+*.p=$source
+*.pod=$source
+*.tex=$source
+*.go=$source
+*.sql=$source
+*.sv=$source
+*.svh=$source
+*.v=$source
+*.vh=$source
+*.vhd=$source
+
+# log files
+$log=
+*.0=$source
+*.1=$source
+*.2=$source
+*.3=$source
+*.4=$source
+*.5=$source
+*.6=$source
+*.7=$source
+*.8=$source
+*.9=$source
+
+# Config / structured data — yellow
+$structured=00;33
+*.json=$structured
+*.yaml=$structured
+*.yml=$structured
+*.toml=$structured
+*.ini=$structured
+*.conf=$structured
+*.cfg=$structured
+*.properties=$structured
+*.xml=$structured
+*.csv=$structured
+*.iml=$structured
+
+### Multimedia formats
+
+# Image
+$image=01;35
+*.jpg=$image
+*.jpeg=$image
+*.gif=$image
+*.bmp=$image
+*.pbm=$image
+*.pgm=$image
+*.ppm=$image
+*.tga=$image
+*.xbm=$image
+*.xpm=$image
+*.tif=$image
+*.tiff=$image
+*.png=$image
+*.bmp=$image
+*.cgm=$image
+*.dl=$image
+*.dvi=$image
+*.emf=$image
+*.eps=$image
+*.gif=$image
+*.jpeg=$image
+*.jpg=$image
+*.JPG=$image
+*.mng=$image
+*.pbm=$image
+*.pcx=$image
+*.pgm=$image
+*.png=$image
+*.PNG=$image
+*.ppm=$image
+*.pps=$image
+*.ppsx=$image
+*.ps=$image
+*.svg=$image
+*.svgz=$image
+*.tga=$image
+*.tif=$image
+*.tiff=$image
+*.xbm=$image
+*.xcf=$image
+*.xpm=$image
+*.xwd=$image
+*.xwd=$image
+*.yuv=$image
+*.nef=$image # Nikon RAW format
+*.NEF=$image
+*.webp=$image
+*.heic=$image
+*.HEIC=$image
+*.avif=$image
+*.psd=$image
+
+# Audio
+$audio=00;33
+*.aac=$audio
+*.au=$audio
+*.flac=$audio
+*.m4a=$audio
+*.mid=$audio
+*.midi=$audio
+*.mka=$audio
+*.mp3=$audio
+*.mpa=$audio
+*.mpeg=$audio
+*.mpg=$audio
+*.ogg=$audio
+*.opus=$audio
+*.ra=$audio
+*.wav=$audio
+*.ogg=$audio
+*.mp3=$audio
+*.wav=$audio
+
+
+# Media
+$video=01;35
+*.mov=$video
+*.mpg=$video
+*.mpeg=$video
+*.avi=$video
+*.fli=$video
+*.gl=$video
+*.dl=$video
+*.xcf=$video
+*.xwd=$video
+*.anx=$video
+*.asf=$video
+*.avi=$video
+*.axv=$video
+*.flc=$video
+*.fli=$video
+*.flv=$video
+*.gl=$video
+*.m2v=$video
+*.m4v=$video
+*.mkv=$video
+*.mov=$video
+*.MOV=$video
+*.mp4=$video
+*.mp4v=$video
+*.mpeg=$video
+*.mpg=$video
+*.nuv=$video
+*.ogm=$video
+*.ogv=$video
+*.ogx=$video
+*.qt=$video
+*.rm=$video
+*.rmvb=$video
+*.swf=$video
+*.vob=$video
+*.webm=$video
+*.wmv=$video
+
+### Misc
+
+# Binary document formats and multimedia source
+$binary_document=00;36
+*.doc=$binary_document
+*.docx=$binary_document
+*.rtf=$binary_document
+*.odt=$binary_document
+*.dot=$binary_document
+*.dotx=$binary_document
+*.ott=$binary_document
+*.xls=$binary_document
+*.xlsx=$binary_document
+*.ods=$binary_document
+*.ots=$binary_document
+*.ppt=$binary_document
+*.pptx=$binary_document
+*.odp=$binary_document
+*.otp=$binary_document
+*.fla=$binary_document
+*.pdf=$binary_document
+
+
+# Archives / packages / compressed
+$archive=01;34
+*.tar=$archive
+*.tgz=$archive
+*.arj=$archive
+*.taz=$archive
+*.lzh=$archive
+*.zip=$archive
+*.z=$archive
+*.Z=$archive
+*.gz=$archive
+*.bz2=$archive
+*.deb=$archive
+*.rpm=$archive
+*.jar=$archive
+*.7z=$archive
+*.apk=$archive
+*.arj=$archive
+*.bin=$archive
+*.bz=$archive
+*.bz2=$archive
+*.cab=$archive  # Win
+*.deb=$archive
+*.dmg=$archive  # OSX
+*.gem=$archive
+*.gz=$archive
+*.iso=$archive
+*.jar=$archive
+*.msi=$archive  # Win
+*.rar=$archive
+*.rpm=$archive
+*.tar=$archive
+*.tbz=$archive
+*.tbz2=$archive
+*.tgz=$archive
+*.tx=$archive
+*.war=$archive
+*.xpi=$archive
+*.xz=$archive
+*.z=$archive
+*.Z=$archive
+*.zip=$archive
+*.zst=$archive
+
+# Backup / temporary / ignored — dim gray
+$ignored=00;90
+*~=$ignored
+*.bak=$ignored
+*.bak=$ignored
+*.BAK=$ignored
+*.old=$ignored
+*.older=$ignored
+*.OLD=$ignored
+*.org_archive=$ignored
+*.off=$ignored
+*.OFF=$ignored
+*.dist=$ignored
+*.DIST=$ignored
+*.orig=$ignored
+*.ORIG=$ignored
+*.swp=$ignored
+*.swo=$ignored
+
+
+# encryption
+$encryption=00;35
+*.gpg=$encryption
+*.pgp=$encryption
+*.asc=$encryption
+*.3des=$encryption
+*.aes=$encryption
+*.enc=$encryption
+*.sqlite=$encryption
+*id_rsa=$encryption
+*.pub=$encryption

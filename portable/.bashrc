@@ -92,17 +92,30 @@ if [ "$TERM" != "dumb" ]; then
             eval "$(dircolors -b)"
         fi
     else
-        LS_COLORS_FILE="${HOME}/.config/jmullan/ls_colors.txt"
-        if [ -e "${LS_COLORS_FILE}" ]; then
-            export LS_COLORS="$(
-                grep -Ev '^[[:space:]]*($|#)' .config/jmullan/ls_colors.txt | paste -sd: -
-            )"
+        LS_COLORS_FILE="${HOME}/.config/jmullan/ls.j_colors"
+        if [ -e "${LS_COLORS_FILE}" ] && command -v j-colors.sh >/dev/null 2>&1; then
+            export LS_COLORS="$(j-colors.sh "${LS_COLORS_FILE}")"
+        fi
+    fi
+
+    if [ -z "${LSCOLORS}" ] && command -v ls_colors_to_lscolors.sh >/dev/null 2>&1; then
+        export LSCOLORS="$(ls_colors_to_lscolors.sh)"
+    fi
+
+    if [ -z "${LSCOLORS}" ]; then
+        export LSCOLORS="ExGxFxdaBxDaDaabababab"
+    fi
+
+    if [ -z "${GREP_COLORS}" ] ; then
+        GREP_COLORS_FILE="${HOME}/.config/jmullan/grep.j_colors"
+        if [ -e "${GREP_COLORS_FILE}" ] && command -v j-colors.sh >/dev/null 2>&1; then
+            export GREP_COLORS="$(j-colors.sh "${GREP_COLORS_FILE}")"
         fi
     fi
 fi
 alias bc='bc -lq .bcrc'
 alias gcc='gcc -Wall -O3'
-alias tree='tree -a -F --dirsfirst --gitignore --condense --compress 2'
+alias tree='tree -F --dirsfirst --condense --compress 2'
 ######################################################################
 # Prefer US English and use UTF-8
 ######################################################################
